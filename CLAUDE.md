@@ -8,6 +8,9 @@ Plataforma web de gestión para clubes deportivos (proyecto integrador escolar).
 - `docs/DER_logico.jpg`: DER lógico (24 entidades). **Si la imagen y `docs/contexto.md` no coinciden, manda el contexto.** Diferencias conocidas (la imagen quedó desactualizada):
   - `fee`: `memberId` y `period` **no** son únicos por separado. La restricción es un índice único compuesto `(memberId, period)`.
   - `role`: `name` **no** es único en toda la base. La restricción es un índice único compuesto `(clubId, name)`, para que cada club pueda tener sus propios roles base ("Socio", "Jugadora", etc.).
+  - `user.password` admite NULL: queda vacío desde el alta presencial hasta que el socio completa su registro con el número de socio. El login rechaza usuarios sin contraseña.
+  - `member.memberAdultId` pasa a ser `adultUserId` y apunta a `user` (no a `member`), porque el adulto Familia puede no ser Socio.
+  - `dvv.table_name`, `routine.image_url` y `routine.video_url` pasan a camelCase: `tableName`, `imageUrl`, `videoUrl`.
 
 **Si algo no está definido en este archivo, en el contexto o en el DER, preguntar antes de asumir un criterio.**
 
@@ -43,7 +46,6 @@ api/src/
   jobs/                Tareas programadas (node-cron), una por archivo
   utils/               constants, messages, errors, token, crypto, integrity, logger, mailer/
   seed/seed.js         Carga inicial
-
 client/src/
   api/                 axiosClient.js + un <módulo>.api.js por módulo
   context/             AuthContext (usuario, roles, rol activo, permisos)

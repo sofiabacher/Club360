@@ -11,6 +11,8 @@ Este documento es el contexto acumulado del proyecto. Está pensado para pegarse
 
 **Última actualización (10/10/2026) — DER lógico final:** el DER lógico definitivo (24 entidades, nombres de tabla/campo en inglés camelCase, igual que el código Sequelize) queda como **imagen adjunta al conocimiento del proyecto**. Incorporó varios ajustes respecto de la primera versión del modelo — ver el detalle en sección 8.
 
+**Última actualización (11/10/2026) — ajustes al DER para los modelos:** contraseña nullable, adulto responsable como FK a `user`, campos en camelCase y política de FK y borrado (ver sección 8).
+
 **Última actualización (10/10/2026) — estructura del proyecto:** se definió la estructura del repositorio, la organización del código por módulos, el stack completo y las convenciones técnicas (ver sección 11). El bot de consultas queda fuera del repo hasta decidir si entra en el trabajo (ver sección 9).
 
 ---
@@ -226,7 +228,13 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 - Relaciones dibujadas con línea simple, sin círculo de opcionalidad: la nulabilidad de cada FK está indicada en su propia columna, no en la flecha.
 - Sin SuperAdmin en el MVP: todo Usuario pertenece a un club (`club_id NOT NULL`) y hay 7 roles base (`Rol.es_base`). La Bitácora también tiene `club_id NOT NULL` (ya no hay acciones de plataforma sin club).
 - **Roles por club:** `role.name` es único **junto con `clubId`** (índice compuesto `(clubId, name)`), no único en toda la base, para que cada club tenga sus propios roles base.
-- **La imagen del DER quedó desactualizada en dos restricciones (10/10/2026); manda este documento:** en `fee`, `memberId` y `period` no son únicos por separado (es un único compuesto `(memberId, period)`, ver más abajo); en `role`, `name` no es único global (ver el punto anterior).
+- **La imagen del DER quedó desactualizada en estos puntos; manda este documento:**
+  - (10/10) En `fee`, `memberId` y `period` no son únicos por separado: es un único compuesto `(memberId, period)` (ver más abajo).
+  - (10/10) En `role`, `name` no es único global (ver el punto anterior).
+  - (11/10) `user.password` admite NULL: queda vacío desde el alta presencial hasta que el socio genera su usuario y contraseña con el número de socio (ver 3.1). El login rechaza usuarios sin contraseña.
+  - (11/10) El adulto responsable del vínculo familiar se guarda en `member.adultUserId` (en el DER figura como `memberAdultId`) y es FK a **`user`**, no a `member`, porque el adulto Familia puede no ser Socio (ver 3.5).
+  - (11/10) Los tres campos que estaban en snake_case pasan a camelCase como el resto: `dvv.tableName`, `routine.imageUrl` y `routine.videoUrl`.
+- **FK y borrado (11/10):** las FK son NOT NULL salvo `log.userId`, `log.roleId`, `notification.transmitterId` (NULL cuando notifica el sistema) y `member.adultUserId`. Las bajas son lógicas (por estado o `isActive`), por eso las relaciones usan `RESTRICT` al borrar, salvo las tablas intermedias (`CASCADE`) y esas cuatro FK opcionales (`SET NULL`). Las flags booleanas son NOT NULL con default (`isActive` en true; `isBase`, `isRead` y `linkStatus` en false).
 - Permisos por rol (`RolPermiso`) y también directos por usuario (`UsuarioPermiso`), para excepciones puntuales sin crear un rol nuevo.
 - Datos personales en Usuario. El alta presencial crea Usuario (pendiente de activación) y Socio.
 - Un solo Pago, siempre asociado a una Cuota (sin tienda en el MVP). Cuota = cuota social (Club) + cuota deportiva (ClubDeporte), con el desglose guardado en la cuota (`socialAmount` + `sportAmount`). La Cuota lleva `period` (`CHAR(7)`, formato `AAAA-MM`), único **junto con `memberId`** (no único solo) — identifica a qué mes corresponde.

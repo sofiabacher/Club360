@@ -25,9 +25,9 @@ Seguimiento de todo lo que falta para entregar el proyecto: desarrollo, entregab
 
 ## Fase 1 — Base de datos
 
-- [ ] Los 24 modelos de Sequelize según el DER, con las correcciones del contexto (P02)
-- [ ] Asociaciones entre modelos en `models/index.js` (P02)
-- [ ] Índices únicos compuestos: `fee (memberId, period)` y `role (clubId, name)` (P02)
+- [x] Los 24 modelos de Sequelize según el DER, con las correcciones del contexto (P02)
+- [x] Asociaciones entre modelos en `models/index.js` (P02)
+- [x] Índices únicos compuestos: `fee (memberId, period)` y `role (clubId, name)` (P02)
 - [ ] Cálculo automático de DVH al crear/modificar y recálculo del DVV de la tabla (hooks de Sequelize)
 - [ ] Catálogo de permisos (`módulo.acción`) y qué permisos trae cada uno de los 7 roles base
 - [ ] Seed completo: deportes, club Valencia, Vóley activado, permisos, roles base y usuario Admin
@@ -150,6 +150,7 @@ Cada una se resuelve en el chat de Claude y se registra en el documento de conte
 
 Lo terminado, con la fecha. Lo más reciente arriba.
 
+- 11/10/2026 — Modelos y asociaciones (P02): los 24 modelos, las asociaciones en `models/index.js` y los índices únicos compuestos de `fee` y `role`. Verificado contra la base local con `sync({ force: true })` y arranque del servidor. Ojo: la base local es MariaDB 10.4, no MySQL 8
 - 11/10/2026 — Estructura base del proyecto (P01): `api/` y `client/` con configuración, middlewares, utils, esqueletos de los 15 módulos y front base. Verificado sin base de datos (`/health`, `encrypt`/`decrypt`, build del front). Falta probar el arranque completo (`npm run dev` y `npm run seed`) con MySQL y un `.env`
 - 10/10/2026 — Definidas la estructura del proyecto y las convenciones técnicas (`CLAUDE.md`, contexto sección 11)
 - 10/10/2026 — DER lógico cerrado, con las correcciones de `fee` y `role` en el contexto
