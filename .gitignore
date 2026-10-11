@@ -1,0 +1,29 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno (solo se sube .env.example)
+.env
+.env.local
+.env.*.local
+
+# Builds
+dist/
+build/
+
+# Archivos subidos y backups (se mantiene la carpeta con su .gitkeep)
+api/uploads/*
+!api/uploads/.gitkeep
+api/backups/*
+!api/backups/.gitkeep
+
+# Bot de consultas (fuera del repo hasta decidir si entra en el trabajo)
+bot/
+
+# Logs
+*.log
+
+# Editores y sistema operativo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
