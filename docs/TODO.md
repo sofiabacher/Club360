@@ -28,9 +28,9 @@ Seguimiento de todo lo que falta para entregar el proyecto: desarrollo, entregab
 - [x] Los 24 modelos de Sequelize según el DER, con las correcciones del contexto (P02)
 - [x] Asociaciones entre modelos en `models/index.js` (P02)
 - [x] Índices únicos compuestos: `fee (memberId, period)` y `role (clubId, name)` (P02)
-- [ ] Cálculo automático de DVH al crear/modificar y recálculo del DVV de la tabla (hooks de Sequelize)
-- [ ] Catálogo de permisos (`módulo.acción`) y qué permisos trae cada uno de los 7 roles base
-- [ ] Seed completo: deportes, club Valencia, Vóley activado, permisos, roles base y usuario Admin
+- [x] Cálculo automático de DVH al crear/modificar y recálculo del DVV de la tabla (hooks de Sequelize)
+- [x] Catálogo de permisos (`módulo.acción`) y qué permisos trae cada uno de los 7 roles base — definido en el contexto, sección 4.1 (41 permisos)
+- [x] Seed completo: deportes, club Valencia, Vóley activado, permisos, roles base y usuario Admin
 - [ ] Datos de prueba: socios, jugadoras, familias, staff, ligas y partidos para probar y para la demo
 
 ## Fase 2 — Seguridad y acceso
@@ -54,7 +54,7 @@ Seguimiento de todo lo que falta para entregar el proyecto: desarrollo, entregab
 - [ ] Alta presencial de Socio: genera el número de socio y crea el usuario pendiente de activación
 - [ ] Código de vínculo familiar automático para los socios menores de edad
 - [!] Entrega del código de vínculo al adulto — bloqueado: falta definir cómo lo recibe (decisión D3)
-- [ ] Registro de Familia con el código de vínculo (un solo uso)
+- [ ] Pantalla "Vincularme como Familia" desde el login: con el código, crea la cuenta o suma el rol Familia a un usuario existente (un solo uso)
 - [ ] Detección de la mayoría de edad y opción de desvincularse del adulto
 - [ ] Modificación y baja de Socios
 - [ ] Alta, modificación y baja de Staff (impedir que un Staff sea también Socio)
@@ -150,6 +150,7 @@ Cada una se resuelve en el chat de Claude y se registra en el documento de conte
 
 Lo terminado, con la fecha. Lo más reciente arriba.
 
+- 11/10/2026 — Integridad y seed (P03): hooks de DVH/DVV automáticos (`models/integrityHooks.js`), catálogo de 41 permisos (`utils/permissions.js`) y seed completo del club Valencia (7 roles base, Vóley activado, usuario Admin). Verificado: seed corrido dos veces sin duplicar, cantidades, DVH/DVV de todas las tablas cargadas y detección de cambios hechos por SQL directo
 - 11/10/2026 — Modelos y asociaciones (P02): los 24 modelos, las asociaciones en `models/index.js` y los índices únicos compuestos de `fee` y `role`. Verificado contra la base local con `sync({ force: true })` y arranque del servidor. Ojo: la base local es MariaDB 10.4, no MySQL 8
 - 11/10/2026 — Estructura base del proyecto (P01): `api/` y `client/` con configuración, middlewares, utils, esqueletos de los 15 módulos y front base. Verificado sin base de datos (`/health`, `encrypt`/`decrypt`, build del front). Falta probar el arranque completo (`npm run dev` y `npm run seed`) con MySQL y un `.env`
 - 10/10/2026 — Definidas la estructura del proyecto y las convenciones técnicas (`CLAUDE.md`, contexto sección 11)

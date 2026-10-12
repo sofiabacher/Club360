@@ -77,12 +77,12 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
 - **Multi-tenant:** toda entidad de negocio tiene `clubId`. Todo service filtra por `req.user.clubId`; nunca se toma el clubId del body.
 - **Permisos, no roles:** el back verifica con `checkPermission('módulo.acción')` y el front con `usePermission()` / `PermissionRoute`. Nunca se compara el nombre de un rol para dar acceso.
 - **Rol activo:** el JWT lleva `id`, `clubId` y `activeRoleId`. Los permisos efectivos son los del rol activo + los permisos directos del usuario (`user_permission`), no la suma de todos sus roles. Cambiar de rol genera un token nuevo.
-- **Nombres de permisos:** `módulo.acción` (ej. `fees.manage`, `citations.create`, `logs.export`).
+- **Nombres de permisos:** `módulo.acción` (ej. `fees.manage`, `citations.create`). El catálogo es fijo (41 permisos) y vive en `api/src/utils/permissions.js`: en las rutas se usan sus constantes (`checkPermission(PERMISSIONS.FEES_MANAGE)`), nunca strings sueltos. El Admin no puede crear ni modificar permisos, solo roles.
 - **Estados:** los campos de estado son `INT NOT NULL DEFAULT 1`, sin tabla de estados. El mapeo vive en `api/src/utils/constants.js` y se replica en `client/src/utils/constants.js`. Nunca escribir números mágicos: usar las constantes.
-- **Dígitos verificadores:** las tablas de negocio tienen `dvh`; al crear o modificar un registro se recalcula su DVH y el DVV de la tabla (`utils/integrity.js`). La tabla `log` no tiene `dvh`.
+- **Dígitos verificadores:** las tablas de negocio tienen `dvh`. El DVH de cada registro y el DVV de cada tabla se calculan **automáticamente** con los hooks de `models/integrityHooks.js`: no se calculan a mano en los services. Para que funcionen, toda escritura tiene que pasar por Sequelize (nunca SQL directo con `sequelize.query` para insertar, modificar o borrar datos de negocio) y, si se usa una transacción, hay que pasarla en `options.transaction`. La tabla `log` no tiene `dvh`.
 - **Bitácora:** las acciones relevantes se registran con `utils/logger.js`, indicando `clubId`, `userId` y `roleId` (el rol activo). Las acciones se definen en `LOG_ACTIONS` de `constants.js`.
 - **Encriptación:** contraseñas con bcrypt (`hashPassword`); datos sensibles reversibles con `encrypt`/`decrypt` de `utils/crypto.js`.
-- **Seed:** la carga inicial se hace solo con `npm run seed`, nunca al arrancar el servidor.
+- **Seed:** la carga inicial se hace solo con `npm run seed`, nunca al arrancar el servidor. Es idempotente (se puede correr varias veces). Los datos del club están en `seed/data/club.js` y los del usuario Admin en el `.env` (`SEED_ADMIN_*`).
 - **Configuración:** todo valor de entorno se lee desde `config/index.js`, no con `process.env` en otros archivos. Las URLs no se hardcodean.
 
 ## Convenciones

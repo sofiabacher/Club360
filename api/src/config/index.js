@@ -45,5 +45,16 @@ module.exports = {
 
     cors: {
         origin: process.env.FRONTEND_URL || 'http://localhost:5173'
+    },
+
+    seed: {
+        admin: {   // Usuario Admin que crea el seed. La contraseña no tiene valor por defecto
+            name: process.env.SEED_ADMIN_NAME || 'Admin',
+            lastName: process.env.SEED_ADMIN_LASTNAME || 'Valencia',
+            email: process.env.SEED_ADMIN_EMAIL || 'admin@valencia-club.com',
+            username: process.env.SEED_ADMIN_USERNAME || 'admin.valencia',
+            password: process.env.SEED_ADMIN_PASSWORD,
+            birthDate: process.env.SEED_ADMIN_BIRTHDATE || '1990-01-01'
+        }
     }
 }

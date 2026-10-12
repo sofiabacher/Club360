@@ -35,6 +35,8 @@ const Citation = require('./Citation')
 // 6. Rutinas
 const Routine = require('./Routine')
 
+const { registerIntegrityHooks } = require('./integrityHooks')
+
 
 // Las bajas del sistema son lógicas (por estado o isActive), así que por defecto no se borra en cascada.
 const RESTRICT = { onDelete: 'RESTRICT', onUpdate: 'CASCADE' }
@@ -144,7 +146,7 @@ oneToMany(Category, Routine, 'categoryId', 'routines', 'category')
 oneToMany(Game, Citation, 'gameId', 'citations', 'game')
 oneToMany(Fee, Payment, 'feeId', 'payments', 'fee')
 
-module.exports = {
+const models = {
     User,
     Role,
     Permission,
@@ -170,3 +172,7 @@ module.exports = {
     Citation,
     Routine
 }
+
+registerIntegrityHooks(models)   // DVH y DVV automáticos en todos los modelos con dvh
+
+module.exports = models

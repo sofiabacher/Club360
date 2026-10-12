@@ -11,6 +11,8 @@ Este documento es el contexto acumulado del proyecto. Está pensado para pegarse
 
 **Última actualización (10/10/2026) — DER lógico final:** el DER lógico definitivo (24 entidades, nombres de tabla/campo en inglés camelCase, igual que el código Sequelize) queda como **imagen adjunta al conocimiento del proyecto**. Incorporó varios ajustes respecto de la primera versión del modelo — ver el detalle en sección 8.
 
+**Última actualización (11/10/2026) — catálogo de permisos y seed:** se definió el catálogo de 41 permisos (ver sección 4) y los datos iniciales del seed (ver sección 2).
+
 **Última actualización (11/10/2026) — ajustes al DER para los modelos:** contraseña nullable, adulto responsable como FK a `user`, campos en camelCase y política de FK y borrado (ver sección 8).
 
 **Última actualización (10/10/2026) — estructura del proyecto:** se definió la estructura del repositorio, la organización del código por módulos, el stack completo y las convenciones técnicas (ver sección 11). El bot de consultas queda fuera del repo hasta decidir si entra en el trabajo (ver sección 9).
@@ -46,6 +48,7 @@ El sistema nace con **arquitectura multi-club** desde el diseño (ver sección 2
 - Multi-tenant: cada club tiene sus datos aislados. Toda entidad de negocio relevante (Socio, Liga, Fixture, Cuota, etc.) está asociada a un `club_id`, y el backend filtra todo por el club del usuario logueado. Sin SuperAdmin en el MVP, todo Usuario pertenece siempre a un club (`club_id NOT NULL`, ver sección 8).
 - **Catálogo de Deportes**: lista maestra de la plataforma (Vóley, Futsal, Básquet...). Cada club activa los que ofrece. Valencia activa solo Vóley.
 - **Carga inicial por script (seed), sin panel de SuperAdmin en el MVP:** un script inserta el club, el catálogo de deportes, la activación de Vóley para el club y el usuario Admin del club. A partir de ahí el Admin opera desde la aplicación.
+- **Seed de Valencia (11/10/2026):** margen de conflicto inicial de **60 minutos** y días de atraso 180. Los datos de contacto y los valores de las cuotas son provisorios (`[COMPLETAR]` en `seed/data/club.js`) hasta tener los reales. Los datos del usuario Admin se toman del `.env` (`SEED_ADMIN_*`), no del código. El seed es idempotente.
 - **Argumento de Escalabilidad:** agregar un club nuevo no requiere rediseño ni cambios de código, solo correr el script con otros datos. El panel de SuperAdmin queda en Futuro (sección 7).
 
 ---
@@ -98,6 +101,8 @@ El sistema nace con **arquitectura multi-club** desde el diseño (ver sección 2
 ## 4. Actores y permisos
 
 **Roles del sistema (7):** Socio (perfil base), Jugadora (Socio-Deportista), Familia, Representante, Entrenadora, Preparadora física y Admin del club. *(El SuperAdmin salió del MVP; ver sección 2 y 7. Estos 7 son los roles base del DER, `Rol.es_base`, ver sección 8.)*
+
+**Catálogo de permisos (definido el 11/10/2026):** el catálogo completo (41 permisos, formato `módulo.acción`, con los permisos de cada rol: Admin 14, Representante 9, Entrenadora 8, Preparadora física 5, Socio 9, Jugadora 12, Familia 7) está en el documento `Documentación Club360`, sección 4.1, que es su lugar de origen. En el código vive en `api/src/utils/permissions.js`. El catálogo es fijo y común a toda la plataforma: lo carga el seed y el Admin del club no puede crear, modificar ni eliminar permisos (sí crear roles con los permisos existentes, editar los permisos de cada rol y asignar permisos directos).
 
 Los actores se describen por rol para facilitar la lectura, pero el acceso a pantallas y acciones se implementa por **permisos** (patentes): cada rol es un conjunto de permisos (familia), y el front y el back verifican el permiso, no el rol. Además de los permisos por rol, un usuario puede tener permisos directos (tabla `UsuarioPermiso`, ver sección 8) para excepciones puntuales sin crear un rol nuevo. Un usuario con más de un rol trabaja con un rol activo a la vez (ver 3.5).
 
