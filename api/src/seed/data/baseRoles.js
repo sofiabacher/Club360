@@ -1,8 +1,9 @@
 // Los 7 roles base de cada club (isBase: true) con sus permisos.
 const { PERMISSIONS: P } = require('../../utils/permissions')
+const { BASE_ROLES: R } = require('../../utils/constants')
 
 // members.unlinkAdult y fees.payOwn dependen además de que el socio sea mayor de edad.
-// Esa condición la verifica el service correspondiente, no el seed.
+// Esa condición no la maneja el seed: getEffectivePermissions las quita a los menores (ADULT_ONLY_PERMISSIONS).
 const MEMBER_PERMISSIONS = [
     P.AUTH_MANAGE_ACCOUNT,
     P.NOTIFICATIONS_VIEW,
@@ -15,11 +16,9 @@ const MEMBER_PERMISSIONS = [
     P.BOT_USE
 ]
 
-const ADMIN_ROLE_NAME = 'Admin del Club'
-
-const BASE_ROLES = [
+const BASE_ROLES_SEED = [
     {
-        name: ADMIN_ROLE_NAME,
+        name: R.ADMIN,
         description: 'Administra la operación de su club.',
         permissions: [
             P.AUTH_MANAGE_ACCOUNT,
@@ -39,7 +38,7 @@ const BASE_ROLES = [
         ]
     },
     {
-        name: 'Representante',
+        name: R.REPRESENTATIVE,
         description: 'Administra el deporte dentro del club.',
         permissions: [
             P.AUTH_MANAGE_ACCOUNT,
@@ -54,7 +53,7 @@ const BASE_ROLES = [
         ]
     },
     {
-        name: 'Entrenadora',
+        name: R.COACH,
         description: 'Gestiona sus categorías, citaciones y conflictos de horario.',
         permissions: [
             P.AUTH_MANAGE_ACCOUNT,
@@ -68,7 +67,7 @@ const BASE_ROLES = [
         ]
     },
     {
-        name: 'Preparadora física',
+        name: R.TRAINER,
         description: 'Carga las rutinas semanales de sus categorías.',
         permissions: [
             P.AUTH_MANAGE_ACCOUNT,
@@ -79,17 +78,17 @@ const BASE_ROLES = [
         ]
     },
     {
-        name: 'Socio',
+        name: R.MEMBER,
         description: 'Perfil base del socio del club.',
         permissions: MEMBER_PERMISSIONS
     },
     {
-        name: 'Jugadora',
+        name: R.PLAYER,
         description: 'Socia deportista, incluye todo lo del Socio.',
         permissions: [...MEMBER_PERMISSIONS, P.GAMES_VIEW_OWN, P.CITATIONS_RESPOND, P.ROUTINES_VIEW_OWN]
     },
     {
-        name: 'Familia',
+        name: R.FAMILY,
         description: 'Adulto responsable vinculado a una o más jugadoras.',
         permissions: [
             P.AUTH_MANAGE_ACCOUNT,
@@ -103,4 +102,4 @@ const BASE_ROLES = [
     }
 ]
 
-module.exports = { BASE_ROLES, ADMIN_ROLE_NAME }
+module.exports = { BASE_ROLES_SEED }

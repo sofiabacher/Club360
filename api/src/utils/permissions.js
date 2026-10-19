@@ -129,7 +129,13 @@ const PERMISSION_CATALOG = [
     { name: PERMISSIONS.BOT_USE, description: 'Usar el bot de consultas' }
 ]
 
+// Permisos que solo tienen los mayores de 18. getEffectivePermissions (access.service) los quita si el usuario es menor,
+// aunque los traiga su rol. Es una condición calculada por la fecha de nacimiento, no un rol fijo: el caso de uso de
+// "Patentes y Familias" (Documentación Club360, sección 4.1; contexto, sección 3.4).
+const ADULT_ONLY_PERMISSIONS = [PERMISSIONS.FEES_PAY_OWN, PERMISSIONS.MEMBERS_UNLINK_ADULT]
+
 module.exports = {
     PERMISSIONS,
-    PERMISSION_CATALOG
+    PERMISSION_CATALOG,
+    ADULT_ONLY_PERMISSIONS
 }

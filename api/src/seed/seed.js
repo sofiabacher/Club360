@@ -8,9 +8,9 @@ const { seed: seedConfig } = require('../config')
 const { User, Role, Permission, UserRole, RolePermission, Club, Sport, ClubSport } = require('../models')
 
 const { hashPassword } = require('../utils/crypto')
-const { USER_STATES } = require('../utils/constants')
+const { USER_STATES, BASE_ROLES } = require('../utils/constants')
 const { PERMISSION_CATALOG } = require('../utils/permissions')
-const { BASE_ROLES, ADMIN_ROLE_NAME } = require('./data/baseRoles')
+const { BASE_ROLES_SEED } = require('./data/baseRoles')
 const { CLUB_SEED } = require('./data/club')
 
 // Cuenta cuántos registros se crearon y cuántos ya existían
@@ -80,7 +80,7 @@ async function loadClubSports(club, sportsByName, transaction, summary) {
 async function loadBaseRoles(club, permissionsByName, transaction, summary) {
     const rolesByName = {}
 
-    for (const { name, description, permissions } of BASE_ROLES) {
+    for (const { name, description, permissions } of BASE_ROLES_SEED) {
         const [role, created] = await Role.findOrCreate({
             where: { clubId: club.id, name },
             defaults: { description, isBase: true },
@@ -127,7 +127,7 @@ async function loadAdmin(club, rolesByName, transaction, summary) {
     count(summary.admin, created)
 
     const [, linked] = await UserRole.findOrCreate({
-        where: { userId: admin.id, roleId: rolesByName[ADMIN_ROLE_NAME].id },
+        where: { userId: admin.id, roleId: rolesByName[BASE_ROLES.ADMIN].id },
         transaction
     })
 
@@ -151,7 +151,7 @@ function printSummary(summary, club, admin) {
     }
 
     console.log(`  Usuario Admin:       ${admin.username} (${state(summary.admin)})`)
-    console.log(`  Rol del Admin:       ${ADMIN_ROLE_NAME} (${summary.adminRole.created ? 'asignado' : 'ya lo tenía'})`)
+    console.log(`  Rol del Admin:       ${BASE_ROLES.ADMIN} (${summary.adminRole.created ? 'asignado' : 'ya lo tenía'})`)
 }
 
 async function seed() {

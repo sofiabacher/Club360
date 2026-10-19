@@ -17,6 +17,12 @@ Este documento es el contexto acumulado del proyecto. Está pensado para pegarse
 
 **Última actualización (10/10/2026) — estructura del proyecto:** se definió la estructura del repositorio, la organización del código por módulos, el stack completo y las convenciones técnicas (ver sección 11). El bot de consultas queda fuera del repo hasta decidir si entra en el trabajo (ver sección 9).
 
+**Última actualización (18/10/2026) — valores de los estados:** se cerraron los valores numéricos de todos los campos de estado (ver sección 8), la recuperación automática del Socio suspendido por mora y la cancelación de citaciones de un partido cancelado (ver sección 6). Los resultados de los partidos quedan en Futuro como prioridad 1 si sobra tiempo (ver sección 7).
+
+**Última actualización (18/10/2026) — diseño visual:** se adoptó el moodboard "Propuesta 1" como referencia del front: paleta, colores de estado, tipografías, íconos y texturas (ver sección 11). Queda pendiente el color propio de Valencia.
+
+**Última actualización (18/10/2026) — login y sesión:** registro con número de socio y fecha de nacimiento, bloqueo por intentos, roles disponibles según la condición de socio y elección del rol al entrar (ver 3.1 y 3.6.1).
+
 ---
 
 ## 0. Contexto de la consigna escolar
@@ -59,6 +65,7 @@ El sistema nace con **arquitectura multi-club** desde el diseño (ver sección 2
 - El alta es presencial: la persona se acerca al club, el Admin la da de alta y le entrega su **número de socio único, de una sola vez**. Con ese número ingresa por primera vez a la plataforma y genera su propio usuario/contraseña.
 - Si es **menor de edad**: se genera automáticamente un código de vínculo familiar para un adulto responsable (ver 3.5).
 - Si es **mayor de edad**: sin código, gestión de cuotas propia habilitada desde el alta.
+- **Primer ingreso (18/10/2026):** para registrarse, el Socio ingresa su número de socio **y su fecha de nacimiento** (que se carga obligatoriamente en el alta); si no coinciden, el sistema responde un mensaje genérico sin indicar cuál falló. Así, alguien que adivine un número de socio no puede registrarse en lugar de otra persona.
 - El número de socio se entrega una sola vez en el alta presencial y se usa una única vez para completar el registro (generación de usuario/contraseña). A partir de ese momento el Socio ingresa siempre con usuario y contraseña; el número de socio queda asociado a la persona de forma permanente como identificador, pero no se reutiliza para futuros inicios de sesión.
 
 **3.2 Perfil base de Socio**
@@ -90,6 +97,14 @@ El sistema nace con **arquitectura multi-club** desde el diseño (ver sección 2
 **3.6 Alta de Staff** (Representante, entrenadoras, preparadora física)
 - No pasa por el circuito de Socio. Alta directa por el Admin del club, con rol de staff ya asignado.
 - Un usuario Staff **no puede ser además Socio**: o es Staff o es Socio. Sí puede ser además Familia (ver 3.5).
+
+**3.6.1 Login, roles disponibles y rol activo (18/10/2026)**
+- Se inicia sesión con **nombre de usuario** y contraseña. Política de contraseñas igual a HotelDesk: mínimo 8 caracteres, con mayúscula, minúscula, número y carácter especial.
+- **Bloqueo:** 5 intentos fallidos seguidos bloquean al usuario (estado Bloqueado). Quién y cómo lo desbloquea: [A DEFINIR] (se resuelve junto con la recuperación de contraseña, ver 3.7).
+- Solo entran usuarios Activos con contraseña. Un usuario Pendiente (alta presencial sin registro) debe registrarse primero con su número de socio.
+- **Socio dado de baja (Inactivo):** pierde los roles Socio y Jugadora, pero conserva los demás (por ejemplo, Familia). Si no le queda ningún rol, no puede iniciar sesión. Un Socio Suspendido por mora conserva sus roles (ver sección 6).
+- **Elección del rol activo:** con un solo rol se entra directo; con más de uno, después del login el usuario elige con qué rol entrar, y después puede cambiarlo desde el menú (ver "Rol activo" en 3.5).
+- **Permisos condicionados por edad:** el pago de las propias cuotas y la desvinculación del adulto se quitan de los permisos efectivos mientras el Socio es menor de 18 (ver 3.4 y `Documentación Club360`, sección 4.1).
 
 **3.7 Recuperación de contraseña**
 - Desde el login, botón "Olvidé mi contraseña".
@@ -124,6 +139,7 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 - Asignar jugadoras a liga/categoría
 - Asignar entrenadoras y preparadoras físicas a sus ligas/categorías
 - Publicar y editar fixtures con dirección. El sistema avisa si hay superposición
+- Marcar un partido como jugado o cancelarlo (ver sección 6)
 - Aprobar inscripciones de jugadoras nuevas
 - Ver el estado de cuotas de sus jugadoras
 - Enviar notificaciones a jugadoras, familias y entrenadoras
@@ -183,13 +199,18 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 - **Margen de conflicto:** el margen mínimo entre partidos para considerarlo "conflicto" es un parámetro configurable por el Admin del club (no fijo en código).
 - **Tipos de cuota:** hay **cuota social** y **cuota deportiva**. Un Socio paga solo la cuota social; si además es deportista (Jugadora), se suman ambas. Si la cuota deportiva es una por cada deporte en que se inscribe o una única: [A DEFINIR] (en el MVP solo existe Vóley; ver sección 10, pendiente 15).
 - **Mora (únicas dos restricciones funcionales del MVP):** con más de 180 días de atraso (default, configurable por el Admin) → (1) la jugadora puede perder su condición de socia y (2) la entrenadora no puede citarla hasta que regularice su situación. El resto del sistema sigue accesible (solo aviso/badge informativo). Se envían notificaciones desde el primer mes de atraso, junto con las advertencias correspondientes, si no regulariza su situación.
+  - **Pérdida y recuperación de la condición (18/10/2026):** al superar el plazo, el Socio pasa a estado Suspendido (ver sección 8). La recupera automáticamente, sin intervención del Admin, cuando se aprueba un pago y ya no le queda ninguna cuota que supere el plazo de mora. La baja dada por el Admin es un estado distinto (Inactivo) y no se revierte sola.
 - **Pagos de cuotas simulados:** se registra estado de transacción (pendiente/aprobado/rechazado), sin pasarela real conectada. Sin tienda en el MVP, todo Pago está asociado a una Cuota (ver sección 8).
-- **Citación:** mínimo 2 días de anticipación al partido; la jugadora tiene 24 hs para rechazar con justificación, si no queda confirmada automáticamente. La responde siempre la jugadora, aunque sea menor. La genera siempre un miembro del Staff (ver sección 8 — FK de Citación a Staff, no a Usuario genérico).
+- **Citación:** mínimo 2 días de anticipación al partido; la jugadora tiene 24 hs para rechazar con justificación, si no queda confirmada automáticamente. La responde siempre la jugadora, aunque sea menor. La genera siempre un miembro del Staff (ver sección 8 — FK de Citación a Staff, no a Usuario genérico). Si el partido se cancela, todas sus citaciones pasan a estado Cancelada y se notifica a las jugadoras citadas (18/10/2026).
+- **Estado de los partidos (18/10/2026):** el Representante marca a mano el partido como Jugado una vez que ocurrió, o lo cancela. No se pueden generar citaciones para un partido jugado o cancelado.
 - Formato de exportación de la bitácora: CSV.
 
 ---
 
 ## 7. Futuro / Escalabilidad (documentado, NO se construye en el MVP)
+
+**Prioridad 1 si queda tiempo (definido el 18/10/2026):**
+- Resultados de los partidos y campaña por categoría: el Representante carga el resultado al marcar el partido como Jugado, y se muestran los partidos jugados, ganados y perdidos y los sets a favor y en contra, en el dashboard de la Jugadora y del Representante. Requiere sumar `ownScore` y `rivalScore` (INT, null) a `game`. Es la campaña del club, no la tabla de posiciones completa del torneo, porque no se cargan los partidos entre otros equipos. Orden respecto del bot de consultas (sección 9), si sobra tiempo para uno solo: [A DEFINIR].
 
 **Recortados del MVP el 04/10/2026:**
 - Panel de SuperAdmin (Administrador de Plataforma): alta de clubes y asignación del primer Admin, mantenimiento del catálogo maestro de deportes, consulta y corrección de datos de un club como soporte (con registro en bitácora), sin poder ingresar como otro usuario
@@ -197,6 +218,7 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 - Tienda de merch tipo e-commerce (productos, pedidos, detalle), habilitada para mayores de 18 y familias, con catálogo gestionable y delegable por permiso
 
 **Otras mejoras futuras:**
+- Tabla de posiciones completa del torneo (requiere cargar los resultados de todos los equipos de la liga)
 - Onboarding real de nuevos clubes (auto-registro)
 - Integración real de pasarela de pago (ej. Mercado Pago)
 - Restricciones adicionales por mora
@@ -229,6 +251,14 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 - Tipos reales de MySQL 8, con longitud y restricciones (`NOT NULL`, `UNIQUE`, `DEFAULT`) en cada columna. `boolean` se modela como `TINYINT(1)`.
 - Todas las entidades de negocio llevan `club_id` (`clubId`) y `dvh`. `created_at`/`updated_at` **no se dibujan explícitamente en el DER**: existen igual a nivel de base por el `timestamps: true` default de Sequelize, pero se consideran implementación, no parte del DER visual. Excepción ya existente: la Bitácora (`log`) solo tiene `createdAt` (sin `updatedAt`, un log no se edita — igual que en el proyecto HotelDesk de referencia).
 - **Patrón de estados por código numérico** (campos `userStateId`, `memberStateId`, `inscriptionState`, `citationState`, `gameState`, `transactionState` en `payment`, `feeState` en `fee`): se modelan como `INT NOT NULL DEFAULT 1`, **sin tabla de estados en la base**. El mapeo nombre↔número vive en un archivo de constantes de la aplicación (mismo patrón que `USER_STATES`/`ROOM_STATES` en el proyecto HotelDesk de referencia). Los campos `TINYINT(1)` tipo `isActive`/`linkStatus` son flags booleanas simples y no siguen este patrón.
+- **Valores de los estados (cerrado el 18/10/2026, decisión D8):** el 1 es siempre el estado inicial (default del modelo). Los mapeos viven en `utils/constants.js`, replicados en `api/` y `client/`.
+  - `user.userStateId`: 1 Pendiente, 2 Activo, 3 Bloqueado, 4 Eliminado. La baja de un Staff se hace con el usuario en Eliminado (`staff` no tiene estado propio).
+  - `member.memberStateId`: 1 Activo, 2 Suspendido (perdió la condición por mora, se recupera solo al regularizar; ver sección 6), 3 Inactivo (baja dada por el Admin).
+  - `inscription.inscriptionState`: 1 Pendiente, 2 Aprobada, 3 Rechazada, 4 Cancelada (incluye la baja del deporte; pasos en sección 10, pendiente 12).
+  - `fee.feeState`: 1 Pendiente, 2 Pagada, 3 Vencida. Los días de mora no son un estado: se calculan desde `expirationDate`.
+  - `payment.transactionState`: 1 Pendiente, 2 Aprobado, 3 Rechazado.
+  - `citation.citationState`: 1 Pendiente, 2 Confirmada, 3 Rechazada, 4 Confirmada automáticamente, 5 Cancelada (partido cancelado).
+  - `game.gameState`: 1 Programado, 2 Jugado (lo marca el Representante), 3 Cancelado.
 - `member.numMember`: `VARCHAR(20) UNIQUE NOT NULL`, generado por la aplicación (no autoincrement, no lo calcula la base) — mismo patrón que `confirmationCode` en HotelDesk.
 - Relaciones dibujadas con línea simple, sin círculo de opcionalidad: la nulabilidad de cada FK está indicada en su propia columna, no en la flecha.
 - Sin SuperAdmin en el MVP: todo Usuario pertenece a un club (`club_id NOT NULL`) y hay 7 roles base (`Rol.es_base`). La Bitácora también tiene `club_id NOT NULL` (ya no hay acciones de plataforma sin club).
@@ -268,7 +298,7 @@ Asistente de consultas generales sobre el club y sobre cómo usar la plataforma,
 
 ## 10. Estado actual y próximos pasos
 
-**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**
+**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**
 
 **Pendiente:**
 1. ~~Modelo DER Lógico completo~~ — cerrado el 04/10/2026, actualizado el 10/10/2026 (ver sección 8)
@@ -287,7 +317,7 @@ Asistente de consultas generales sobre el club y sobre cómo usar la plataforma,
 14. Canal de cada tipo de notificación (in-app, email o ambos) (ver sección 5, módulo 6)
 15. Cuota deportiva: una por deporte o una única (ver sección 6)
 16. Almacenamiento de imágenes (rutinas, fotos) en el deploy de la demo en Render, donde el disco no es persistente (ver sección 11)
-17. Valores numéricos de cada estado (`USER_STATES`, `FEE_STATES`, etc.): hay una propuesta en `utils/constants.js` marcada `[A DEFINIR]`, falta confirmarla
+17. ~~Valores numéricos de cada estado~~ — cerrado el 18/10/2026 (ver sección 8)
 18. Pruebas: definir si se hacen tests automatizados o solo casos de prueba documentados (por ahora no es prioridad)
 
 **Stack técnico:** ver sección 11.
@@ -324,5 +354,14 @@ El repositorio incluye un `CLAUDE.md` en la raíz con estas mismas convenciones,
 - **Encriptación:** bcrypt para contraseñas (irreversible) y AES-256 para datos sensibles (reversible).
 - **Imágenes:** multer guardando en disco, como HotelDesk. Pendiente resolver el almacenamiento para Render (ver sección 10, pendiente 16).
 - **Backups:** se guardan en `api/backups/`, excluidos del repo.
+
+**Diseño visual (definido el 18/10/2026, decisión D10):** referencia oficial: el moodboard adjunto al proyecto (`Club360_Moodboard.png`, "Propuesta 1"), copiado en el repo como `docs/moodboard.png`. Personalidad: **ordenado, vivo, cercano, confiable** — "orden de tablero, energía de partido y calidez de club de barrio".
+- **Paleta:** Marino `#0F1B3D` (estructura: menú lateral, encabezados, títulos), Naranja `#EA6A1F` (**lo urgente**: acción principal y avisos que requieren atención), Azul `#1E40AF` (acciones secundarias, links, selección), Crema `#FBF4E6` (fondos cálidos), Bordó `#8E2C3A` (guiño al club de barrio, por ejemplo el carnet de socio), Verde `#1F8A5B`. Fondo del área de trabajo `#F6F7FB`, tarjetas en blanco.
+- **Colores de estado** (chips con fondo claro y texto oscuro): verde = al día (`#E3F4EB` / `#16683F`), ámbar = pendiente (`#FEF3C7` / `#8A5300`), rojo = vencida (`#FCE8E8` / `#A32929`), naranja = urgente, por ejemplo una citación pendiente (`#FDEBDD` / `#B4470D`).
+- **Tipografía:** Poppins para títulos, textos y botones; Barlow Condensed **solo para números** (resultados, fechas y horas de partidos, número de socio).
+- **Íconos:** los redondeados de Material UI (variante *Rounded*).
+- **Texturas:** "líneas de cancha" (cancha naranja sobre marino) en el login y los encabezados; "trama de red" en las grillas de accesos; "parquet" en las rutinas y los estados vacíos.
+- **Imágenes:** fotos reales del club, nada de bancos de imágenes.
+- **Acento del club:** el color propio de Valencia, para personalizar la plataforma por club: [A DEFINIR].
 
 **Convenciones de código:** código, tablas y campos en inglés camelCase (igual que el DER); mensajes al usuario e interfaz en español. Archivos del backend con el nombre del módulo (`fees.service.js`); modelos en PascalCase singular (`Member.js`); componentes y páginas de React en PascalCase. Variables de entorno solo en `.env` (se sube únicamente `.env.example`), sin URLs hardcodeadas. Sin archivos duplicados por persona (`-Sofi`, `-v2`): se usan ramas de git.

@@ -1,12 +1,13 @@
+const { User } = require('../models')
+const { getAvailableRoles } = require('../modules/access/access.service')
 const { verifySessionToken } = require('../utils/token')
 const { createError } = require('../utils/errors')
 const { USER_STATES } = require('../utils/constants')
+const { isAdult } = require('../utils/dates')
 const { auth } = require('../utils/messages')
 
 module.exports = async (req, res, next) => {
     try {
-        const { User } = require('../models')   // Se requiere acá adentro porque los modelos todavía no existen
-
         const header = req.headers.authorization || ''
         const [scheme, token] = header.split(' ')
 
@@ -19,7 +20,7 @@ module.exports = async (req, res, next) => {
             throw createError(auth.invalidToken, 401)
         }
 
-        const user = await User.findByPk(payload.id, { attributes: ['id', 'clubId', 'userStateId'] })
+        const user = await User.findByPk(payload.id, { attributes: ['id', 'clubId', 'userStateId', 'birthDate'] })
         if (!user) {
             throw createError(auth.userNotFound, 401)
         }
@@ -32,7 +33,18 @@ module.exports = async (req, res, next) => {
             throw createError(auth.inactiveUser, 401)
         }
 
-        req.user = { id: user.id, clubId: user.clubId, activeRoleId: payload.activeRoleId }
+        // El rol activo del token tiene que seguir disponible: si el Admin se lo sacó o dio de baja al socio, la sesión ya no vale
+        const activeRoleId = payload.activeRoleId ?? null
+
+        if (activeRoleId !== null) {
+            const roles = await getAvailableRoles(user.id)
+
+            if (!roles.some(role => role.id === activeRoleId)) {
+                throw createError(auth.sessionNoLongerValid, 401)
+            }
+        }
+
+        req.user = { id: user.id, clubId: user.clubId, activeRoleId, isAdult: isAdult(user.birthDate) }
         next()
 
     } catch (error) {

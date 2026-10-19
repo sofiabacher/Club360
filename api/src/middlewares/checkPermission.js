@@ -1,25 +1,22 @@
 const logger = require('../utils/logger')
+const { getEffectivePermissions } = require('../modules/access/access.service')
 const { createError } = require('../utils/errors')
 const { LOG_ACTIONS } = require('../utils/constants')
 const { auth } = require('../utils/messages')
 
-// Uso: checkPermission('fees.manage'). Va siempre después de isAuth.
-// Permisos efectivos = los del rol activo + los directos del usuario. No se suman los de sus otros roles.
+// Uso: checkPermission(PERMISSIONS.FEES_MANAGE). Va siempre después de isAuth.
+// Los permisos salen de getEffectivePermissions, la misma función que arma la sesión del front (/auth/me).
 const checkPermission = (permissionName) => async (req, res, next) => {
     try {
-        const { Permission, RolePermission, UserPermission } = require('../models')   // Se requieren acá adentro porque los modelos todavía no existen
         const { id: userId, clubId, activeRoleId } = req.user
 
-        const permission = await Permission.findOne({ where: { name: permissionName }, attributes: ['id'] })
-
-        if (permission) {
-            const [byRole, byUser] = await Promise.all([
-                RolePermission.findOne({ where: { roleId: activeRoleId, permissionId: permission.id } }),
-                UserPermission.findOne({ where: { userId, permissionId: permission.id } })
-            ])
-
-            if (byRole || byUser) return next()
+        // Con más de un rol, hasta que no elige uno solo puede usar /auth/me, /auth/switch-role y /auth/logout
+        if (!activeRoleId) {
+            throw createError(auth.roleSelectionRequired, 403, 'ROLE_SELECTION_REQUIRED')
         }
+
+        const permissions = await getEffectivePermissions(userId, activeRoleId)
+        if (permissions.includes(permissionName)) return next()
 
         await logger(
             { clubId, userId, roleId: activeRoleId },

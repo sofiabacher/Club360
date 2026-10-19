@@ -3,16 +3,46 @@
 module.exports = {
     general: {
         serverError: 'Ocurrió un error interno. Probá de nuevo más tarde.',
-        invalidJson: 'Los datos enviados no tienen un formato válido.'
+        invalidJson: 'Los datos enviados no tienen un formato válido.',
+        validationError: 'Revisá los datos ingresados.'
     },
 
     auth: {
+        // Sesión y token
         tokenRequired: 'Tenés que iniciar sesión para continuar.',
         invalidToken: 'Tu sesión no es válida o venció. Iniciá sesión de nuevo.',
+        sessionNoLongerValid: 'Tu sesión ya no es válida. Iniciá sesión de nuevo.',
         userNotFound: 'No encontramos tu usuario.',
         inactiveUser: 'Tu usuario no está activo. Comunicate con el club.',
-        userDeleted: 'Tu usuario fue dado de baja. Comunicate con el club.',
-        accessDenied: 'No tenés permiso para hacer esta acción.'
+        userDeleted: 'Tu cuenta fue dada de baja.',
+        accessDenied: 'No tenés permiso para hacer esta acción.',
+
+        // Login
+        invalidCredentials: 'Usuario o contraseña incorrectos.',
+        pendingUser: 'Tu cuenta todavía no está activada. Si es tu primer ingreso, registrate con tu número de socio.',
+        blockedUser: 'Tu cuenta está bloqueada por intentos fallidos. Comunicate con el club.',
+        noRoles: 'No tenés roles habilitados en el club. Comunicate con la administración.',
+
+        // Rol activo
+        roleSelectionRequired: 'Elegí un rol para continuar.',
+        roleNotAvailable: 'No tenés ese rol habilitado.',
+
+        // Registro con número de socio
+        registerDataMismatch: 'Los datos ingresados no coinciden con ningún socio.',
+        numMemberAlreadyUsed: 'Este número de socio ya fue utilizado. Iniciá sesión con tu usuario.',
+        memberInactive: 'Tu condición de socio no está activa. Comunicate con el club.',
+        usernameTaken: 'Ese nombre de usuario ya está en uso.',
+
+        // Validaciones de formato
+        usernameRequired: 'Ingresá tu usuario.',
+        passwordRequired: 'Ingresá tu contraseña.',
+        numMemberRequired: 'Ingresá tu número de socio.',
+        birthDateInvalid: 'Ingresá una fecha de nacimiento válida (AAAA-MM-DD).',
+        usernameLength: 'El usuario tiene que tener entre 4 y 50 caracteres.',
+        usernameFormat: 'El usuario solo puede tener letras, números, punto y guion bajo.',
+        passwordPolicy: 'La contraseña tiene que tener al menos 8 caracteres, con una mayúscula, una minúscula, un número y un carácter especial.',
+        passwordsDontMatch: 'Las contraseñas no coinciden.',
+        roleIdInvalid: 'Elegí un rol válido.'
     },
 
     upload: {

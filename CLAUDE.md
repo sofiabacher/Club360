@@ -5,6 +5,7 @@ Plataforma web de gestión para clubes deportivos (proyecto integrador escolar).
 ## Documentación de referencia
 
 - `docs/contexto.md`: documento de contexto del proyecto (roles, reglas de negocio, módulos del MVP, decisiones de modelado). Es una copia del documento que se mantiene en claude.ai; si se actualiza allá, se reemplaza esta copia.
+- `docs/moodboard.png`: referencia visual del front (ver "Diseño visual" más abajo).
 - `docs/DER_logico.jpg`: DER lógico (24 entidades). **Si la imagen y `docs/contexto.md` no coinciden, manda el contexto.** Diferencias conocidas (la imagen quedó desactualizada):
   - `fee`: `memberId` y `period` **no** son únicos por separado. La restricción es un índice único compuesto `(memberId, period)`.
   - `role`: `name` **no** es único en toda la base. La restricción es un índice único compuesto `(clubId, name)`, para que cada club pueda tener sus propios roles base ("Socio", "Jugadora", etc.).
@@ -99,6 +100,27 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
 - Las tablas se crean con `sequelize.sync()` (sin migraciones). `DB_FORCE_SYNC=true` borra y recrea todo; `DB_ALTER_SYNC=true` ajusta sin borrar. Ambos están bloqueados en producción.
 - Los nombres de tabla son los del DER (`freezeTableName: true`).
 
+## Diseño visual (front)
+
+Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/theme.js`); **no** se escriben colores ni fuentes sueltos en los componentes.
+
+- **Colores:** `primary` = Naranja `#EA6A1F`, **reservado para lo urgente y la acción principal** de cada pantalla (un solo botón naranja por vista). `secondary` = Azul `#1E40AF` para acciones secundarias, links y selección. `palette.navy` = Marino `#0F1B3D` para la estructura (menú lateral, encabezados) y los títulos. `palette.cream` `#FBF4E6` y `palette.burgundy` `#8E2C3A` para los toques de club de barrio. Fondo de trabajo `#F6F7FB`, tarjetas blancas.
+- **Estados:** siempre con el componente `StatusChip` (`components/common/StatusChip.jsx`): `ok` verde (al día, confirmada, aprobada), `pending` ámbar (pendiente), `overdue` rojo (vencida, rechazada, cancelada), `urgent` naranja (requiere acción ya, ej. citación sin responder).
+- **Tipografía:** Poppins para todo. Los números destacados (resultados, fecha y hora de un partido, número de socio) usan la variante `numeric` (Barlow Condensed): `<Typography variant="numeric">`.
+- **Íconos:** `@mui/icons-material` en variante Rounded (ej. `NotificationsRounded`).
+- **Texturas:** `CourtBackground` (líneas de cancha) en el login y los encabezados; trama de red para grillas de accesos y parquet para rutinas y estados vacíos (cuando se armen esas pantallas).
+- **Tono:** español rioplatense con voseo, cercano y claro ("Tenés una citación pendiente para el sábado").
+- Diseño responsive: todo tiene que funcionar en el celular.
+
+## Sesión y acceso
+
+- **Login** con `username` y contraseña (no con email). 5 intentos fallidos bloquean al usuario (`USER_STATES.BLOCKED`). Solo entran usuarios ACTIVE con contraseña.
+- **Primer ingreso del socio:** `POST /auth/register-member` con número de socio **y fecha de nacimiento**; el número se usa una sola vez.
+- **Roles disponibles** (`getAvailableRoles` en `modules/access/access.service.js`): los de `user_role`, salvo que el socio esté INACTIVE, en cuyo caso se quitan los de `MEMBERSHIP_ROLES` (Socio y Jugadora). Es la única lógica que mira nombres de rol (los de `BASE_ROLES`), y es por membresía, no para dar acceso.
+- **Rol activo:** con un solo rol disponible se entra directo; con más de uno, el token sale con `activeRoleId: null` y el usuario elige en `/select-role` (`POST /auth/switch-role`, que genera un token nuevo).
+- **Permisos efectivos** (`getEffectivePermissions`): rol activo + permisos directos, menos `ADULT_ONLY_PERMISSIONS` si el usuario es menor de 18. Es la **única** fuente de permisos: la usan `checkPermission` y `/auth/me`. No calcular permisos por otro lado.
+- **Sesión del front:** `session = { user, club, roles, activeRole, permissions }`, armada siempre con `buildSession` en `auth.service.js`.
+
 ## Lista de tareas (`docs/TODO.md`)
 
 `docs/TODO.md` es la lista de todo lo que falta del proyecto. Mantenerla al día es parte de cada tarea:
@@ -111,4 +133,4 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
 
 ## Pendientes conocidos
 
-Las decisiones abiertas están en la sección **Decisiones pendientes** de `docs/TODO.md`. Las que más afectan al código: el almacenamiento de imágenes en Render (D7) y los valores de los estados `[A DEFINIR]` en `constants.js` (D8).
+Las decisiones abiertas están en la sección **Decisiones pendientes** de `docs/TODO.md`. La que más afecta al código: el almacenamiento de imágenes en Render (D7). La recuperación de contraseña está bloqueada hasta definir la D1.
