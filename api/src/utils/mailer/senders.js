@@ -2,14 +2,12 @@ const transporter = require('../../config/mail')
 const logger = require('../logger')
 
 const { cors } = require('../../config')
-const { buildRecoveryEmail } = require('./templates')
+const { buildRecoveryEmail, buildPasswordChangedNotice } = require('./templates')
 const { LOG_ACTIONS } = require('../constants')
 const { mail } = require('../messages')
 
-async function sendRecoveryEmail(user, token) {   // Mail de recuperación de contraseña
-    const link = `${cors.origin}/reset-password?token=${token}`
-    const { subject, html } = buildRecoveryEmail({ name: user.name, link })
-
+// Envía el email y, si falla, lo registra en la bitácora (MAIL_ERROR) y relanza el error
+async function send(user, { subject, html }, failMessage) {
     try {
         await transporter.sendMail({ to: user.email, subject, html })
 
@@ -17,13 +15,23 @@ async function sendRecoveryEmail(user, token) {   // Mail de recuperación de co
         await logger(
             { clubId: user.clubId, userId: user.id, roleId: null },
             LOG_ACTIONS.MAIL_ERROR,
-            `${mail.recoveryFailed} a ${user.email}: ${error.message}`
+            `${failMessage} a ${user.email}: ${error.message}`
         )
 
         throw error
     }
 }
 
+async function sendRecoveryEmail(user, token) {   // Mail de recuperación de contraseña
+    const link = `${cors.origin}/reset-password?token=${encodeURIComponent(token)}`
+    await send(user, buildRecoveryEmail({ name: user.name, link }), mail.recoveryFailed)
+}
+
+async function sendPasswordChangedNotice(user) {   // Aviso de cambio de contraseña
+    await send(user, buildPasswordChangedNotice({ name: user.name }), mail.passwordChangedFailed)
+}
+
 module.exports = {
-    sendRecoveryEmail
+    sendRecoveryEmail,
+    sendPasswordChangedNotice
 }

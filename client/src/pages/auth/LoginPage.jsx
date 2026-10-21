@@ -19,10 +19,11 @@ export default function LoginPage() {
   const location = useLocation()
   const { startSession } = useAuth()
 
-  // Si llega desde el registro, trae el usuario recién creado
-  const registeredUsername = location.state?.registeredUsername ?? ''
+  // Si llega desde el registro o desde el restablecimiento de contraseña, trae el usuario y un mensaje de éxito
+  const presetUsername = location.state?.username ?? ''
+  const successMessage = location.state?.successMessage ?? ''
 
-  const [form, setForm] = useState({ username: registeredUsername, password: '' })
+  const [form, setForm] = useState({ username: presetUsername, password: '' })
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -47,9 +48,7 @@ export default function LoginPage() {
     <AuthLayout title="Iniciá sesión" subtitle="Ingresá con tu usuario y tu contraseña.">
       <Box component="form" onSubmit={handleSubmit} noValidate>
         <Stack spacing={2}>
-          {registeredUsername && !error && (
-            <Alert severity="success">¡Listo, ya te registraste! Ingresá con tu contraseña.</Alert>
-          )}
+          {successMessage && !error && <Alert severity="success">{successMessage}</Alert>}
           {error && <Alert severity="error">{error}</Alert>}
 
           <TextField
@@ -58,7 +57,7 @@ export default function LoginPage() {
             value={form.username}
             onChange={handleChange}
             autoComplete="username"
-            autoFocus={!registeredUsername}
+            autoFocus={!presetUsername}
             required
             fullWidth
           />
@@ -68,7 +67,7 @@ export default function LoginPage() {
             value={form.password}
             onChange={handleChange}
             autoComplete="current-password"
-            autoFocus={Boolean(registeredUsername)}
+            autoFocus={Boolean(presetUsername)}
             required
             fullWidth
           />
@@ -92,9 +91,9 @@ export default function LoginPage() {
                 Registrate con tu número de socio
               </Link>
             </Typography>
-            <Button variant="text" color="secondary" size="small" disabled>
-              ¿Olvidaste tu contraseña? (próximamente)
-            </Button>
+            <Link component={RouterLink} to="/forgot-password" variant="body2" color="secondary" underline="hover">
+              ¿Olvidaste tu contraseña?
+            </Link>
           </Stack>
         </Stack>
       </Box>

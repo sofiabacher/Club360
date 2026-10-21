@@ -69,7 +69,11 @@ const LOG_ACTIONS = {
     REGISTER_SUCCESS: { message: 'Registro con número de socio', criticity: CRITICITY.MEDIUM },
     REGISTER_FAIL: { message: 'Registro con número de socio fallido', criticity: CRITICITY.MEDIUM },
     ACCESS_DENIED: { message: 'Acceso denegado', criticity: CRITICITY.MEDIUM },
-    MAIL_ERROR: { message: 'Error en el envío de correo', criticity: CRITICITY.HIGH }
+    MAIL_ERROR: { message: 'Error en el envío de correo', criticity: CRITICITY.HIGH },
+    PASSWORD_RECOVERY: { message: 'Pedido de recuperación de contraseña', criticity: CRITICITY.MEDIUM },
+    PASSWORD_CHANGE: { message: 'Cambio de contraseña', criticity: CRITICITY.MEDIUM },
+    USER_UNBLOCKED: { message: 'Usuario desbloqueado', criticity: CRITICITY.MEDIUM },
+    USER_UPDATE: { message: 'Modificación de datos del usuario', criticity: CRITICITY.MEDIUM }
 }
 
 // Intentos fallidos de login antes de bloquear al usuario

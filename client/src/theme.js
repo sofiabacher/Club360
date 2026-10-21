@@ -29,7 +29,9 @@ const theme = createTheme(base, {
     // Colores propios: con augmentColor quedan con light, dark y contrastText, como los de MUI
     navy: base.palette.augmentColor({ color: { main: '#0F1B3D', contrastText: '#FFFFFF' }, name: 'navy' }),   // Marino: estructura y títulos
     cream: base.palette.augmentColor({ color: { main: '#FBF4E6' }, name: 'cream' }),                          // Crema: fondos cálidos
-    burgundy: base.palette.augmentColor({ color: { main: '#8E2C3A' }, name: 'burgundy' })                     // Bordó: guiño al club de barrio
+    burgundy: base.palette.augmentColor({ color: { main: '#8E2C3A' }, name: 'burgundy' }),                    // Bordó: guiño al club de barrio
+    // Tablas de madera de la textura de parquet (ParquetBackground): rutinas y estados vacíos
+    parquet: { light: '#F8ECD3', main: '#F1DFBC', dark: '#E2C99B' }
   },
 
   // Colores de los chips de estado (StatusChip): fondo claro y texto oscuro

@@ -55,10 +55,90 @@ const logout = async (req, res, next) => {
     }
 }
 
+const forgotPassword = async (req, res, next) => {
+    try {
+        const data = await service.forgotPassword(req.body.identifier)
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const validateResetToken = async (req, res, next) => {
+    try {
+        const data = await service.validateResetToken(req.query.token)
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const resetPassword = async (req, res, next) => {
+    try {
+        const { token, password } = req.body
+        const data = await service.resetPassword({ token, password })
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const getAccount = async (req, res, next) => {
+    try {
+        const data = await service.getAccount(req.user.id)
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const updateAccount = async (req, res, next) => {
+    try {
+        const { email, phone } = req.body   // Solo estos dos: el resto del body se ignora
+        const data = await service.updateAccount(req.user, { email, phone })
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const updatePhoto = async (req, res, next) => {
+    try {
+        const data = await service.updatePhoto(req.user, req.file)
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const changePassword = async (req, res, next) => {
+    try {
+        const { currentPassword, newPassword } = req.body
+        await service.changePassword(req.user, { currentPassword, newPassword })
+        res.json({ success: true, data: null })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
 module.exports = {
     login,
     registerMember,
     switchRole,
     me,
-    logout
+    logout,
+    forgotPassword,
+    validateResetToken,
+    resetPassword,
+    getAccount,
+    updateAccount,
+    updatePhoto,
+    changePassword
 }

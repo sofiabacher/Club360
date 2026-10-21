@@ -42,7 +42,22 @@ module.exports = {
         usernameFormat: 'El usuario solo puede tener letras, números, punto y guion bajo.',
         passwordPolicy: 'La contraseña tiene que tener al menos 8 caracteres, con una mayúscula, una minúscula, un número y un carácter especial.',
         passwordsDontMatch: 'Las contraseñas no coinciden.',
-        roleIdInvalid: 'Elegí un rol válido.'
+        roleIdInvalid: 'Elegí un rol válido.',
+
+        // Recuperación de contraseña
+        forgotPasswordSent: 'Si los datos corresponden a una cuenta, te enviamos un email con los pasos para restablecer tu contraseña.',
+        resetTokenInvalid: 'El link para restablecer la contraseña venció o ya fue usado. Pedí uno nuevo.',
+        identifierRequired: 'Ingresá tu usuario o tu email.',
+        resetTokenRequired: 'Falta el link para restablecer la contraseña. Pedí uno nuevo.',
+        samePassword: 'La nueva contraseña tiene que ser distinta de la actual.',
+
+        // Mi cuenta
+        currentPasswordRequired: 'Ingresá tu contraseña actual.',
+        currentPasswordWrong: 'La contraseña actual no es correcta.',
+        emailInvalid: 'Ingresá un email válido.',
+        emailTaken: 'Ese email ya está registrado.',
+        phoneLength: 'El teléfono puede tener hasta 30 caracteres.',
+        photoRequired: 'Elegí una imagen para tu foto.'
     },
 
     upload: {
@@ -52,6 +67,7 @@ module.exports = {
     },
 
     mail: {
-        recoveryFailed: 'No se pudo enviar el correo de recuperación de contraseña'
+        recoveryFailed: 'No se pudo enviar el correo de recuperación de contraseña',
+        passwordChangedFailed: 'No se pudo enviar el aviso de cambio de contraseña'
     }
 }

@@ -12,14 +12,15 @@ Plataforma web de gestión para clubes deportivos (proyecto integrador escolar).
   - `user.password` admite NULL: queda vacío desde el alta presencial hasta que el socio completa su registro con el número de socio. El login rechaza usuarios sin contraseña.
   - `member.memberAdultId` pasa a ser `adultUserId` y apunta a `user` (no a `member`), porque el adulto Familia puede no ser Socio.
   - `dvv.table_name`, `routine.image_url` y `routine.video_url` pasan a camelCase: `tableName`, `imageUrl`, `videoUrl`.
+- `docs/pruebas/`: casos de prueba documentados en `.txt`, uno por módulo (ver "Pruebas").
 
 **Si algo no está definido en este archivo, en el contexto o en el DER, preguntar antes de asumir un criterio.**
 
 ## Stack
 
-- Backend: Node.js, Express 5, Sequelize 6, MySQL 8, JWT, express-validator, multer, node-cron, Resend (email). JavaScript con CommonJS (`require`).
+- Backend: Node.js, Express 5, Sequelize 6, MySQL 8, JWT, express-validator, multer, Cloudinary (imágenes en producción), node-cron, nodemailer con Gmail SMTP (email). JavaScript con CommonJS (`require`).
 - Frontend: React 19, Vite, Material UI 7, React Router 7, axios. JavaScript con ES Modules (`import`).
-- Sin TypeScript, sin ESLint/Prettier, sin tests automatizados por ahora.
+- Sin TypeScript, sin ESLint/Prettier, sin tests automatizados (ver "Pruebas").
 
 ## Comandos
 
@@ -57,6 +58,7 @@ client/src/
   components/<módulo>/ Componentes propios de un módulo
   pages/<módulo>/      Páginas de cada módulo
   utils/constants.js   Mismo mapeo de estados que el backend
+docs/pruebas/          Casos de prueba en .txt, uno por módulo
 ```
 
 Módulos: auth, access, clubs, members, staff, inscriptions, fees, leagues, games, citations, routines, notifications, logs, integrity, backup.
@@ -83,7 +85,7 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
 - **Dígitos verificadores:** las tablas de negocio tienen `dvh`. El DVH de cada registro y el DVV de cada tabla se calculan **automáticamente** con los hooks de `models/integrityHooks.js`: no se calculan a mano en los services. Para que funcionen, toda escritura tiene que pasar por Sequelize (nunca SQL directo con `sequelize.query` para insertar, modificar o borrar datos de negocio) y, si se usa una transacción, hay que pasarla en `options.transaction`. La tabla `log` no tiene `dvh`.
 - **Bitácora:** las acciones relevantes se registran con `utils/logger.js`, indicando `clubId`, `userId` y `roleId` (el rol activo). Las acciones se definen en `LOG_ACTIONS` de `constants.js`.
 - **Encriptación:** contraseñas con bcrypt (`hashPassword`); datos sensibles reversibles con `encrypt`/`decrypt` de `utils/crypto.js`.
-- **Seed:** la carga inicial se hace solo con `npm run seed`, nunca al arrancar el servidor. Es idempotente (se puede correr varias veces). Los datos del club están en `seed/data/club.js` y los del usuario Admin en el `.env` (`SEED_ADMIN_*`).
+- **Seed:** la carga inicial se hace solo con `npm run seed`, nunca al arrancar el servidor. Es idempotente (se puede correr varias veces). Los datos del club están en `seed/data/club.js` (provisorios, ver `docs/contexto.md` sección 2.1) y los del usuario Admin en el `.env` (`SEED_ADMIN_*`).
 - **Configuración:** todo valor de entorno se lee desde `config/index.js`, no con `process.env` en otros archivos. Las URLs no se hardcodean.
 
 ## Convenciones
@@ -99,12 +101,49 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
 - Desarrollo: MySQL local (variables `DB_*` del `.env`). Demo: base en la nube con `DATABASE_URL` (SSL).
 - Las tablas se crean con `sequelize.sync()` (sin migraciones). `DB_FORCE_SYNC=true` borra y recrea todo; `DB_ALTER_SYNC=true` ajusta sin borrar. Ambos están bloqueados en producción.
 - Los nombres de tabla son los del DER (`freezeTableName: true`).
+- **Sin particiones:** no se implementan (no son requisito del trabajo).
+
+## Imágenes
+
+- Toda subida pasa por el middleware `upload` (`middlewares/upload.js`), que elige el destino según el entorno:
+  - **desarrollo:** disco, en `uploads/<carpeta>/`, como HotelDesk;
+  - **producción:** Cloudinary, en la carpeta `club360/<carpeta>` (variables `CLOUDINARY_*`). El disco de Render no es persistente.
+- Los services no saben dónde quedó el archivo: guardan en la base lo que devuelve el middleware (la ruta local `/uploads/...` o la URL de Cloudinary).
+- Para borrar una imagen al reemplazarla, se usa una función única de `utils/` que sabe borrar en los dos destinos. No se borra con `fs` desde los services.
+- En el front, las imágenes se muestran con el helper de `utils/` que deja la URL tal cual si es absoluta (Cloudinary) o le antepone `VITE_API_URL` si es una ruta local.
+
+## Emails
+
+- Se envían con **nodemailer y Gmail SMTP** (variables `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` con contraseña de aplicación, `MAIL_FROM`). No se usa Resend.
+- Todo envío pasa por `utils/mailer/`; ningún módulo usa nodemailer directo. Cambiar de proveedor solo toca `config/mail.js`.
+- **Desarrollo sin SMTP configurado:** si `app.isDev` es verdadero y no hay credenciales, el mailer muestra por consola el destinatario, el asunto y los links del email.
+- **Qué notificaciones van por email:** solo las marcadas en `docs/contexto.md`, sección 6 ("Canal de cada notificación"). El resto es solo in-app. Gmail tiene un límite diario de envíos, así que no se mandan emails fuera de esa tabla.
+- Los emails son avisos cortos en español rioplatense, con encabezado Marino y botón Naranja con estilos en línea, que invitan a entrar a la plataforma.
+
+## Pruebas
+
+- Sin tests automatizados.
+- Los casos de prueba se documentan en `.txt` dentro de `docs/pruebas/`, un archivo por módulo (`docs/pruebas/auth.txt`, `docs/pruebas/fees.txt`...).
+- Cada caso lleva: ID (`CP-<MÓDULO>-01`), módulo, descripción, precondiciones, pasos, datos de entrada, resultado esperado, resultado obtenido y estado (Aprobado / Fallido / Pendiente).
+- Los scripts de verificación de cada prompt se siguen corriendo fuera del repo. Son un chequeo técnico y no reemplazan los casos documentados.
+
+## Deploy de la demo
+
+- Backend en **Render** y frontend en **Vercel**.
+- El front necesita `client/vercel.json` con una reescritura de todas las rutas a `index.html`, para que React Router funcione al recargar una página.
+- El front apunta al back con `VITE_API_URL`. El back usa `FRONTEND_URL` para CORS y para los links de los emails.
 
 ## Diseño visual (front)
 
 Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/theme.js`); **no** se escriben colores ni fuentes sueltos en los componentes.
 
-- **Colores:** `primary` = Naranja `#EA6A1F`, **reservado para lo urgente y la acción principal** de cada pantalla (un solo botón naranja por vista). `secondary` = Azul `#1E40AF` para acciones secundarias, links y selección. `palette.navy` = Marino `#0F1B3D` para la estructura (menú lateral, encabezados) y los títulos. `palette.cream` `#FBF4E6` y `palette.burgundy` `#8E2C3A` para los toques de club de barrio. Fondo de trabajo `#F6F7FB`, tarjetas blancas.
+- **Colores:**
+  - `primary` = Naranja `#EA6A1F`, **reservado para lo urgente y la acción principal** de cada pantalla (un solo botón naranja por vista).
+  - `secondary` = Azul `#1E40AF` para acciones secundarias, links y selección.
+  - `palette.navy` = Marino `#0F1B3D` para la estructura (menú lateral, encabezados) y los títulos.
+  - `palette.cream` `#FBF4E6` y `palette.burgundy` `#8E2C3A` para los toques de club de barrio.
+  - Fondo de trabajo `#F6F7FB`, tarjetas blancas.
+- **Acento del club:** Celeste Valencia `#2E9BD6`, provisorio. Es solo un acento, por ejemplo junto al nombre del club en el menú o en el carnet de socio, y no reemplaza ningún color de la paleta. Dónde se guarda está pendiente (D13): no lo implementes sin consultar.
 - **Estados:** siempre con el componente `StatusChip` (`components/common/StatusChip.jsx`): `ok` verde (al día, confirmada, aprobada), `pending` ámbar (pendiente), `overdue` rojo (vencida, rechazada, cancelada), `urgent` naranja (requiere acción ya, ej. citación sin responder).
 - **Tipografía:** Poppins para todo. Los números destacados (resultados, fecha y hora de un partido, número de socio) usan la variante `numeric` (Barlow Condensed): `<Typography variant="numeric">`.
 - **Íconos:** `@mui/icons-material` en variante Rounded (ej. `NotificationsRounded`).
@@ -120,12 +159,15 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 - **Rol activo:** con un solo rol disponible se entra directo; con más de uno, el token sale con `activeRoleId: null` y el usuario elige en `/select-role` (`POST /auth/switch-role`, que genera un token nuevo).
 - **Permisos efectivos** (`getEffectivePermissions`): rol activo + permisos directos, menos `ADULT_ONLY_PERMISSIONS` si el usuario es menor de 18. Es la **única** fuente de permisos: la usan `checkPermission` y `/auth/me`. No calcular permisos por otro lado.
 - **Sesión del front:** `session = { user, club, roles, activeRole, permissions }`, armada siempre con `buildSession` en `auth.service.js`.
+- **Recuperación de contraseña:** link por email con token JWT de propósito `password-reset` que incluye una huella del hash actual de la contraseña, así sirve una sola vez. `forgot-password` responde siempre lo mismo, exista o no el usuario. Restablecer la contraseña desbloquea la cuenta.
+- **Mi cuenta:** el usuario solo modifica email, teléfono, foto y contraseña. Nombre, apellido, DNI, fecha de nacimiento y usuario los cambia el Admin; los endpoints de la cuenta ignoran esos campos si llegan en el body.
+- **Menú y rutas del front:** `client/src/navigation/menu.js` es la única configuración del menú (`label`, `path`, `icon`, `permission`, `group`). Toda pantalla nueva se agrega ahí con su permiso, y la ruta se protege con `PermissionRoute` y el mismo permiso.
 
 ## Lista de tareas (`docs/TODO.md`)
 
 `docs/TODO.md` es la lista de todo lo que falta del proyecto. Mantenerla al día es parte de cada tarea:
 
-- **Al empezar** una tarea, leé `docs/TODO.md` para ubicarla y revisá si depende de algo pendiente o bloqueado (`[!]`). Si depende de una decisión pendiente (D1, D2...), avisá y no asumas un criterio.
+- **Al empezar** una tarea, leé `docs/TODO.md` para ubicarla y revisá si depende de algo pendiente o bloqueado (`[!]`). Si depende de una decisión pendiente (D12, D13...), avisá y no asumas un criterio.
 - **Al terminar**, marcá `[x]` solo lo que quedó terminado y verificado (anda, compila, se probó). Lo que quedó a medias va como `[~]` con una nota corta.
 - Agregá una línea al **Registro** (al final del archivo) con la fecha y lo que se hizo.
 - Si durante el trabajo aparece una tarea nueva o un problema, agregalo en la fase que corresponda.
@@ -133,4 +175,6 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 
 ## Pendientes conocidos
 
-Las decisiones abiertas están en la sección **Decisiones pendientes** de `docs/TODO.md`. La que más afecta al código: el almacenamiento de imágenes en Render (D7). La recuperación de contraseña está bloqueada hasta definir la D1.
+Las decisiones abiertas están en la sección **Decisiones pendientes** de `docs/TODO.md`:
+- **D12:** día de generación y de vencimiento de la cuota mensual. Bloquea el job de cuotas.
+- **D13:** dónde se guarda el color de acento del club.

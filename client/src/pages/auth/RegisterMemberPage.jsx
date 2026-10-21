@@ -46,7 +46,10 @@ export default function RegisterMemberPage() {
 
     try {
       const { data } = await registerMember({ ...form, birthDate: format(form.birthDate, 'yyyy-MM-dd') })
-      navigate('/login', { replace: true, state: { registeredUsername: data.username } })
+      navigate('/login', {
+        replace: true,
+        state: { username: data.username, successMessage: '¡Listo, ya te registraste! Ingresá con tu contraseña.' }
+      })
     } catch (err) {
       setError(getErrorMessage(err))
       setFieldErrors(getFieldErrors(err))

@@ -5,8 +5,8 @@ const fs = require('fs')
 
 const { createError } = require('../utils/errors')
 const { upload: messages } = require('../utils/messages')
+const { UPLOADS_DIR } = require('../utils/files')
 
-const UPLOADS_DIR = path.join(__dirname, '../../uploads')
 const ALLOWED_TYPES = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' }
 const MAX_SIZE = 5 * 1024 * 1024   // 5 MB
 

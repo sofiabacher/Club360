@@ -1,4 +1,4 @@
-// Service de auth: login, registro con número de socio, rol activo y sesión.
+// Service de auth: login, registro con número de socio, rol activo, sesión, recuperación de contraseña y Mi cuenta.
 // Lógica de negocio y acceso a modelos. Filtra siempre por el clubId del usuario logueado (nunca el del body),
 // registra las acciones relevantes en la bitácora (utils/logger) y lanza los errores con createError (utils/errors).
 const { Op, UniqueConstraintError } = require('sequelize')
@@ -10,7 +10,9 @@ const { getAvailableRoles, getEffectivePermissions } = require('../access/access
 const logger = require('../../utils/logger')
 const { createError } = require('../../utils/errors')
 const { hashPassword, comparePassword } = require('../../utils/crypto')
-const { generateLoginToken } = require('../../utils/token')
+const { generateLoginToken, generatePasswordResetToken, getPasswordResetUserId, verifyPasswordResetToken } = require('../../utils/token')
+const { sendRecoveryEmail, sendPasswordChangedNotice } = require('../../utils/mailer/senders')
+const { UPLOAD_FOLDERS, toPublicPath, deleteUpload } = require('../../utils/files')
 const { isAdult } = require('../../utils/dates')
 const { USER_STATES, MEMBER_STATES, LOG_ACTIONS, LOGIN_MAX_ATTEMPTS } = require('../../utils/constants')
 const { auth } = require('../../utils/messages')
@@ -198,11 +200,181 @@ async function registerMember({ numMember, birthDate, username, password }) {
     return { username }
 }
 
+// ---------- Recuperación de contraseña ----------
+
+// Solo se recupera la contraseña de un usuario que ya la tiene y está ACTIVE o BLOCKED (a PENDING y DELETED, nada)
+const RESET_ALLOWED_STATES = [USER_STATES.ACTIVE, USER_STATES.BLOCKED]
+const canResetPassword = (user) => Boolean(user?.password) && RESET_ALLOWED_STATES.includes(user.userStateId)
+
+// El aviso de cambio de contraseña no corta la operación si falla (el sender ya lo registra como MAIL_ERROR)
+function notifyPasswordChanged(user) {
+    sendPasswordChangedNotice(user).catch(() => {})
+}
+
+async function sendRecoveryLink(user) {
+    await logger({ clubId: user.clubId, userId: user.id, roleId: null }, LOG_ACTIONS.PASSWORD_RECOVERY, `Link enviado a ${user.email}`)
+    await sendRecoveryEmail(user, generatePasswordResetToken(user))
+}
+
+// Responde siempre lo mismo, exista o no la cuenta, para no revelar qué usuarios existen
+async function forgotPassword(identifier) {
+    const user = await User.findOne({ where: { [Op.or]: [{ username: identifier }, { email: identifier }] } })
+
+    if (canResetPassword(user)) {
+        // No se espera el envío: así la respuesta tarda lo mismo haya o no email. Si falla, queda MAIL_ERROR en la bitácora
+        sendRecoveryLink(user).catch(() => {})
+    }
+
+    return { message: auth.forgotPasswordSent }
+}
+
+// Usuario del link de recuperación. El link no sirve si venció, si es de otra contraseña (ya se usó) o si la cuenta no puede recuperarse
+async function findUserByResetToken(token, options = {}) {
+    const userId = getPasswordResetUserId(token)
+    const user = userId ? await User.findByPk(userId, options) : null
+
+    if (!canResetPassword(user) || !verifyPasswordResetToken(token, user).valid) {
+        throw createError(auth.resetTokenInvalid, 400, 'RESET_TOKEN_INVALID')
+    }
+
+    return user
+}
+
+async function validateResetToken(token) {
+    await findUserByResetToken(token)
+    return { valid: true }
+}
+
+// Guarda la contraseña nueva y desbloquea la cuenta si estaba bloqueada por intentos fallidos
+async function resetPassword({ token, password }) {
+    const user = await findUserByResetToken(token)
+
+    if (await comparePassword(password, user.password)) throw createError(auth.samePassword, 400)
+
+    const hashedPassword = await hashPassword(password)
+
+    const wasBlocked = await sequelize.transaction(async (transaction) => {
+        // Se vuelve a leer con bloqueo: si llegan dos pedidos con el mismo link, el segundo ve la contraseña ya cambiada
+        const locked = await findUserByResetToken(token, { transaction, lock: transaction.LOCK.UPDATE })
+        const blocked = locked.userStateId === USER_STATES.BLOCKED
+
+        await locked.update({
+            password: hashedPassword,
+            failedAttempts: 0,
+            ...(blocked && { userStateId: USER_STATES.ACTIVE })
+        }, { transaction })
+
+        return blocked
+    })
+
+    const actor = { clubId: user.clubId, userId: user.id, roleId: null }
+    await logger(actor, LOG_ACTIONS.PASSWORD_CHANGE, 'Restablecida con el link de recuperación')
+
+    if (wasBlocked) {
+        await logger(actor, LOG_ACTIONS.USER_UNBLOCKED, 'Desbloqueado al restablecer la contraseña')
+    }
+
+    notifyPasswordChanged(user)
+
+    return { username: user.username }
+}
+
+// ---------- Mi cuenta ----------
+// El usuario solo modifica email, teléfono, foto y contraseña. Nombre, apellido, DNI, fecha de nacimiento y usuario
+// los modifica el Admin (la fecha de nacimiento define los permisos de los menores).
+
+async function getAccount(userId) {
+    const user = await User.findByPk(userId, {
+        attributes: ['id', 'name', 'lastName', 'dni', 'birthDate', 'username', 'email', 'phone', 'photo'],
+        include: [{ model: Member, as: 'member', attributes: ['numMember'] }]
+    })
+
+    if (!user) throw createError(auth.userNotFound, 401)
+
+    return {
+        name: user.name,
+        lastName: user.lastName,
+        dni: user.dni,
+        birthDate: user.birthDate,
+        username: user.username,
+        email: user.email,
+        phone: user.phone,
+        photo: user.photo,
+        numMember: user.member?.numMember ?? null   // Solo si es socio
+    }
+}
+
+// Solo email y teléfono: cualquier otro campo que llegue en el body se ignora
+async function updateAccount({ id: userId, clubId, activeRoleId }, { email, phone }) {
+    const emailTaken = await User.findOne({ where: { email, id: { [Op.ne]: userId } }, attributes: ['id'] })
+    if (emailTaken) throw createError(auth.emailTaken, 409)
+
+    const user = await User.findByPk(userId)
+    const changes = { email, phone: phone || null }
+    const changedFields = Object.keys(changes).filter(field => user[field] !== changes[field])
+
+    if (changedFields.length > 0) {
+        try {
+            await user.update(changes)
+
+        } catch (error) {
+            if (error instanceof UniqueConstraintError) throw createError(auth.emailTaken, 409)
+            throw error
+        }
+
+        await logger({ clubId, userId, roleId: activeRoleId }, LOG_ACTIONS.USER_UPDATE, `Mi cuenta: ${changedFields.join(', ')}`)
+    }
+
+    return getAccount(userId)
+}
+
+// Guarda la foto nueva (ya subida por multer) y borra la anterior del disco
+async function updatePhoto({ id: userId, clubId, activeRoleId }, file) {
+    if (!file) throw createError(auth.photoRequired, 400)
+
+    const photo = toPublicPath(UPLOAD_FOLDERS.AVATARS, file.filename)
+    const user = await User.findByPk(userId)
+    const previousPhoto = user.photo
+
+    try {
+        await user.update({ photo })
+
+    } catch (error) {
+        await deleteUpload(photo)   // Si no se pudo guardar, no queda el archivo suelto
+        throw error
+    }
+
+    await deleteUpload(previousPhoto)
+    await logger({ clubId, userId, roleId: activeRoleId }, LOG_ACTIONS.USER_UPDATE, 'Mi cuenta: foto')
+
+    return { photo }
+}
+
+// Cambio de contraseña con la sesión iniciada. Una contraseña actual incorrecta no suma intentos fallidos
+async function changePassword({ id: userId, clubId, activeRoleId }, { currentPassword, newPassword }) {
+    const user = await User.findByPk(userId)
+
+    if (!await comparePassword(currentPassword, user.password)) throw createError(auth.currentPasswordWrong, 400)
+    if (await comparePassword(newPassword, user.password)) throw createError(auth.samePassword, 400)
+
+    await user.update({ password: await hashPassword(newPassword) })
+
+    await logger({ clubId, userId, roleId: activeRoleId }, LOG_ACTIONS.PASSWORD_CHANGE, 'Desde Mi cuenta')
+    notifyPasswordChanged(user)
+}
+
 module.exports = {
     buildSession,
     login,
     switchRole,
     getMe,
     logout,
-    registerMember
+    registerMember,
+    forgotPassword,
+    validateResetToken,
+    resetPassword,
+    getAccount,
+    updateAccount,
+    updatePhoto,
+    changePassword
 }

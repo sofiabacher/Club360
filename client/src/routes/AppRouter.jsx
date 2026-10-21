@@ -2,16 +2,31 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 
 import PermissionRoute from './PermissionRoute.jsx'
 import PublicRoute from './PublicRoute.jsx'
+import DashboardLayout from '../layouts/DashboardLayout.jsx'
 import LoginPage from '../pages/auth/LoginPage.jsx'
 import RegisterMemberPage from '../pages/auth/RegisterMemberPage.jsx'
+import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage.jsx'
+import ResetPasswordPage from '../pages/auth/ResetPasswordPage.jsx'
 import SelectRolePage from '../pages/auth/SelectRolePage.jsx'
 import HomePage from '../pages/HomePage.jsx'
+import AccountPage from '../pages/account/AccountPage.jsx'
+import ComingSoonPage from '../pages/ComingSoonPage.jsx'
+import { getMenuRoutes } from '../navigation/menu.js'
+
+// Pantalla de cada path del menú. Mientras una sección no exista, su ruta muestra ComingSoonPage.
+// Ejemplo, cuando exista: '/members': MembersPage
+const SCREENS = {}
+
+// Una ruta por path de navigation/menu.js, protegida con sus permisos (alcanza con uno)
+const menuRoutes = getMenuRoutes()
 
 export default function AppRouter() {
   return (
     <Routes>
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><RegisterMemberPage /></PublicRoute>} />
+      <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+      <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
 
       <Route
         path="/select-role"
@@ -22,18 +37,35 @@ export default function AppRouter() {
         }
       />
 
-      <Route path="/" element={<PermissionRoute><HomePage /></PermissionRoute>} />
+      {/* Pantallas con sesión y rol activo, dentro del layout del dashboard */}
+      <Route element={<PermissionRoute><DashboardLayout /></PermissionRoute>}>
+        <Route index element={<HomePage />} />
 
-      {/* Ejemplo de ruta protegida por permiso:
-      <Route
-        path="/fees"
-        element={
-          <PermissionRoute permission="fees.manage">
-            <FeesPage />
-          </PermissionRoute>
-        }
-      />
-      */}
+        <Route
+          path="/account"
+          element={<PermissionRoute permission="auth.manageAccount"><AccountPage /></PermissionRoute>}
+        />
+        <Route
+          path="/notifications"
+          element={<PermissionRoute permission="notifications.view"><ComingSoonPage title="Notificaciones" /></PermissionRoute>}
+        />
+
+        {menuRoutes.map(({ path, label, permissions }) => {
+          const Screen = SCREENS[path]
+
+          return (
+            <Route
+              key={path}
+              path={path}
+              element={
+                <PermissionRoute permission={permissions}>
+                  {Screen ? <Screen /> : <ComingSoonPage key={path} title={label} />}
+                </PermissionRoute>
+              }
+            />
+          )
+        })}
+      </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

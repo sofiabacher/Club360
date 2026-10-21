@@ -1,6 +1,6 @@
 // Validator de auth.
 // Reglas de express-validator: solo el formato de los datos, no reglas de negocio.
-const { body } = require('express-validator')
+const { body, query } = require('express-validator')
 const { auth: m } = require('../../utils/messages')
 
 // Política de contraseñas (igual que HotelDesk): mínimo 8 caracteres, con mayúscula, minúscula, número y carácter especial.
@@ -36,8 +36,43 @@ const switchRole = [
     body('roleId').isInt({ min: 1 }).withMessage(m.roleIdInvalid).bail().toInt()
 ]
 
+// Contraseña nueva según la política y su confirmación igual
+const newPasswordRules = (field) => [
+    body(field).custom(isValidPassword).withMessage(m.passwordPolicy),
+    body('confirmPassword').custom((value, { req }) => value === req.body[field]).withMessage(m.passwordsDontMatch)
+]
+
+const forgotPassword = [
+    body('identifier').isString().withMessage(m.identifierRequired).bail().trim().notEmpty().withMessage(m.identifierRequired)
+]
+
+const validateResetToken = [
+    query('token').isString().withMessage(m.resetTokenRequired).bail().notEmpty().withMessage(m.resetTokenRequired)
+]
+
+const resetPassword = [
+    body('token').isString().withMessage(m.resetTokenRequired).bail().notEmpty().withMessage(m.resetTokenRequired),
+    ...newPasswordRules('password')
+]
+
+// Mi cuenta: solo email y teléfono. Los demás campos del body no se validan porque el service los ignora
+const updateAccount = [
+    body('email').isString().withMessage(m.emailInvalid).bail().trim().isEmail().withMessage(m.emailInvalid).bail().isLength({ max: 150 }).withMessage(m.emailInvalid),
+    body('phone').optional({ values: 'falsy' }).isString().withMessage(m.phoneLength).bail().trim().isLength({ max: 30 }).withMessage(m.phoneLength)
+]
+
+const changePassword = [
+    body('currentPassword').isString().withMessage(m.currentPasswordRequired).bail().notEmpty().withMessage(m.currentPasswordRequired),
+    ...newPasswordRules('newPassword')
+]
+
 module.exports = {
     login,
     registerMember,
-    switchRole
+    switchRole,
+    forgotPassword,
+    validateResetToken,
+    resetPassword,
+    updateAccount,
+    changePassword
 }
