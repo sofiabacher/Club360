@@ -134,8 +134,13 @@ const PERMISSION_CATALOG = [
 // "Patentes y Familias" (Documentación Club360, sección 4.1; contexto, sección 3.4).
 const ADULT_ONLY_PERMISSIONS = [PERMISSIONS.FEES_PAY_OWN, PERMISSIONS.MEMBERS_UNLINK_ADULT]
 
+// Permisos que el rol "Admin del Club" conserva siempre: así nunca queda nadie sin poder administrar los roles.
+// El resto de sus permisos se puede editar (access.service, updateRole).
+const LOCKED_ADMIN_PERMISSIONS = [PERMISSIONS.ACCESS_MANAGE_ROLES, PERMISSIONS.ACCESS_ASSIGN_ROLES]
+
 module.exports = {
     PERMISSIONS,
     PERMISSION_CATALOG,
-    ADULT_ONLY_PERMISSIONS
+    ADULT_ONLY_PERMISSIONS,
+    LOCKED_ADMIN_PERMISSIONS
 }

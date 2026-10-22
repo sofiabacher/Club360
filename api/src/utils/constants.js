@@ -73,14 +73,24 @@ const LOG_ACTIONS = {
     PASSWORD_RECOVERY: { message: 'Pedido de recuperación de contraseña', criticity: CRITICITY.MEDIUM },
     PASSWORD_CHANGE: { message: 'Cambio de contraseña', criticity: CRITICITY.MEDIUM },
     USER_UNBLOCKED: { message: 'Usuario desbloqueado', criticity: CRITICITY.MEDIUM },
-    USER_UPDATE: { message: 'Modificación de datos del usuario', criticity: CRITICITY.MEDIUM }
+    USER_UPDATE: { message: 'Modificación de datos del usuario', criticity: CRITICITY.MEDIUM },
+
+    // Roles y permisos: HIGH porque cambian la seguridad del sistema
+    ROLE_CREATED: { message: 'Creación de rol', criticity: CRITICITY.HIGH },
+    ROLE_UPDATED: { message: 'Modificación de rol', criticity: CRITICITY.HIGH },
+    ROLE_DELETED: { message: 'Eliminación de rol', criticity: CRITICITY.HIGH },
+    ROLE_ASSIGNED: { message: 'Asignación de rol a un usuario', criticity: CRITICITY.HIGH },
+    ROLE_REMOVED: { message: 'Quita de rol a un usuario', criticity: CRITICITY.HIGH },
+    PERMISSION_ASSIGNED: { message: 'Asignación de permiso directo', criticity: CRITICITY.HIGH },
+    PERMISSION_REMOVED: { message: 'Quita de permiso directo', criticity: CRITICITY.HIGH }
 }
 
 // Intentos fallidos de login antes de bloquear al usuario
 const LOGIN_MAX_ATTEMPTS = 5
 
 // Nombres de los 7 roles base de cada club (los crea el seed con isBase: true).
-// No se usan para dar acceso (eso va siempre por permisos): solo para el seed y para MEMBERSHIP_ROLES.
+// No se usan para dar acceso (eso va siempre por permisos): solo para el seed, para MEMBERSHIP_ROLES y para las reglas
+// de la gestión de roles (access.service: qué roles se asignan a mano y cuáles desde su circuito).
 const BASE_ROLES = {
     ADMIN: 'Admin del Club',
     REPRESENTATIVE: 'Representante',

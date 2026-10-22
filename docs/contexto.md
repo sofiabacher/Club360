@@ -29,6 +29,8 @@ Este documento es el contexto acumulado del proyecto. Está pensado para pegarse
 - **Prioridades si sobra tiempo:** primero los resultados de partidos, después el bot (D11, ver sección 7).
 - **Particiones:** no se implementan porque no son requisito (ver sección 0).
 
+**Última actualización (21/10/2026) — gestión de roles y permisos:** reglas para editar roles base, permisos bloqueados del rol Admin del Club, qué roles se asignan a mano y cuáles desde su circuito, y eliminación de roles (ver sección 4, "Gestión de roles y permisos").
+
 **Última actualización (18/10/2026) — diseño visual:** se adoptó el moodboard "Propuesta 1" como referencia del front: paleta, colores de estado, tipografías, íconos y texturas (ver sección 11). El color propio de Valencia quedó con un valor provisorio el 21/10/2026.
 
 **Última actualización (18/10/2026) — login y sesión:** registro con número de socio y fecha de nacimiento, bloqueo por intentos, roles disponibles según la condición de socio y elección del rol al entrar (ver 3.1 y 3.6.1).
@@ -165,6 +167,15 @@ Se usan para el seed, los datos de prueba, la pantalla "El club" y el bot. Se re
 
 Los actores se describen por rol para facilitar la lectura, pero el acceso a pantallas y acciones se implementa por **permisos** (patentes): cada rol es un conjunto de permisos (familia), y el front y el back verifican el permiso, no el rol. Además de los permisos por rol, un usuario puede tener permisos directos (tabla `UsuarioPermiso`, ver sección 8) para excepciones puntuales sin crear un rol nuevo. Un usuario con más de un rol trabaja con un rol activo a la vez (ver 3.5).
 
+**Gestión de roles y permisos (21/10/2026):**
+- **Roles base:** no se pueden eliminar ni cambiar de nombre (el sistema los identifica por su nombre). Sí se pueden editar su descripción y sus permisos. Los cambios que hace el Admin en los permisos de un rol base no se pierden si se vuelve a correr el seed: el seed solo asigna los permisos al crear el rol.
+- **Rol Admin del Club:** conserva siempre los permisos `access.manageRoles` y `access.assignRoles`, para que nunca quede nadie sin poder administrar los roles. El resto de sus permisos se puede editar. Siempre tiene que quedar al menos un usuario activo con el rol Admin del Club, y un Admin no puede quitarse ese rol a sí mismo.
+- **Roles nuevos:** el Admin los crea con cualquier combinación de permisos del catálogo. El nombre es único dentro del club.
+- **Asignación manual:** desde "Usuarios y roles", el Admin solo asigna o quita los **roles nuevos y el rol Admin del Club**. Socio, Jugadora, Familia, Representante, Entrenadora y Preparadora física se asignan únicamente desde su circuito: alta de socio (3.1), aprobación de la inscripción (3.3), vínculo familiar (3.5) y alta de staff (3.6). Así no se puede, por ejemplo, convertir a alguien en Jugadora sin inscripción ni darle el rol Socio a un Staff.
+- **Eliminar un rol nuevo:** solo si no tiene usuarios asignados; si los tiene, primero hay que quitárselo a cada uno.
+- **Permisos directos:** cualquiera de los 41, como excepción puntual para un usuario. Los permisos condicionados por edad igual se quitan si el usuario es menor (ver 3.6.1).
+- Los cambios de roles y permisos rigen desde la siguiente acción del usuario afectado.
+
 **Funciones comunes** — todos los usuarios con sesión
 - Iniciar sesión, recuperar contraseña y modificar sus datos de cuenta
 - Ver notificaciones (canales: ver sección 6)
@@ -174,7 +185,7 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 - Gestionar cuotas sociales y deportivas, incluido el parámetro de días de atraso (ver sección 6)
 - Activar deportes del catálogo maestro para su club
 - Configurar parámetros globales, como el margen de conflicto horario
-- Asignar roles a usuarios, editar los permisos de cada rol y crear roles nuevos. Los roles base no se pueden eliminar
+- Asignar roles a usuarios, editar los permisos de cada rol y crear roles nuevos. Los roles base no se pueden eliminar (reglas en "Gestión de roles y permisos", arriba)
 - Consultar y descargar la bitácora
 - Enviar notificaciones generales
 
@@ -366,7 +377,7 @@ Asistente de consultas generales sobre el club y sobre cómo usar la plataforma,
 
 ## 10. Estado actual y próximos pasos
 
-**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**, **recuperación de contraseña y Mi cuenta (3.6.2 y 3.7, 21/10)**, **decisiones D2 a D7, D9 y D11 y emails de la demo (21/10)**
+**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**, **recuperación de contraseña y Mi cuenta (3.6.2 y 3.7, 21/10)**, **decisiones D2 a D7, D9 y D11 y emails de la demo (21/10)**, **gestión de roles y permisos (sección 4, 21/10)**
 
 **Pendiente:**
 1. ~~Modelo DER Lógico completo~~ — cerrado el 04/10/2026, actualizado el 10/10/2026 (ver sección 8)

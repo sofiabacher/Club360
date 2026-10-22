@@ -5,8 +5,11 @@ const { LOG_ACTIONS } = require('../utils/constants')
 const { auth } = require('../utils/messages')
 
 // Uso: checkPermission(PERMISSIONS.FEES_MANAGE). Va siempre después de isAuth.
+// También acepta un array: checkPermission([PERMISSIONS.A, PERMISSIONS.B]) pasa con cualquiera de los dos (como PermissionRoute).
 // Los permisos salen de getEffectivePermissions, la misma función que arma la sesión del front (/auth/me).
 const checkPermission = (permissionName) => async (req, res, next) => {
+    const required = [].concat(permissionName)
+
     try {
         const { id: userId, clubId, activeRoleId } = req.user
 
@@ -16,12 +19,12 @@ const checkPermission = (permissionName) => async (req, res, next) => {
         }
 
         const permissions = await getEffectivePermissions(userId, activeRoleId)
-        if (permissions.includes(permissionName)) return next()
+        if (required.some(name => permissions.includes(name))) return next()
 
         await logger(
             { clubId, userId, roleId: activeRoleId },
             LOG_ACTIONS.ACCESS_DENIED,
-            `Permiso requerido: ${permissionName} (${req.method} ${req.originalUrl})`
+            `Permiso requerido: ${required.join(' o ')} (${req.method} ${req.originalUrl})`
         )
 
         throw createError(auth.accessDenied, 403)

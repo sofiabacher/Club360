@@ -85,7 +85,7 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
 - **Dígitos verificadores:** las tablas de negocio tienen `dvh`. El DVH de cada registro y el DVV de cada tabla se calculan **automáticamente** con los hooks de `models/integrityHooks.js`: no se calculan a mano en los services. Para que funcionen, toda escritura tiene que pasar por Sequelize (nunca SQL directo con `sequelize.query` para insertar, modificar o borrar datos de negocio) y, si se usa una transacción, hay que pasarla en `options.transaction`. La tabla `log` no tiene `dvh`.
 - **Bitácora:** las acciones relevantes se registran con `utils/logger.js`, indicando `clubId`, `userId` y `roleId` (el rol activo). Las acciones se definen en `LOG_ACTIONS` de `constants.js`.
 - **Encriptación:** contraseñas con bcrypt (`hashPassword`); datos sensibles reversibles con `encrypt`/`decrypt` de `utils/crypto.js`.
-- **Seed:** la carga inicial se hace solo con `npm run seed`, nunca al arrancar el servidor. Es idempotente (se puede correr varias veces). Los datos del club están en `seed/data/club.js` (provisorios, ver `docs/contexto.md` sección 2.1) y los del usuario Admin en el `.env` (`SEED_ADMIN_*`).
+- **Seed:** la carga inicial se hace solo con `npm run seed`, nunca al arrancar el servidor. Es idempotente (se puede correr varias veces). Los datos del club están en `seed/data/club.js` (provisorios, ver `docs/contexto.md` sección 2.1) y los del usuario Admin en el `.env` (`SEED_ADMIN_*`). Los permisos de un rol base se asignan **solo cuando el rol se crea**: volver a correr el seed no pisa los cambios que hizo el Admin.
 - **Configuración:** todo valor de entorno se lee desde `config/index.js`, no con `process.env` en otros archivos. Las URLs no se hardcodean.
 
 ## Convenciones
@@ -162,6 +162,15 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 - **Recuperación de contraseña:** link por email con token JWT de propósito `password-reset` que incluye una huella del hash actual de la contraseña, así sirve una sola vez. `forgot-password` responde siempre lo mismo, exista o no el usuario. Restablecer la contraseña desbloquea la cuenta.
 - **Mi cuenta:** el usuario solo modifica email, teléfono, foto y contraseña. Nombre, apellido, DNI, fecha de nacimiento y usuario los cambia el Admin; los endpoints de la cuenta ignoran esos campos si llegan en el body.
 - **Menú y rutas del front:** `client/src/navigation/menu.js` es la única configuración del menú (`label`, `path`, `icon`, `permission`, `group`). Toda pantalla nueva se agrega ahí con su permiso, y la ruta se protege con `PermissionRoute` y el mismo permiso.
+
+## Gestión de roles y permisos (módulo `access`)
+
+- **Roles base** (`isBase`): no se eliminan ni se renombran (el sistema los identifica por su nombre en `BASE_ROLES`); sí se editan su descripción y sus permisos.
+- **Rol "Admin del Club":** siempre conserva `LOCKED_ADMIN_PERMISSIONS` (`access.manageRoles` y `access.assignRoles`), definidos en `utils/permissions.js`. Siempre tiene que quedar al menos un usuario ACTIVE con ese rol, y un Admin no puede quitárselo a sí mismo.
+- **Roles que el Admin asigna a mano:** solo los roles nuevos (no base) y "Admin del Club". Socio, Jugadora, Familia, Representante, Entrenadora y Preparadora física se asignan **solo** desde su circuito (alta de socio, aprobación de inscripción, vínculo familiar, alta de staff), y el back rechaza asignarlos desde `access`. Los módulos de esos circuitos asignan el rol con un helper de `access.service.js`, no escribiendo `user_role` por su cuenta.
+- **Eliminar un rol** con usuarios asignados no se puede: primero hay que quitárselo a cada uno.
+- **Permisos directos** (`user_permission`): excepción puntual por usuario, con cualquiera de los 41 permisos. Los de `ADULT_ONLY_PERMISSIONS` igual se quitan si el usuario es menor.
+- Los cambios de roles y permisos rigen en el back desde la siguiente request; el front refresca la sesión al recuperar el foco de la pestaña (como mínimo cada 60 segundos).
 
 ## Lista de tareas (`docs/TODO.md`)
 

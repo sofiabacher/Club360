@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { jwtDecode } from 'jwt-decode'
 
 import { TOKEN_KEY, clearSession } from '../api/axiosClient.js'
@@ -8,6 +8,9 @@ export const AuthContext = createContext(null)
 
 // La sesión la arma siempre el back (buildSession): { user, club, roles, activeRole, permissions }
 const emptySession = { user: null, club: null, roles: [], activeRole: null, permissions: [] }
+
+// Mínimo entre dos pedidos automáticos de la sesión al volver a la pestaña
+const REFRESH_INTERVAL_MS = 60 * 1000
 
 function hasValidToken() {
   const token = localStorage.getItem(TOKEN_KEY)
@@ -23,15 +26,18 @@ function hasValidToken() {
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(emptySession)
   const [loading, setLoading] = useState(hasValidToken)   // true mientras se recupera la sesión guardada
+  const lastRefresh = useRef(0)   // Cuándo se pidió la sesión por última vez
 
   // Después del login y del cambio de rol activo (que devuelve un token nuevo)
   const startSession = useCallback(({ token, session: newSession }) => {
     if (token) localStorage.setItem(TOKEN_KEY, token)
+    lastRefresh.current = Date.now()
     setSession({ ...emptySession, ...newSession })
   }, [])
 
   // Vuelve a pedir la sesión al back (por ejemplo, si cambiaron sus roles o permisos)
   const refreshSession = useCallback(async () => {
+    lastRefresh.current = Date.now()
     const { data } = await getMe()
     setSession({ ...emptySession, ...data.session })
     return data.session
@@ -58,6 +64,7 @@ export function AuthProvider({ children }) {
       return
     }
 
+    lastRefresh.current = Date.now()
     getMe()
       .then(({ data }) => setSession({ ...emptySession, ...data.session }))
       .catch(() => {
@@ -67,14 +74,35 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false))
   }, [])
 
+  // Los cambios de roles y permisos rigen en el back desde la siguiente request. Para que el menú también se actualice,
+  // la sesión se vuelve a pedir cuando la pestaña recupera el foco (como mucho una vez cada REFRESH_INTERVAL_MS).
+  // Si la sesión ya no vale (por ejemplo, le quitaron el rol activo), axiosClient la cierra con el 401.
+  const isAuthenticated = session.user !== null
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    const handleVisibility = () => {
+      if (document.visibilityState !== 'visible') return
+      if (Date.now() - lastRefresh.current < REFRESH_INTERVAL_MS) return
+
+      refreshSession().catch(() => {
+        // Sin conexión: se reintenta la próxima vez que vuelva a la pestaña
+      })
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [isAuthenticated, refreshSession])
+
   const value = useMemo(() => ({
     ...session,
-    isAuthenticated: session.user !== null,
+    isAuthenticated,
     loading,
     startSession,
     refreshSession,
     endSession
-  }), [session, loading, startSession, refreshSession, endSession])
+  }), [session, isAuthenticated, loading, startSession, refreshSession, endSession])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

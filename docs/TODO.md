@@ -34,6 +34,7 @@ Seguimiento de todo lo que falta para entregar el proyecto: desarrollo, entregab
 - [x] Seed completo: deportes, club Valencia, Vóley activado, permisos (catálogo de la sección 4.1 del contexto), roles base y usuario Admin
 - [ ] Actualizar `seed/data/club.js` con los datos provisorios de Valencia (D2, contexto 2.1: contacto, horarios, canchas, cuota social $15.000 y cuota de Vóley $25.000)
 - [ ] Datos de prueba: socios, jugadoras, familias, staff, ligas y partidos para probar y para la demo (usar las canchas de la sección 2.1 del contexto)
+- [ ] Volver a cargar con los modelos (o reparar con el módulo `integrity`) los datos cargados por SQL el 18/10 y el 21/10: hay filas de `member`, `user_role` e `inscription` con `dvh` NULL, y `inscription` no tiene DVV. La verificación de integridad las marca
 
 ## Fase 2 — Seguridad y acceso
 
@@ -44,11 +45,11 @@ Seguimiento de todo lo que falta para entregar el proyecto: desarrollo, entregab
 - [x] Recuperación de contraseña por email: link que vence en 1 hora y sirve una sola vez (D1, P05)
 - [x] Desbloqueo de usuarios bloqueados por intentos fallidos al restablecer la contraseña (P05). El desbloqueo por el Admin quedó en la Fase 3
 - [x] Modificar los datos de la propia cuenta: email, teléfono, foto y contraseña (Mi cuenta, P05)
-- [ ] Gestión de roles: crear, editar permisos, asignar a usuarios, impedir borrar roles base
-- [ ] Permisos directos por usuario (`user_permission`)
+- [x] Gestión de roles: crear, editar permisos, asignar a usuarios, impedir borrar roles base (P06: permisos bloqueados del Admin del Club, roles de circuito solo desde su circuito, siempre un Admin activo; el seed ya no pisa los permisos de un rol existente)
+- [x] Permisos directos por usuario (`user_permission`) (P06)
 - [x] Front: pantalla de login, registro con número de socio y selector de rol activo (P04; falta probarlas a mano en el navegador)
 - [x] Front: layout de dashboard con menú armado según los permisos (responsive), inicio con accesos rápidos y página "en construcción" (P05; falta probarlo a mano en el navegador)
-- [ ] Front: pantallas de gestión de roles y permisos
+- [x] Front: pantallas de gestión de roles y permisos ("Roles y permisos" y "Usuarios y roles", P06; falta probarlas a mano en el navegador)
 
 ## Fase 3 — Club y personas
 
@@ -134,7 +135,7 @@ Formato de referencia: el PDF de HotelDesk.
 - [ ] Especificación de funcionalidad (casos de uso)
 - [ ] Diseño de seguridad técnica: encriptación, dígitos verificadores, patentes y familias
 - [ ] Estrategias de base de datos: backup/restore e integridad (sin particiones)
-- [ ] Casos de prueba en `.txt`, uno por módulo, en `docs/pruebas/` (D9; formato en `CLAUDE.md`, "Pruebas")
+- [~] Casos de prueba en `.txt`, uno por módulo, en `docs/pruebas/` (D9; formato en `CLAUDE.md`, "Pruebas"). Hecho: `docs/pruebas/access.txt` (P06)
 - [ ] Manuales de usuario
 - [ ] Armado del documento final con todo lo anterior
 
@@ -171,6 +172,7 @@ Cada una se resuelve en el chat de Claude y se registra en el documento de conte
 
 Lo terminado, con la fecha. Lo más reciente arriba.
 
+- 21/10/2026 — Gestión de roles y permisos (P06): módulo `access` con el catálogo de permisos, CRUD de roles (los base no se eliminan ni se renombran; el Admin del Club conserva `LOCKED_ADMIN_PERMISSIONS`; un rol con usuarios no se elimina), asignación manual solo de roles nuevos y Admin del Club (siempre un Admin activo, sin quitarse el rol a sí mismo), permisos directos, helpers `assignBaseRole`/`removeBaseRole` para los circuitos y bitácora de todo con criticidad alta. El seed asigna los permisos de un rol base solo al crearlo. Front: pantallas "Roles y permisos" y "Usuarios y roles" con `PermissionPicker`, y refresco de la sesión al volver a la pestaña. Casos documentados en `docs/pruebas/access.txt`. Verificado con un script contra la base local y con el build del front
 - 21/10/2026 — Decisiones D2 a D7, D9 y D11 cerradas; emails con Gmail SMTP en lugar de Resend, front en Vercel y particiones descartadas (contexto secciones 0, 2.1, 3, 6, 7 y 11). Surgen D12 y D13
 - 21/10/2026 — Mi cuenta, recuperación de contraseña y layout (P05): recuperación por email con link de un solo uso (token con huella del hash de la contraseña) que desbloquea la cuenta, aviso por email del cambio de contraseña, links por consola en desarrollo sin `RESEND_API_KEY`; Mi cuenta (email, teléfono, foto y contraseña); layout del dashboard con el menú de `navigation/menu.js` según los permisos, inicio con accesos rápidos, página "en construcción" y texturas de red y parquet. Verificado con un script contra la base local y con el build del front
 - 18/10/2026 — Login y sesión (P04): login con bloqueo por intentos, registro con número de socio y fecha de nacimiento, roles disponibles según la condición de socio, elección y cambio de rol activo, permisos efectivos con los permisos solo para mayores (`getEffectivePermissions`, usada por `checkPermission` y `/auth/me`), validación del rol activo en `isAuth`, tema visual del moodboard y pantallas de login, registro, selección de rol e inicio provisorio. Verificado con un script contra la base local (los 12 casos del prompt) y con el build del front

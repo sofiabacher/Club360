@@ -11,11 +11,16 @@ import SelectRolePage from '../pages/auth/SelectRolePage.jsx'
 import HomePage from '../pages/HomePage.jsx'
 import AccountPage from '../pages/account/AccountPage.jsx'
 import ComingSoonPage from '../pages/ComingSoonPage.jsx'
+import RolesPage from '../pages/access/RolesPage.jsx'
+import UsersRolesPage from '../pages/access/UsersRolesPage.jsx'
 import { getMenuRoutes } from '../navigation/menu.js'
 
 // Pantalla de cada path del menú. Mientras una sección no exista, su ruta muestra ComingSoonPage.
-// Ejemplo, cuando exista: '/members': MembersPage
-const SCREENS = {}
+// La ruta se protege con el mismo permiso que tiene en navigation/menu.js
+const SCREENS = {
+  '/access/roles': RolesPage,
+  '/access/users': UsersRolesPage
+}
 
 // Una ruta por path de navigation/menu.js, protegida con sus permisos (alcanza con uno)
 const menuRoutes = getMenuRoutes()

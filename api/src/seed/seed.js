@@ -77,6 +77,8 @@ async function loadClubSports(club, sportsByName, transaction, summary) {
     }
 }
 
+// Los permisos de un rol base se asignan solo cuando el rol se crea. Si el rol ya existía, sus permisos no se tocan:
+// el Admin los puede haber editado (gestión de roles) y volver a correr el seed no tiene que devolvérselos.
 async function loadBaseRoles(club, permissionsByName, transaction, summary) {
     const rolesByName = {}
 
@@ -89,18 +91,16 @@ async function loadBaseRoles(club, permissionsByName, transaction, summary) {
 
         rolesByName[name] = role
         count(summary.roles, created)
-        summary.rolePermissions[name] = counter()
+        summary.rolePermissions[name] = created ? counter() : null   // null: ya existía, sus permisos quedan como estaban
+
+        if (!created) continue
 
         for (const permissionName of permissions) {
             const permission = permissionsByName[permissionName]
             if (!permission) throw new Error(`El permiso "${permissionName}" del rol "${name}" no está en el catálogo`)
 
-            const [, linked] = await RolePermission.findOrCreate({
-                where: { roleId: role.id, permissionId: permission.id },
-                transaction
-            })
-
-            count(summary.rolePermissions[name], linked)
+            await RolePermission.create({ roleId: role.id, permissionId: permission.id }, { transaction })
+            count(summary.rolePermissions[name], true)
         }
     }
 
@@ -147,7 +147,7 @@ function printSummary(summary, club, admin) {
     console.log(`  Roles base:          ${line(summary.roles)}`)
 
     for (const [roleName, result] of Object.entries(summary.rolePermissions)) {
-        console.log(`    ${roleName.padEnd(20)} ${line(result)}`)
+        console.log(`    ${roleName.padEnd(20)} ${result ? `${result.created} permisos asignados` : 'ya existía: sus permisos no se tocan'}`)
     }
 
     console.log(`  Usuario Admin:       ${admin.username} (${state(summary.admin)})`)

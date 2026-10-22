@@ -1,0 +1,267 @@
+CASOS DE PRUEBA — MÓDULO ACCESS (ROLES Y PERMISOS)
+==================================================
+
+Club360 · Prompt 06 · 21/10/2026
+Formato según CLAUDE.md ("Pruebas"). Los resultados obtenidos salen del script de verificación del back
+(corrido contra la base local el 21/10/2026, con usuarios de prueba creados con los modelos y borrados al final).
+Los casos que solo se pueden comprobar en el navegador quedan como Pendiente.
+
+Precondición general: base cargada con `npm run seed` (club Valencia, 7 roles base, 41 permisos y el usuario Admin).
+
+
+--------------------------------------------------
+ID: CP-ACCESS-01
+Módulo: access
+Descripción: Crear un rol nuevo con permisos
+Precondiciones: sesión iniciada con el Admin del Club (permiso access.manageRoles). No existe un rol "Tesorería" en el club.
+Pasos:
+  1. Ir a Sistema > Roles y permisos.
+  2. Tocar "Nuevo rol".
+  3. Completar nombre, descripción y elegir los permisos.
+  4. Tocar "Crear rol".
+Datos de entrada: nombre "Tesorería", descripción "Cuotas del club", permisos fees.manage y fees.viewOwn.
+Resultado esperado: el rol se crea como rol nuevo (no base), con los 2 permisos, aparece en la lista con
+  "2 permisos · 0 usuarios" y queda en la bitácora la acción "Creación de rol" con criticidad alta.
+Resultado obtenido: POST /access/roles → 200, isBase false, editableName true, 2 permisos. Aparece en
+  GET /access/roles con permissionCount 2 y userCount 0. Bitácora: "Creación de rol" (HIGH) con el nombre y los permisos.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ACCESS-02
+Módulo: access
+Descripción: Crear un rol con un nombre repetido
+Precondiciones: sesión del Admin. Existe el rol "Tesorería" (CP-ACCESS-01).
+Pasos:
+  1. Tocar "Nuevo rol".
+  2. Escribir un nombre que ya existe en el club y guardar.
+Datos de entrada: nombre "Tesorería"; también "tesorería" (otras mayúsculas) y "Jugadora" (nombre de un rol base).
+Resultado esperado: no se crea el rol. Mensaje "Ya existe un rol con ese nombre en el club."
+Resultado obtenido: 409 "Ya existe un rol con ese nombre en el club." en los tres casos. También se rechazan con 400
+  un nombre de menos de 3 caracteres, uno con caracteres no permitidos ("Rol @raro"), una descripción de más de
+  200 caracteres y un permiso inexistente ("Alguno de los permisos elegidos no existe.").
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ACCESS-03
+Módulo: access
+Descripción: Editar los permisos de un rol base
+Precondiciones: sesión del Admin.
+Pasos:
+  1. En la tarjeta del rol "Socio", tocar "Editar".
+  2. Destildar el permiso bot.use y cambiar la descripción.
+  3. Guardar.
+Datos de entrada: rol Socio sin bot.use; descripción "Descripción de prueba".
+Resultado esperado: el rol Socio queda sin bot.use y con la descripción nueva. En la bitácora, "Modificación de rol"
+  con los permisos agregados y quitados.
+Resultado obtenido: PUT /access/roles/:id → 200; el rol quedó sin bot.use y con la descripción nueva. Bitácora:
+  "Modificación de rol" con "permisos agregados: ... permisos quitados: ...". Después de volver a correr
+  `npm run seed`, el rol siguió sin bot.use (el seed ya no pisa los permisos de un rol que existe). Al final se le
+  devolvió bot.use y su descripción original.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ACCESS-04
+Módulo: access
+Descripción: Intentar cambiar el nombre de un rol base
+Precondiciones: sesión del Admin.
+Pasos:
+  1. Abrir la edición del rol "Socio".
+  2. Verificar que el nombre está en solo lectura, con la nota "El nombre de los roles base no se puede cambiar".
+  3. Mandar igual un nombre nuevo al back (por ejemplo, desde Postman).
+Datos de entrada: name "Socio renombrado".
+Resultado esperado: el back ignora el nombre: el rol se sigue llamando "Socio". Los demás cambios se guardan.
+Resultado obtenido: PUT /access/roles/:id con name "Socio renombrado" → 200 y el rol siguió llamándose "Socio"
+  (se guardaron la descripción y los permisos). GET /access/roles devuelve editableName false en los 7 roles base.
+  El campo en solo lectura del diálogo falta verlo en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ACCESS-05
+Módulo: access
+Descripción: Intentar sacarle al Admin del Club los permisos bloqueados
+Precondiciones: sesión del Admin.
+Pasos:
+  1. Abrir la edición del rol "Admin del Club".
+  2. Verificar que access.manageRoles y access.assignRoles aparecen tildados, deshabilitados y con un tooltip.
+  3. Mandar al back la lista de permisos sin access.assignRoles.
+Datos de entrada: permisos actuales del rol menos access.assignRoles.
+Resultado esperado: 400 "El rol Admin del Club tiene que conservar los permisos de roles y permisos." y el rol no
+  pierde ningún permiso. Los demás permisos del rol sí se pueden quitar.
+Resultado obtenido: GET /access/roles/:id del Admin del Club devuelve lockedPermissions con los ids de
+  access.manageRoles y access.assignRoles (en otro rol, []). PUT sin access.assignRoles → 400 con el mensaje esperado
+  y el rol conservó sus 14 permisos. Sacarle logs.view (no bloqueado) → 200; después se le devolvió.
+  Las casillas deshabilitadas con tooltip faltan verlas en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ACCESS-06
+Módulo: access
+Descripción: Intentar eliminar un rol base
+Precondiciones: sesión del Admin.
+Pasos:
+  1. Verificar que las tarjetas de los roles base no tienen la acción "Eliminar".
+  2. Mandar igual DELETE /access/roles/:id de un rol base.
+Datos de entrada: rol "Socio".
+Resultado esperado: 403 "Los roles base no se pueden eliminar." y el rol sigue existiendo.
+Resultado obtenido: DELETE /access/roles/:id → 403 "Los roles base no se pueden eliminar."
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ACCESS-07
+Módulo: access
+Descripción: Intentar eliminar un rol con usuarios
+Precondiciones: sesión del Admin. El rol "Tesorería" está asignado a uno o más usuarios.
+Pasos:
+  1. Verificar que "Eliminar" está deshabilitado en la tarjeta, con un tooltip.
+  2. Mandar igual DELETE /access/roles/:id.
+Datos de entrada: rol "Tesorería" asignado a 2 usuarios; después a 1.
+Resultado esperado: 409 "Este rol está asignado a 2 usuarios. Quitáselo a cada uno antes de eliminarlo." y el rol
+  no se borra.
+Resultado obtenido: con 2 usuarios → 409 "Este rol está asignado a 2 usuarios. Quitáselo a cada uno antes de
+  eliminarlo."; con 1 → 409 "Este rol está asignado a 1 usuario. Quitáselo antes de eliminarlo." El rol no se borró.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ACCESS-08
+Módulo: access
+Descripción: Eliminar un rol sin usuarios
+Precondiciones: sesión del Admin. Existe un rol nuevo sin usuarios.
+Pasos:
+  1. Tocar "Eliminar" en la tarjeta del rol.
+  2. Confirmar en el diálogo.
+Datos de entrada: rol "Prueba borrable" con el permiso logs.view.
+Resultado esperado: el rol se elimina junto con sus permisos (role_permission) y queda "Eliminación de rol" en la
+  bitácora.
+Resultado obtenido: DELETE /access/roles/:id → 200; el rol y sus filas de role_permission ya no existen; bitácora
+  "Eliminación de rol". La verificación de DVH/DVV de role y role_permission dio correcta después del borrado.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ACCESS-09
+Módulo: access
+Descripción: Asignar un rol nuevo a un usuario y comprobar que su menú cambia
+Precondiciones: sesión del Admin. Existe el rol "Tesorería" con fees.manage. Un usuario de prueba con el rol Socio.
+Pasos:
+  1. Ir a Sistema > Usuarios y roles y buscar al usuario.
+  2. En la pestaña "Roles", tildar "Tesorería" y tocar "Guardar roles".
+  3. Con ese usuario, recargar la página (o volver a la pestaña después de un minuto) y elegir el rol Tesorería.
+Datos de entrada: rol "Tesorería".
+Resultado esperado: el usuario conserva Socio y suma Tesorería. Con Tesorería como rol activo, el menú muestra
+  "Cuotas" y el back le permite las acciones de fees.manage.
+Resultado obtenido: back: PUT /access/users/:id/roles → 200; el usuario conservó Socio; bitácora "Asignación de rol
+  a un usuario" con el usuario y el rol. /auth/me pasó a devolver 2 roles y, con el rol nuevo como activo, una ruta
+  con checkPermission(fees.manage) respondió 200 con el token nuevo. Al sacarle fees.manage al rol, la siguiente
+  request respondió 403; al quitarle el rol activo, 401 (la sesión ya no vale y hay que volver a entrar).
+  Falta comprobar el menú en el navegador.
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-ACCESS-10
+Módulo: access
+Descripción: Intentar asignar el rol Jugadora a mano
+Precondiciones: sesión del Admin. Un usuario de prueba con el rol Socio.
+Pasos:
+  1. Abrir el usuario en Usuarios y roles: Jugadora no aparece entre los roles asignables (solo en "Roles de
+     circuito", si lo tiene).
+  2. Mandar igual PUT /access/users/:id/roles con el id de Jugadora.
+Datos de entrada: roleIds con el rol nuevo y Jugadora; también solo Socio.
+Resultado esperado: 403 "Este rol se asigna desde su circuito (alta de socio, inscripción, vínculo familiar o alta de
+  staff)." y no cambia ningún rol del usuario.
+Resultado obtenido: 403 con el mensaje esperado en los dos casos; el usuario no quedó con Jugadora.
+  GET /access/users/:id devuelve en assignableRoleIds solo los roles nuevos y Admin del Club. Mandar roleIds vacío
+  le quitó el rol nuevo y no tocó Socio.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ACCESS-11
+Módulo: access
+Descripción: Intentar quitar el rol Admin al último Admin
+Precondiciones: el Admin del seed es el único usuario ACTIVE con el rol Admin del Club. Un segundo usuario con un
+  rol nuevo que tiene access.assignRoles.
+Pasos:
+  1. Con el Admin, intentar quitarse a sí mismo el rol Admin del Club.
+  2. Con el segundo usuario, intentar quitarle al Admin el rol Admin del Club.
+  3. Asignarle Admin del Club al segundo usuario y después quitárselo (con el Admin del seed activo).
+Datos de entrada: roleIds [] para el Admin.
+Resultado esperado: paso 1: 403 "No podés quitarte a vos mismo el rol Admin del Club."; paso 2: 409 "No se puede
+  quitar el rol Admin del Club: tiene que quedar al menos un Admin activo."; paso 3: las dos operaciones funcionan.
+Resultado obtenido: paso 1 → 403 con el mensaje esperado; paso 2 → 409 con el mensaje esperado; el Admin conservó
+  su rol. Paso 3 → 200 en las dos operaciones.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ACCESS-12
+Módulo: access
+Descripción: Asignar un permiso directo y comprobar el acceso
+Precondiciones: sesión del Admin. Un usuario de prueba logueado con el rol Socio (sin fees.manage).
+Pasos:
+  1. Abrir el usuario en Usuarios y roles, pestaña "Permisos directos".
+  2. Tildar fees.manage y tocar "Guardar permisos".
+  3. Con el usuario, sin volver a iniciar sesión, usar una acción que requiere fees.manage.
+  4. Quitarle el permiso y repetir el paso 3.
+Datos de entrada: permiso fees.manage.
+Resultado esperado: con el permiso, la acción se permite desde la siguiente request; sin el permiso, vuelve a
+  rechazarse con 403. Quedan "Asignación de permiso directo" y "Quita de permiso directo" en la bitácora.
+Resultado obtenido: antes → 403; con el permiso directo → 200 con el mismo token; sin el permiso → 403 en la
+  siguiente request. Bitácora con las dos acciones. Un permiso inexistente → 400.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ACCESS-13
+Módulo: access
+Descripción: Permiso solo para mayores asignado directo a un menor
+Precondiciones: sesión del Admin. Una jugadora de prueba menor de 18 (nacida en 2012).
+Pasos:
+  1. Abrir la jugadora en Usuarios y roles, pestaña "Permisos directos".
+  2. Tildar fees.payOwn (aparece con la nota "No le aplica: es menor de edad") y guardar.
+Datos de entrada: permiso fees.payOwn.
+Resultado esperado: el permiso se guarda como directo, pero no forma parte de sus permisos efectivos
+  (getEffectivePermissions lo quita por ADULT_ONLY_PERMISSIONS).
+Resultado obtenido: PUT /access/users/:id/permissions → 200, con fees.payOwn en permissionIds y en
+  restrictedPermissionIds. getEffectivePermissions de la menor con el rol Jugadora no incluye fees.payOwn.
+  Para una adulta, restrictedPermissionIds viene vacío.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ACCESS-14
+Módulo: access
+Descripción: Usuario sin permiso que entra a /access/roles
+Precondiciones: un usuario logueado con el rol Socio (sin access.manageRoles ni access.assignRoles).
+Pasos:
+  1. Escribir /access/roles en la barra de direcciones.
+  2. Llamar a GET /access/roles, GET /access/permissions y GET /access/users con su token.
+Datos de entrada: —
+Resultado esperado: el front lo devuelve al inicio (PermissionRoute) y el menú no muestra la entrada. El back
+  responde 403 y registra "Acceso denegado".
+Resultado obtenido: back: las tres rutas → 403. Sin token → 401. Un usuario con solo access.assignRoles puede leer
+  GET /access/permissions (lo usa la pantalla de usuarios) pero recibe 403 en GET /access/roles. La redirección del
+  front falta comprobarla en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ACCESS-15
+Módulo: access
+Descripción: Un Admin no ve ni edita los roles de otro club
+Precondiciones: un segundo club de prueba con un rol propio y un usuario.
+Pasos:
+  1. Con el Admin de Valencia, listar los roles y pedir, editar y eliminar el rol del otro club por su id.
+  2. Intentar asignarle ese rol a un usuario de Valencia y abrir el usuario del otro club.
+Datos de entrada: id del rol y del usuario del otro club.
+Resultado esperado: el rol no aparece en la lista; pedirlo, editarlo o eliminarlo da 404; asignarlo da 400; el
+  usuario del otro club da 404 y no aparece en la búsqueda. El rol del otro club queda intacto.
+Resultado obtenido: todo según lo esperado. El club de prueba se borró al final.
+Estado: Aprobado

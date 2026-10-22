@@ -60,6 +60,36 @@ module.exports = {
         photoRequired: 'Elegí una imagen para tu foto.'
     },
 
+    access: {
+        // Roles
+        roleNotFound: 'No encontramos el rol.',
+        roleNameTaken: 'Ya existe un rol con ese nombre en el club.',
+        baseRoleNotDeletable: 'Los roles base no se pueden eliminar.',
+        roleHasUsers: (count) => count === 1
+            ? 'Este rol está asignado a 1 usuario. Quitáselo antes de eliminarlo.'
+            : `Este rol está asignado a ${count} usuarios. Quitáselo a cada uno antes de eliminarlo.`,
+        adminLockedPermissions: 'El rol Admin del Club tiene que conservar los permisos de roles y permisos.',
+
+        // Asignación a usuarios
+        userNotFound: 'No encontramos el usuario.',
+        circuitRole: 'Este rol se asigna desde su circuito (alta de socio, inscripción, vínculo familiar o alta de staff).',
+        lastAdmin: 'No se puede quitar el rol Admin del Club: tiene que quedar al menos un Admin activo.',
+        selfAdminRemoval: 'No podés quitarte a vos mismo el rol Admin del Club.',
+        rolesNotFound: 'Alguno de los roles elegidos no existe.',
+        permissionsNotFound: 'Alguno de los permisos elegidos no existe.',
+        notCircuitRole: 'El rol indicado no es un rol de circuito.',
+
+        // Validaciones de formato
+        idInvalid: 'El identificador no es válido.',
+        roleNameLength: 'El nombre tiene que tener entre 3 y 50 caracteres.',
+        roleNameFormat: 'El nombre solo puede tener letras, números, espacios y guiones.',
+        descriptionLength: 'La descripción puede tener hasta 200 caracteres.',
+        permissionIdsInvalid: 'Elegí permisos válidos.',
+        roleIdsInvalid: 'Elegí roles válidos.',
+        searchLength: 'La búsqueda puede tener hasta 100 caracteres.',
+        pageInvalid: 'La página no es válida.'
+    },
+
     upload: {
         invalidType: 'El archivo tiene que ser una imagen JPG, PNG o WEBP.',
         tooLarge: 'La imagen no puede pesar más de 5 MB.',
