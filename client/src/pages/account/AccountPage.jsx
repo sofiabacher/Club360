@@ -34,7 +34,8 @@ function ReadOnlyField({ label, children }) {
 }
 
 export default function AccountPage() {
-  const { refreshSession } = useAuth()
+  const { user, refreshSession } = useAuth()
+  const emailRequired = user?.isAdult ?? true   // El email es obligatorio para los mayores de 18
 
   const [account, setAccount] = useState(null)
   const [loadError, setLoadError] = useState('')
@@ -53,7 +54,7 @@ export default function AccountPage() {
 
   const showAccount = (data) => {
     setAccount(data)
-    setContact({ email: data.email, phone: data.phone ?? '' })
+    setContact({ email: data.email ?? '', phone: data.phone ?? '' })
   }
 
   useEffect(() => {
@@ -195,9 +196,9 @@ export default function AccountPage() {
                     value={contact.email}
                     onChange={(event) => setContact({ ...contact, email: event.target.value })}
                     error={Boolean(contactErrors.email)}
-                    helperText={contactErrors.email}
+                    helperText={contactErrors.email ?? (emailRequired ? undefined : 'Opcional para menores de 18.')}
                     autoComplete="email"
-                    required
+                    required={emailRequired}
                     fullWidth
                   />
                   <TextField

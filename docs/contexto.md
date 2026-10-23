@@ -29,6 +29,8 @@ Este documento es el contexto acumulado del proyecto. Está pensado para pegarse
 - **Prioridades si sobra tiempo:** primero los resultados de partidos, después el bot (D11, ver sección 7).
 - **Particiones:** no se implementan porque no son requisito (ver sección 0).
 
+**Última actualización (21/10/2026) — club y alta de socios:** formato del número de socio y del código de vínculo, datos obligatorios del alta, socios que ya tienen usuario, baja y reactivación (ver 3.1); email opcional para menores, teléfono cifrado y campos nuevos de `club` para el color y la información general (D13, ver sección 8).
+
 **Última actualización (21/10/2026) — gestión de roles y permisos:** reglas para editar roles base, permisos bloqueados del rol Admin del Club, qué roles se asignan a mano y cuáles desde su circuito, y eliminación de roles (ver sección 4, "Gestión de roles y permisos").
 
 **Última actualización (18/10/2026) — diseño visual:** se adoptó el moodboard "Propuesta 1" como referencia del front: paleta, colores de estado, tipografías, íconos y texturas (ver sección 11). El color propio de Valencia quedó con un valor provisorio el 21/10/2026.
@@ -96,6 +98,12 @@ Se usan para el seed, los datos de prueba, la pantalla "El club" y el bot. Se re
 - Si es **mayor de edad**: sin código, gestión de cuotas propia habilitada desde el alta.
 - **Primer ingreso (18/10/2026):** para registrarse, el Socio ingresa su número de socio **y su fecha de nacimiento** (que se carga obligatoriamente en el alta); si no coinciden, el sistema responde un mensaje genérico sin indicar cuál falló. Así, alguien que adivine un número de socio no puede registrarse en lugar de otra persona.
 - El número de socio se entrega una sola vez en el alta presencial y se usa una única vez para completar el registro (generación de usuario/contraseña). A partir de ese momento el Socio ingresa siempre con usuario y contraseña; el número de socio queda asociado a la persona de forma permanente como identificador, pero no se reutiliza para futuros inicios de sesión.
+- **Reglas del alta (21/10/2026):**
+  - **Número de socio:** 6 dígitos correlativos con ceros a la izquierda (`000001`), únicos en toda la plataforma, como en el carnet del moodboard.
+  - **Datos:** nombre, apellido, DNI y fecha de nacimiento son obligatorios en el alta; el email es obligatorio para los mayores de 18 y opcional para los menores (ver sección 8); el teléfono es opcional.
+  - **Código de vínculo:** formato `XXXX-XXXX`, con letras y números sin caracteres que se confundan (sin 0/O, 1/I/L).
+  - **Persona que ya tiene usuario en el club** (se detecta por DNI o email): si es Staff, no puede ser socia (ver 3.6); si ya es socia, se rechaza; si tiene otro rol, por ejemplo Familia, se la da de alta como socia **con ese mismo usuario**, sin tocar su contraseña ni pedirle que se registre de nuevo.
+  - **Baja y reactivación:** la baja deja al Socio Inactivo sin tocar su usuario (si es Familia, sigue entrando con ese rol, ver 3.6.1). El Admin puede reactivar a un Socio Inactivo; un Socio Suspendido por mora no se reactiva a mano, se recupera solo al pagar (ver sección 6). La baja no modifica inscripciones, cuotas ni categorías: cada módulo consulta el estado del socio.
 - **Comprobante del alta (21/10/2026, decisión D3):** al terminar el alta, el sistema muestra un comprobante imprimible con el número de socio y, si es menor, el código de vínculo familiar (ver 3.5). El Admin lo entrega en el momento.
 
 **3.2 Perfil base de Socio**
@@ -251,6 +259,7 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 ## 6. Reglas de negocio clave
 
 - **Conflictos de horario:** los resuelven las entrenadoras entre sí; el sistema solo avisa y registra en bitácora quién lo resolvió. No se guarda una entidad de conflicto: se calculan a partir de los partidos de cada jugadora y el margen configurado.
+- **Deportes del club (21/10/2026):** el Admin activa o desactiva los deportes del catálogo y fija su cuota deportiva. No se puede desactivar un deporte que tiene inscripciones Pendientes o Aprobadas.
 - **Margen de conflicto:** el margen mínimo entre partidos para considerarlo "conflicto" es un parámetro configurable por el Admin del club (no fijo en código).
 - **Tipos de cuota:** hay **cuota social** y **cuota deportiva**. Un Socio paga solo la cuota social; si además es deportista (Jugadora), se suman ambas.
   - **Una cuota deportiva por cada deporte (21/10/2026, decisión D6):** el Socio paga la cuota deportiva de cada deporte en el que tiene inscripción Aprobada, con el valor de ese deporte en el club (`clubSport.priceFee`). En la cuota mensual, `sportAmount` es la suma de todas. En el MVP solo existe Vóley, pero el cálculo ya contempla varios deportes.
@@ -348,6 +357,9 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
   - (11/10) `user.password` admite NULL: queda vacío desde el alta presencial hasta que el socio genera su usuario y contraseña con el número de socio (ver 3.1). El login rechaza usuarios sin contraseña.
   - (11/10) El adulto responsable del vínculo familiar se guarda en `member.adultUserId` (en el DER figura como `memberAdultId`) y es FK a **`user`**, no a `member`, porque el adulto Familia puede no ser Socio (ver 3.5).
   - (11/10) Los tres campos que estaban en snake_case pasan a camelCase como el resto: `dvv.tableName`, `routine.imageUrl` y `routine.videoUrl`.
+  - (21/10) `user.email` admite NULL (sigue siendo único): es obligatorio para los mayores de 18 y opcional para los menores, que pueden no tener email propio y no pueden repetir el del adulto si son hermanos. Un menor sin email recupera su contraseña a través del club.
+  - (21/10) `user.phone` pasa a `VARCHAR(255)` y se guarda **cifrado con AES** (encriptación reversible de la consigna). El DNI y el email no se cifran porque se buscan y son únicos.
+  - (21/10, decisión D13) `club` suma `accentColor` (`VARCHAR(7)`, NOT NULL, color propio del club en hex) y `extraInfo` (JSON, NULL: WhatsApp, horarios de secretaría, canchas y horarios de entrenamiento). Los carga el seed y los edita el Admin en la configuración del club.
 - **FK y borrado (11/10):** las FK son NOT NULL salvo `log.userId`, `log.roleId`, `notification.transmitterId` (NULL cuando notifica el sistema) y `member.adultUserId`. Las bajas son lógicas (por estado o `isActive`), por eso las relaciones usan `RESTRICT` al borrar, salvo las tablas intermedias (`CASCADE`) y esas cuatro FK opcionales (`SET NULL`). Las flags booleanas son NOT NULL con default (`isActive` en true; `isBase`, `isRead` y `linkStatus` en false).
 - Permisos por rol (`RolPermiso`) y también directos por usuario (`UsuarioPermiso`), para excepciones puntuales sin crear un rol nuevo.
 - Datos personales en Usuario. El alta presencial crea Usuario (pendiente de activación) y Socio.
@@ -377,7 +389,7 @@ Asistente de consultas generales sobre el club y sobre cómo usar la plataforma,
 
 ## 10. Estado actual y próximos pasos
 
-**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**, **recuperación de contraseña y Mi cuenta (3.6.2 y 3.7, 21/10)**, **decisiones D2 a D7, D9 y D11 y emails de la demo (21/10)**, **gestión de roles y permisos (sección 4, 21/10)**
+**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**, **recuperación de contraseña y Mi cuenta (3.6.2 y 3.7, 21/10)**, **decisiones D2 a D7, D9 y D11 y emails de la demo (21/10)**, **gestión de roles y permisos (sección 4, 21/10)**, **club y alta de socios, D13 (3.1 y sección 8, 21/10)**
 
 **Pendiente:**
 1. ~~Modelo DER Lógico completo~~ — cerrado el 04/10/2026, actualizado el 10/10/2026 (ver sección 8)
@@ -400,7 +412,7 @@ Asistente de consultas generales sobre el club y sobre cómo usar la plataforma,
 18. ~~Pruebas~~ — cerrado el 21/10/2026: casos de prueba documentados en `.txt`, sin tests automatizados (D9, ver sección 11)
 19. ~~Envío de emails en la demo~~ — cerrado el 21/10/2026: Gmail SMTP con nodemailer; el dominio propio con Resend pasa a Futuro (ver secciones 7 y 11)
 20. Día de generación y día de vencimiento de la cuota mensual [A DEFINIR] (decisión D12, ver sección 6)
-21. Dónde se guarda el color de acento de cada club (campo en `club` o configuración del seed) [A DEFINIR] (decisión D13, ver sección 11)
+21. ~~Dónde se guarda el color de acento de cada club~~ — cerrado el 21/10/2026: campo `club.accentColor` (D13, ver sección 8)
 
 **Stack técnico:** ver sección 11.
 
@@ -434,7 +446,7 @@ El repositorio incluye un `CLAUDE.md` en la raíz con estas mismas convenciones,
 - **JWT con `id`, `clubId` y `activeRoleId`.** Cambiar de rol activo genera un token nuevo.
 - **Verificación de permisos** (back y front): permisos del rol activo + permisos directos del usuario. El front protege rutas con `PermissionRoute` por permiso, no por rol (en HotelDesk era por rol).
 - **Nombres de permisos:** `módulo.acción` (ej. `fees.manage`, `citations.create`), igual que en HotelDesk.
-- **Encriptación:** bcrypt para contraseñas (irreversible) y AES-256 para datos sensibles (reversible).
+- **Encriptación:** bcrypt para contraseñas (irreversible) y AES-256 para datos sensibles (reversible): el teléfono del usuario (ver sección 8).
 - **Imágenes (21/10/2026, decisión D7):** se suben con multer a través del middleware `upload`, que decide dónde guardar según el entorno:
   - **en desarrollo**, en disco (`uploads/`), como HotelDesk;
   - **en producción**, en Cloudinary (plan gratuito), porque el disco de Render no es persistente: se borra en cada reinicio o deploy, y el plan gratuito se duerme después de unos minutos sin uso.
@@ -455,6 +467,6 @@ El repositorio incluye un `CLAUDE.md` en la raíz con estas mismas convenciones,
 - **Íconos:** los redondeados de Material UI (variante *Rounded*).
 - **Texturas:** "líneas de cancha" (cancha naranja sobre marino) en el login y los encabezados; "trama de red" en las grillas de accesos; "parquet" en las rutinas y los estados vacíos.
 - **Imágenes:** fotos reales del club, nada de bancos de imágenes.
-- **Acento del club:** el color propio de cada club, para personalizar la plataforma. Para Valencia, provisoriamente Celeste Valencia `#2E9BD6` (ver 2.1). Es solo un acento, por ejemplo una franja junto al nombre del club en el menú lateral o en el carnet de socio: no reemplaza a ningún color de la paleta. Dónde se guarda: [A DEFINIR] (ver sección 10, pendiente 21).
+- **Acento del club:** el color propio de cada club, para personalizar la plataforma. Para Valencia, provisoriamente Celeste Valencia `#2E9BD6` (ver 2.1). Es solo un acento, por ejemplo una franja junto al nombre del club en el menú lateral o en el carnet de socio: no reemplaza a ningún color de la paleta. Se guarda en `club.accentColor` (decisión D13, ver sección 8).
 
 **Convenciones de código:** código, tablas y campos en inglés camelCase (igual que el DER); mensajes al usuario e interfaz en español. Archivos del backend con el nombre del módulo (`fees.service.js`); modelos en PascalCase singular (`Member.js`); componentes y páginas de React en PascalCase. Variables de entorno solo en `.env` (se sube únicamente `.env.example`), sin URLs hardcodeadas. Sin archivos duplicados por persona (`-Sofi`, `-v2`): se usan ramas de git.

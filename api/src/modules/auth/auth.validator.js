@@ -55,9 +55,10 @@ const resetPassword = [
     ...newPasswordRules('password')
 ]
 
-// Mi cuenta: solo email y teléfono. Los demás campos del body no se validan porque el service los ignora
+// Mi cuenta: solo email y teléfono. Los demás campos del body no se validan porque el service los ignora.
+// El email puede venir vacío: que sea obligatorio para los mayores lo decide el service
 const updateAccount = [
-    body('email').isString().withMessage(m.emailInvalid).bail().trim().isEmail().withMessage(m.emailInvalid).bail().isLength({ max: 150 }).withMessage(m.emailInvalid),
+    body('email').optional({ values: 'falsy' }).isString().withMessage(m.emailInvalid).bail().trim().isEmail().withMessage(m.emailInvalid).bail().isLength({ max: 150 }).withMessage(m.emailInvalid),
     body('phone').optional({ values: 'falsy' }).isString().withMessage(m.phoneLength).bail().trim().isLength({ max: 30 }).withMessage(m.phoneLength)
 ]
 

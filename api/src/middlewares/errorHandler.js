@@ -22,6 +22,7 @@ module.exports = (err, req, res, next) => {
     res.status(status).json({
         success: false,
         code: err.name === 'MulterError' ? undefined : err.code,
-        message
+        message,
+        data: err.isOperational ? err.data : undefined
     })
 }

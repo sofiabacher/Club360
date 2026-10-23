@@ -73,11 +73,15 @@ export const MENU_ITEMS = [
   { label: 'Copias de seguridad', path: '/backup', icon: BackupRounded, permission: 'backup.manage', group: 'Sistema' }
 ]
 
-// Pantallas que no están en el menú, para el título de la barra superior
-const EXTRA_TITLES = {
-  '/account': 'Mi cuenta',
-  '/notifications': 'Notificaciones'
-}
+// Pantallas que no están en el menú, para el título de la barra superior: [patrón del path, título]
+const EXTRA_TITLES = [
+  [/^\/account$/, 'Mi cuenta'],
+  [/^\/notifications$/, 'Notificaciones'],
+  [/^\/members\/new$/, 'Nuevo socio'],
+  [/^\/members\/\d+$/, 'Socio'],
+  [/^\/members\/\d+\/edit$/, 'Editar socio'],
+  [/^\/members\/\d+\/receipt$/, 'Comprobante de alta']
+]
 
 // Entradas que puede ver el usuario con sus permisos, sin repetir label dentro de un grupo
 export function getVisibleMenu(permissions) {
@@ -121,6 +125,6 @@ export function getMenuRoutes() {
 export function getSectionTitle(pathname, visibleItems) {
   return visibleItems.find((item) => item.path === pathname)?.label
     ?? MENU_ITEMS.find((item) => item.path === pathname)?.label
-    ?? EXTRA_TITLES[pathname]
+    ?? EXTRA_TITLES.find(([pattern]) => pattern.test(pathname))?.[1]
     ?? ''
 }

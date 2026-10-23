@@ -1,0 +1,265 @@
+CASOS DE PRUEBA — MÓDULO MEMBERS (SOCIOS)
+=========================================
+
+Club360 · Prompt 07 · 23/10/2026
+Formato según CLAUDE.md ("Pruebas"). Los resultados obtenidos salen del script de verificación del back
+(corrido contra la base local recreada el 23/10/2026, con datos de prueba creados con la API y los modelos y borrados
+al final). Lo que solo se puede comprobar en el navegador queda anotado en cada caso.
+
+Precondición general: base recreada y cargada con `npm run seed`, sin socios. Sesión del Admin del Club (permiso
+members.manage). Las pantallas están en Gestión > Socios.
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-01
+Módulo: members
+Descripción: Alta de un socio mayor de edad
+Precondiciones: no existe nadie con ese DNI ni ese email.
+Pasos:
+  1. Tocar "Nuevo socio".
+  2. Completar los datos y tocar "Dar de alta".
+Datos de entrada: Laura Mayor, DNI 25111222, nacida el 03/02/1990, email laura@club360.test, teléfono 11 6666-7777.
+Resultado esperado: se crea el socio con su número, sin código de vínculo, con el usuario pendiente de registro y el
+  rol Socio. Se abre el comprobante con las instrucciones de primer ingreso. Queda "Alta de socio" en la bitácora.
+Resultado obtenido: POST /members → 201, Nº 000002, familyCode null, codeFamily null en la base, usuario PENDING sin
+  usuario ni contraseña, rol Socio asignado. Comprobante con isPendingRegistration true y registerUrl
+  http://localhost:5173/register. Bitácora: "Alta de socio" (MEDIUM). Falta ver en el navegador el paso directo al comprobante.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-02
+Módulo: members
+Descripción: Alta de un menor: genera el código de vínculo
+Precondiciones: ninguna.
+Pasos:
+  1. Tocar "Nuevo socio" y cargar una fecha de nacimiento de un menor de 18.
+  2. Ver el aviso debajo de la fecha y tocar "Dar de alta".
+Datos de entrada: Martina Menor, DNI 50111222, nacida el 12/05/2014, sin email, teléfono 11 2222-3333.
+Resultado esperado: aparece el aviso "Es menor de edad: se va a generar un código de vínculo para el adulto
+  responsable" y el email pasa a opcional. Se crea el socio con un código XXXX-XXXX (sin 0, O, 1, I ni L), sin adulto
+  vinculado, y el comprobante muestra el recuadro para el adulto responsable.
+Resultado obtenido: POST /members → 201, Nº 000001, código con el formato pedido (por ejemplo 7YZD-S5KK),
+  linkStatus false, adultUserId null, member ACTIVE. El detalle y el comprobante devuelven el código. Falta ver el
+  aviso y el recuadro en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-03
+Módulo: members
+Descripción: Alta de un menor sin email
+Precondiciones: ninguna.
+Pasos:
+  1. Dar de alta a un menor dejando el email vacío.
+Datos de entrada: los de CP-MEMBERS-02 (sin email).
+Resultado esperado: el alta se hace igual; el usuario queda sin email.
+Resultado obtenido: 201; el usuario quedó con email NULL. Después el menor se registró con su número y su fecha
+  (POST /auth/register-member → 200) y pudo iniciar sesión. Desde Mi cuenta puede guardar sin email (200), y
+  "Olvidé mi contraseña" con su usuario responde el mensaje de siempre sin enviar nada.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-04
+Módulo: members
+Descripción: Alta de un mayor sin email (rechazada)
+Precondiciones: ninguna.
+Pasos:
+  1. Dar de alta a un mayor de edad dejando el email vacío.
+Datos de entrada: Mayor Sinmail, DNI 30111222, nacido el 03/02/1990, sin email.
+Resultado esperado: no se crea nada. Mensaje "Ingresá un email: es obligatorio para los mayores de 18."
+Resultado obtenido: 400 con ese mensaje; no se creó ningún usuario con ese DNI. También dan 400: un DNI de 3 dígitos,
+  una fecha de nacimiento futura y un alta sin nombre ni fecha (2 errores de campo).
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-05
+Módulo: members
+Descripción: DNI o email de alguien que ya es socio
+Precondiciones: existe la socia Nº 000002 (CP-MEMBERS-01).
+Pasos:
+  1. Dar de alta a otra persona con el mismo DNI.
+  2. Darla de alta con otro DNI pero el mismo email.
+Datos de entrada: DNI 25111222; después DNI 25999888 con email laura@club360.test.
+Resultado esperado: no se crea nada. Mensaje "Esta persona ya es socia (Nº 000002)."
+Resultado obtenido: 409 con ese mensaje en los dos casos. Un DNI de un usuario de otro club da 409 "Ese DNI ya está
+  registrado." (no se revela el otro club).
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-06
+Módulo: members
+Descripción: Alta de una persona que es Staff
+Precondiciones: existe una Entrenadora (usuario con registro en staff) con DNI 28111222.
+Pasos:
+  1. Dar de alta un socio con ese DNI.
+Datos de entrada: DNI 28111222.
+Resultado esperado: no se crea nada. Mensaje "Esta persona es staff del club y no puede ser socia."
+Resultado obtenido: 409 con ese mensaje.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-07
+Módulo: members
+Descripción: Alta de una persona que ya es Familia (EXISTING_USER)
+Precondiciones: existe Paula Familia, usuario activo con contraseña y solo el rol Familia (DNI 27111222).
+Pasos:
+  1. Dar de alta un socio con su DNI y su email.
+  2. En el diálogo "Paula Familia ya tiene usuario en el club. ¿Querés darlo de alta como socio con ese usuario?",
+     confirmar.
+Datos de entrada: DNI 27111222, email familia@club360.test.
+Resultado esperado: primero se pregunta; al confirmar se crea el socio sobre su mismo usuario, con el rol Socio, sin
+  tocar su usuario ni su contraseña ni pedirle que se registre.
+Resultado obtenido: el primer POST → 409 con code EXISTING_USER, el mensaje "Paula Familia ya tiene usuario en el
+  club." y data con su id. Reenviado con existingUserId → 201, Nº 000006, isPendingRegistration false. El hash de la
+  contraseña, el usuario y el estado ACTIVE quedaron iguales; tiene los roles Familia y Socio. Con el id de otra
+  persona, o de un usuario de otro club, → 400. Repetir el alta → 409 "Esta persona ya es socia (Nº 000006).".
+  Falta ver el diálogo en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-08
+Módulo: members
+Descripción: Número de socio correlativo
+Precondiciones: tabla de socios vacía.
+Pasos:
+  1. Dar de alta varios socios seguidos, y tres a la vez.
+Datos de entrada: —
+Resultado esperado: los números son de 6 dígitos con ceros a la izquierda, correlativos y únicos en toda la plataforma.
+Resultado obtenido: 000001 y 000002; tres altas simultáneas → 000003, 000004 y 000005 (sin repetidos). Con un socio
+  000099 en otro club, el alta siguiente de Valencia salió 000100.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-09
+Módulo: members
+Descripción: Baja y reactivación de un socio
+Precondiciones: Paula Familia es socia activa y además tiene el rol Familia (CP-MEMBERS-07).
+Pasos:
+  1. En el detalle del socio, tocar "Dar de baja" y confirmar.
+  2. Tocar "Reactivar" y confirmar.
+Datos de entrada: —
+Resultado esperado: con la baja, el socio queda Inactivo, su usuario no cambia y sigue entrando con el rol Familia
+  (ya no con Socio). Con la reactivación vuelve a Activo y recupera el rol Socio. Las dos acciones quedan en la bitácora.
+Resultado obtenido: deactivate → 200, INACTIVE; getAvailableRoles devuelve solo Familia; el usuario siguió ACTIVE. Dar
+  de baja otra vez → 409. reactivate → 200, ACTIVE; vuelve a tener Socio. Reactivar un activo → 409. Bitácora: "Baja de
+  socio" y "Reactivación de socio". Falta ver los diálogos de confirmación en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-10
+Módulo: members
+Descripción: Un socio suspendido por mora no se reactiva a mano
+Precondiciones: socio en estado Suspendido.
+Pasos:
+  1. Intentar reactivarlo.
+Datos de entrada: —
+Resultado esperado: no se reactiva. Mensaje "El socio está suspendido por mora: se reactiva solo cuando regulariza sus
+  cuotas." En el detalle no aparece el botón "Reactivar" y se ve el aviso de la suspensión.
+Resultado obtenido: 409 con ese mensaje. Falta ver el detalle en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-11
+Módulo: members
+Descripción: Desbloqueo de un socio bloqueado por intentos fallidos
+Precondiciones: el usuario del socio está Bloqueado con 5 intentos fallidos.
+Pasos:
+  1. En el detalle del socio (con el chip "Bloqueado"), tocar "Desbloquear" y confirmar.
+  2. Iniciar sesión con ese usuario.
+Datos de entrada: —
+Resultado esperado: el usuario queda Activo con 0 intentos, puede entrar, y queda "Usuario desbloqueado" en la bitácora.
+Resultado obtenido: unblock → 200; ACTIVE y failedAttempts 0. Bitácora: "Desbloqueado por el Admin: socio Nº 000006,
+  usuario "test.familia" (id ...)". El login funcionó. Desbloquear un usuario activo → 409.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-12
+Módulo: members
+Descripción: Cambio de la fecha de nacimiento registrado en la bitácora
+Precondiciones: socia mayor Nº 000002 con email.
+Pasos:
+  1. Tocar "Editar", cambiar la fecha de nacimiento a la de una menor, borrar el email y guardar.
+  2. Volver a la fecha original con el email.
+Datos de entrada: fecha 09/09/2012, sin email; después 03/02/1990 con laura@club360.test.
+Resultado esperado: como con la fecha nueva es menor, el email pasa a opcional y se guarda. La bitácora registra la
+  fecha anterior y la nueva. Sin email y con la fecha de una mayor, se rechaza.
+Resultado obtenido: con la fecha de mayor y sin email → 400 "Ingresá un email: es obligatorio para los mayores de 18.".
+  Con la fecha nueva → 200, isMinor true y email null. Bitácora: "Socio Nº 000002: fecha de nacimiento: 1990-02-03 →
+  2012-09-09, email". Volver a la fecha original → 200. Además: un DNI de otra persona → 409; cambiar el usuario de un
+  socio sin registrar → 400; cambiar el usuario de un socio registrado → 200; un usuario ocupado → 409.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-13
+Módulo: members
+Descripción: Comprobante con y sin código de vínculo
+Precondiciones: socios de CP-MEMBERS-01 (mayor) y CP-MEMBERS-02 (menor).
+Pasos:
+  1. En el detalle de cada socio, tocar "Ver comprobante".
+  2. Tocar "Imprimir" y ver la vista previa de impresión.
+Datos de entrada: —
+Resultado esperado: carnet con encabezado Bordó, el nombre del club en mayúsculas espaciadas, la franja del color del
+  club, fondo Crema, el nombre, "SOCIO Nº ..." y la fecha de alta. Si está pendiente de registro, las instrucciones de
+  primer ingreso. Si tiene código sin usar, el recuadro para el adulto responsable. Al imprimir no se ven el menú, la
+  barra superior ni los botones.
+Resultado obtenido: GET /members/:id/receipt del mayor → sin código y con instrucciones; del menor ya registrado → con
+  código y sin instrucciones. Los dos con club "Club Valencia" y color #2E9BD6. Falta comprobar el carnet y la vista
+  previa de impresión en el navegador.
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-14
+Módulo: members
+Descripción: Listado de socios con búsqueda y filtros
+Precondiciones: los 6 socios de los casos anteriores (2 registrados y 4 pendientes de registro).
+Pasos:
+  1. Ir a Gestión > Socios.
+  2. Buscar por número de socio, por DNI y por nombre y apellido.
+  3. Filtrar por registro y por estado.
+Datos de entrada: "000002", "50111", "laura mayor"; registro "Pendientes" y "Registrados"; estado "Inactivos".
+Resultado esperado: cada búsqueda encuentra al socio; los filtros devuelven la cantidad correcta. Cada fila muestra el
+  número en la tipografía numérica, el nombre, el chip "Menor" si corresponde y los chips de estado.
+Resultado obtenido: total 6; las tres búsquedas encontraron 1 socio cada una; pendientes 4, registrados 2, inactivos 0;
+  un estado inválido → 400. La fila del menor trae isMinor true y hasUnusedFamilyCode true. Un Socio sin
+  members.manage → 403. Falta ver la tabla y las tarjetas (celular) en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-15
+Módulo: members
+Descripción: Teléfono cifrado
+Precondiciones: ninguna.
+Pasos:
+  1. Dar de alta un socio con teléfono y ver su detalle.
+Datos de entrada: teléfono 11 6666-7777.
+Resultado esperado: en la base queda cifrado; el detalle lo muestra en claro.
+Resultado obtenido: leído con raw: true, el campo phone es "iv:authTag:contenido" en hex; con el modelo vuelve
+  "11 6666-7777", y GET /members/:id lo devuelve en claro. Un teléfono vacío queda NULL.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-16
+Módulo: members
+Descripción: Socios de otro club (multi-tenant)
+Precondiciones: un segundo club de prueba con un socio.
+Pasos:
+  1. Con el Admin de Valencia, buscar, abrir, ver el comprobante y dar de baja al socio del otro club.
+Datos de entrada: el id del socio del otro club.
+Resultado esperado: no aparece en el listado y todo lo demás responde "No encontramos el socio.".
+Resultado obtenido: el listado no lo devuelve; detalle, comprobante y baja → 404. Al final se borraron el club, su
+  socio y su usuario.
+Estado: Aprobado

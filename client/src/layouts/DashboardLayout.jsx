@@ -23,6 +23,7 @@ const DRAWER_WIDTH = 240
 
 // Layout de todas las pantallas con sesión: menú lateral Marino (fijo en escritorio, desplegable en el celular),
 // barra superior blanca con el título de la sección, la campana y el avatar, y el contenido sobre el fondo de trabajo.
+// Al imprimir (por ejemplo, el comprobante del alta de un socio) se esconden el menú y la barra: queda solo el contenido.
 export default function DashboardLayout() {
   const theme = useTheme()
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'))
@@ -36,12 +37,12 @@ export default function DashboardLayout() {
   const items = useMemo(() => getVisibleMenu(permissions), [permissions])
   const title = getSectionTitle(location.pathname, items)
 
-  const sidebar = <Sidebar items={items} clubName={club?.name} onNavigate={() => setMobileOpen(false)} />
+  const sidebar = <Sidebar items={items} club={club} onNavigate={() => setMobileOpen(false)} />
   const paperSx = { width: DRAWER_WIDTH, bgcolor: 'navy.main', color: 'navy.contrastText', border: 'none' }
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100dvh', bgcolor: 'background.default' }}>
-      <Box sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}>
+    <Box sx={{ display: 'flex', minHeight: '100dvh', bgcolor: 'background.default', '@media print': { bgcolor: 'background.paper' } }}>
+      <Box sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 }, displayPrint: 'none' }}>
         {isDesktop ? (
           <Drawer variant="permanent" open slotProps={{ paper: { sx: paperSx } }}>
             {sidebar}
@@ -64,7 +65,7 @@ export default function DashboardLayout() {
           position="sticky"
           color="inherit"
           elevation={0}
-          sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}
+          sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider', displayPrint: 'none' }}
         >
           <Toolbar sx={{ gap: 1 }}>
             {!isDesktop && (
@@ -87,7 +88,7 @@ export default function DashboardLayout() {
           </Toolbar>
         </AppBar>
 
-        <Box component="main" sx={{ flexGrow: 1, px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, sm: 3 } }}>
+        <Box component="main" sx={{ flexGrow: 1, px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, sm: 3 }, '@media print': { p: 0 } }}>
           <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
             <Outlet />
           </Box>

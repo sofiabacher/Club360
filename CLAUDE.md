@@ -12,6 +12,9 @@ Plataforma web de gestión para clubes deportivos (proyecto integrador escolar).
   - `user.password` admite NULL: queda vacío desde el alta presencial hasta que el socio completa su registro con el número de socio. El login rechaza usuarios sin contraseña.
   - `member.memberAdultId` pasa a ser `adultUserId` y apunta a `user` (no a `member`), porque el adulto Familia puede no ser Socio.
   - `dvv.table_name`, `routine.image_url` y `routine.video_url` pasan a camelCase: `tableName`, `imageUrl`, `videoUrl`.
+  - `user.email` admite NULL (sigue siendo único): es obligatorio para mayores de 18 y opcional para menores. La regla va en los services.
+  - `user.phone` es `VARCHAR(255)` y se guarda cifrado con AES (getter y setter en el modelo).
+  - `club` suma `accentColor` (`VARCHAR(7)`, color propio del club) y `extraInfo` (JSON: WhatsApp, horarios de secretaría, canchas y horarios de entrenamiento).
 - `docs/pruebas/`: casos de prueba documentados en `.txt`, uno por módulo (ver "Pruebas").
 
 **Si algo no está definido en este archivo, en el contexto o en el DER, preguntar antes de asumir un criterio.**
@@ -84,7 +87,7 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
 - **Estados:** los campos de estado son `INT NOT NULL DEFAULT 1`, sin tabla de estados. El mapeo vive en `api/src/utils/constants.js` y se replica en `client/src/utils/constants.js`. Nunca escribir números mágicos: usar las constantes.
 - **Dígitos verificadores:** las tablas de negocio tienen `dvh`. El DVH de cada registro y el DVV de cada tabla se calculan **automáticamente** con los hooks de `models/integrityHooks.js`: no se calculan a mano en los services. Para que funcionen, toda escritura tiene que pasar por Sequelize (nunca SQL directo con `sequelize.query` para insertar, modificar o borrar datos de negocio) y, si se usa una transacción, hay que pasarla en `options.transaction`. La tabla `log` no tiene `dvh`.
 - **Bitácora:** las acciones relevantes se registran con `utils/logger.js`, indicando `clubId`, `userId` y `roleId` (el rol activo). Las acciones se definen en `LOG_ACTIONS` de `constants.js`.
-- **Encriptación:** contraseñas con bcrypt (`hashPassword`); datos sensibles reversibles con `encrypt`/`decrypt` de `utils/crypto.js`.
+- **Encriptación:** contraseñas con bcrypt (`hashPassword`); datos sensibles reversibles con `encrypt`/`decrypt` de `utils/crypto.js`. El dato cifrado reversible es el **teléfono del usuario**, y lo cifra y descifra el propio modelo `User`: los services lo usan en claro, y **no** se lee `phone` con `raw: true`.
 - **Seed:** la carga inicial se hace solo con `npm run seed`, nunca al arrancar el servidor. Es idempotente (se puede correr varias veces). Los datos del club están en `seed/data/club.js` (provisorios, ver `docs/contexto.md` sección 2.1) y los del usuario Admin en el `.env` (`SEED_ADMIN_*`). Los permisos de un rol base se asignan **solo cuando el rol se crea**: volver a correr el seed no pisa los cambios que hizo el Admin.
 - **Configuración:** todo valor de entorno se lee desde `config/index.js`, no con `process.env` en otros archivos. Las URLs no se hardcodean.
 
@@ -143,7 +146,7 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
   - `palette.navy` = Marino `#0F1B3D` para la estructura (menú lateral, encabezados) y los títulos.
   - `palette.cream` `#FBF4E6` y `palette.burgundy` `#8E2C3A` para los toques de club de barrio.
   - Fondo de trabajo `#F6F7FB`, tarjetas blancas.
-- **Acento del club:** Celeste Valencia `#2E9BD6`, provisorio. Es solo un acento, por ejemplo junto al nombre del club en el menú o en el carnet de socio, y no reemplaza ningún color de la paleta. Dónde se guarda está pendiente (D13): no lo implementes sin consultar.
+- **Acento del club:** se guarda en `club.accentColor` (D13) y llega al front en `session.club.accentColor`. Para Valencia, Celeste `#2E9BD6` (provisorio). Es solo un acento, por ejemplo una franja junto al nombre del club en el menú o en el carnet de socio, y no reemplaza ningún color de la paleta. Se usa desde la sesión, nunca escrito a mano en un componente.
 - **Estados:** siempre con el componente `StatusChip` (`components/common/StatusChip.jsx`): `ok` verde (al día, confirmada, aprobada), `pending` ámbar (pendiente), `overdue` rojo (vencida, rechazada, cancelada), `urgent` naranja (requiere acción ya, ej. citación sin responder).
 - **Tipografía:** Poppins para todo. Los números destacados (resultados, fecha y hora de un partido, número de socio) usan la variante `numeric` (Barlow Condensed): `<Typography variant="numeric">`.
 - **Íconos:** `@mui/icons-material` en variante Rounded (ej. `NotificationsRounded`).
@@ -172,6 +175,17 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 - **Permisos directos** (`user_permission`): excepción puntual por usuario, con cualquiera de los 41 permisos. Los de `ADULT_ONLY_PERMISSIONS` igual se quitan si el usuario es menor.
 - Los cambios de roles y permisos rigen en el back desde la siguiente request; el front refresca la sesión al recuperar el foco de la pestaña (como mínimo cada 60 segundos).
 
+## Socios y club (módulos `members` y `clubs`)
+
+- **Número de socio:** 6 dígitos correlativos con ceros a la izquierda (`000001`), únicos en toda la plataforma. Lo genera `generateMemberNumber` en `members.service.js`.
+- **Código de vínculo familiar:** solo para menores al momento del alta, con formato `XXXX-XXXX` (sin caracteres que se confundan). Se usa una sola vez.
+- **Alta presencial:** DNI y fecha de nacimiento obligatorios; email obligatorio solo para mayores. Si la persona ya tiene usuario en el club: si es Staff, se rechaza; si ya es socia, se rechaza; si es otra cosa (por ejemplo, Familia), se le crea el socio sobre ese mismo usuario (`EXISTING_USER`). El rol Socio se asigna con `assignBaseRole`.
+- **Baja del socio:** `member` en INACTIVE, sin tocar el `user`. **Reactivación:** solo de INACTIVE a ACTIVE. Un SUSPENDED por mora no se reactiva a mano.
+- **Estado del socio:** los demás módulos (inscripciones, cuotas, categorías, citaciones) consultan `memberStateId` en lugar de modificarse cuando el socio se da de baja.
+- **Información del club:** los datos de contacto son columnas de `club`; WhatsApp, horarios y canchas van en `club.extraInfo` (JSON). La estructura está comentada en el modelo `Club`.
+- **Deportes del club:** no se puede desactivar un deporte que tiene inscripciones Pendientes o Aprobadas.
+- **Integridad con JSON:** `utils/integrity.js` normaliza objetos y arrays como JSON con las claves ordenadas, así el DVH no depende del orden que devuelve MySQL.
+
 ## Lista de tareas (`docs/TODO.md`)
 
 `docs/TODO.md` es la lista de todo lo que falta del proyecto. Mantenerla al día es parte de cada tarea:
@@ -186,4 +200,3 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 
 Las decisiones abiertas están en la sección **Decisiones pendientes** de `docs/TODO.md`:
 - **D12:** día de generación y de vencimiento de la cuota mensual. Bloquea el job de cuotas.
-- **D13:** dónde se guarda el color de acento del club.

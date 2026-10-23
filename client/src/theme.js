@@ -8,7 +8,7 @@ import '@fontsource/barlow-condensed/600.css'
 import '@fontsource/barlow-condensed/700.css'
 
 // Tema de Club360 según docs/moodboard.png (decisión D10). Todo lo visual sale de acá: no se escriben colores ni fuentes
-// sueltos en los componentes. Falta el acento propio de cada club (el color de Valencia está a definir).
+// sueltos en los componentes. El acento propio de cada club no está acá: llega en session.club.accentColor (D13).
 const FONT_FAMILY = '"Poppins", "Helvetica", "Arial", sans-serif'
 const NUMERIC_FONT_FAMILY = '"Barlow Condensed", sans-serif'
 

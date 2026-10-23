@@ -54,11 +54,36 @@ async function loadSports(transaction, summary) {
     return sportsByName
 }
 
+// Si el club ya existe, solo se completan accentColor (si tiene el valor por defecto) y extraInfo (si está vacío):
+// lo demás lo puede haber cambiado el Admin desde la configuración del club.
+// Antes de crearlo se busca también por los nombres anteriores (previousNames): si aparece, se le cambia el nombre.
 async function loadClub(transaction, summary) {
-    const { name, ...defaults } = CLUB_SEED.club
-    const [club, created] = await Club.findOrCreate({ where: { name }, defaults, transaction })
+    const { name, accentColor, extraInfo } = CLUB_SEED.club
 
-    count(summary.club, created)
+    let club = await Club.findOne({ where: { name }, transaction })
+
+    if (!club) {
+        club = await Club.findOne({ where: { name: CLUB_SEED.previousNames }, transaction })
+        if (club) {
+            summary.clubRenamedFrom = club.name
+            await club.update({ name }, { transaction })
+        }
+    }
+
+    if (!club) {
+        club = await Club.create(CLUB_SEED.club, { transaction })
+        count(summary.club, true)
+        return club
+    }
+
+    const completed = {}
+    if (club.accentColor === Club.rawAttributes.accentColor.defaultValue) completed.accentColor = accentColor
+    if (club.extraInfo === null) completed.extraInfo = extraInfo
+
+    if (Object.keys(completed).length > 0) await club.update(completed, { transaction })
+
+    summary.clubCompleted = Object.keys(completed)
+    count(summary.club, false)
     return club
 }
 
@@ -143,6 +168,8 @@ function printSummary(summary, club, admin) {
     console.log(`  Permisos:            ${line(summary.permissions)}`)
     console.log(`  Deportes:            ${line(summary.sports)}`)
     console.log(`  Club:                ${club.name} (${state(summary.club)})`)
+    if (summary.clubRenamedFrom) console.log(`    Se renombró desde "${summary.clubRenamedFrom}"`)
+    if (summary.clubCompleted?.length > 0) console.log(`    Se completó: ${summary.clubCompleted.join(', ')}`)
     console.log(`  Deportes activados:  ${line(summary.clubSports)}`)
     console.log(`  Roles base:          ${line(summary.roles)}`)
 

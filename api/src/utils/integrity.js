@@ -21,11 +21,26 @@ function mod11(text) {
     return result === 11 ? 0 : result
 }
 
-// Lleva cada valor a un texto que no depende de cómo llegó el dato
+// JSON con las claves de los objetos ordenadas, en todos los niveles
+function stableStringify(value) {
+    if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`
+
+    if (value && typeof value === 'object') {
+        const entries = Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${stableStringify(value[key])}`)
+        return `{${entries.join(',')}}`
+    }
+
+    return JSON.stringify(value ?? null)
+}
+
+// Lleva cada valor a un texto que no depende de cómo llegó el dato.
+// Los objetos y arrays (campos JSON) van como JSON con las claves ordenadas, así el DVH no depende del orden en que
+// MySQL devuelve las claves.
 function toText(value) {
     if (value === null || value === undefined) return ''
     if (value instanceof Date) return value.toISOString()
     if (typeof value === 'boolean') return value ? '1' : '0'
+    if (typeof value === 'object') return stableStringify(value)
     return String(value)
 }
 
@@ -69,6 +84,7 @@ const computeTableDVV = async (Model, transaction) => {
 }
 
 module.exports = {
+    stableStringify,
     calculateDVH,
     getDVHAttributes,
     computeRowDVH,

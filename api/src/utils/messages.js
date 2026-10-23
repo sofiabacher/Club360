@@ -57,6 +57,7 @@ module.exports = {
         emailInvalid: 'Ingresá un email válido.',
         emailTaken: 'Ese email ya está registrado.',
         phoneLength: 'El teléfono puede tener hasta 30 caracteres.',
+        emailRequiredAdult: 'Ingresá un email: es obligatorio para los mayores de 18.',
         photoRequired: 'Elegí una imagen para tu foto.'
     },
 
@@ -87,6 +88,65 @@ module.exports = {
         permissionIdsInvalid: 'Elegí permisos válidos.',
         roleIdsInvalid: 'Elegí roles válidos.',
         searchLength: 'La búsqueda puede tener hasta 100 caracteres.',
+        pageInvalid: 'La página no es válida.'
+    },
+
+    clubs: {
+        clubNotFound: 'No encontramos el club.',
+        sportNotFound: 'No encontramos el deporte.',
+        sportHasInscriptions: 'Hay socios inscriptos en este deporte. No se puede desactivar.',
+        emailTaken: 'Ese email ya lo usa otro club.',
+
+        // Validaciones de formato
+        socialFeeInvalid: 'La cuota social tiene que ser un número mayor a 0.',
+        priceFeeInvalid: 'La cuota deportiva tiene que ser un número mayor a 0.',
+        delayFeeInvalid: 'Los días de atraso tienen que ser un número entero mayor o igual a 1.',
+        conflictMarginInvalid: 'El margen de conflicto tiene que ser un número entero de minutos, mayor o igual a 0.',
+        addressInvalid: 'Ingresá la dirección (hasta 100 caracteres).',
+        phoneInvalid: 'El teléfono puede tener hasta 30 caracteres.',
+        emailInvalid: 'Ingresá un email válido (hasta 100 caracteres).',
+        accentColorInvalid: 'El color tiene que tener el formato #RRGGBB.',
+        extraInfoInvalid: 'La información general no tiene el formato esperado.',
+        whatsappInvalid: 'El WhatsApp puede tener hasta 30 caracteres.',
+        secretaryHoursInvalid: 'Cada horario de secretaría tiene que tener entre 1 y 100 caracteres (hasta 10 líneas).',
+        courtsInvalid: 'Cada cancha necesita nombre y dirección (hasta 100 caracteres cada uno, hasta 20 canchas).',
+        trainingScheduleInvalid: 'Cada horario de entrenamiento necesita deporte y horario (hasta 100 caracteres cada uno, hasta 20).',
+        isActiveInvalid: 'Indicá si el deporte está activo.',
+        idInvalid: 'El identificador no es válido.'
+    },
+
+    members: {
+        memberNotFound: 'No encontramos el socio.',
+        userNotFound: 'No encontramos el usuario.',
+        isStaff: 'Esta persona es staff del club y no puede ser socia.',
+        alreadyMember: (numMember) => `Esta persona ya es socia (Nº ${numMember}).`,
+        existingUser: (name) => `${name} ya tiene usuario en el club.`,
+        existingUserMismatch: 'Los datos no corresponden al usuario indicado. Volvé a cargar el alta.',
+        dniTaken: 'Ese DNI ya está registrado.',
+        emailTaken: 'Ese email ya está registrado.',
+        usernameTaken: 'Ese nombre de usuario ya está en uso.',
+        emailRequiredAdult: 'Ingresá un email: es obligatorio para los mayores de 18.',
+        usernameNotRegistered: 'El socio todavía no se registró: el nombre de usuario lo elige al registrarse.',
+        memberNumberFailed: 'No pudimos generar el número de socio. Probá de nuevo.',
+        alreadyInactive: 'El socio ya está dado de baja.',
+        notInactive: 'Solo se puede reactivar a un socio dado de baja.',
+        suspendedNotReactivable: 'El socio está suspendido por mora: se reactiva solo cuando regulariza sus cuotas.',
+        notBlocked: 'El usuario no está bloqueado.',
+
+        // Validaciones de formato
+        idInvalid: 'El identificador no es válido.',
+        nameInvalid: 'Ingresá el nombre (hasta 100 caracteres).',
+        lastNameInvalid: 'Ingresá el apellido (hasta 100 caracteres).',
+        dniInvalid: 'El DNI tiene que tener 7 u 8 dígitos, sin puntos.',
+        birthDateInvalid: 'Ingresá una fecha de nacimiento válida, que no sea futura.',
+        emailInvalid: 'Ingresá un email válido (hasta 150 caracteres).',
+        phoneInvalid: 'El teléfono puede tener hasta 30 caracteres.',
+        usernameLength: 'El usuario tiene que tener entre 4 y 50 caracteres.',
+        usernameFormat: 'El usuario solo puede tener letras, números, punto y guion bajo.',
+        existingUserIdInvalid: 'El usuario indicado no es válido.',
+        searchLength: 'La búsqueda puede tener hasta 100 caracteres.',
+        stateInvalid: 'El estado no es válido.',
+        registrationInvalid: 'El filtro de registro no es válido.',
         pageInvalid: 'La página no es válida.'
     },
 

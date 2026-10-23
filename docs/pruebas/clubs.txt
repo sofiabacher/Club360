@@ -1,0 +1,126 @@
+CASOS DE PRUEBA — MÓDULO CLUBS (CONFIGURACIÓN, DEPORTES Y "EL CLUB")
+=====================================================================
+
+Club360 · Prompt 07 · 23/10/2026
+Formato según CLAUDE.md ("Pruebas"). Los resultados obtenidos salen del script de verificación del back
+(corrido contra la base local recreada el 23/10/2026, con datos de prueba creados con los modelos y borrados al final).
+Lo que solo se puede comprobar en el navegador queda anotado en cada caso.
+
+Precondición general: base recreada y cargada con `npm run seed` (Club Valencia con los datos provisorios de la
+sección 2.1 del contexto, Vóley activo con cuota $25.000, 7 roles base, 41 permisos y el usuario Admin).
+
+
+--------------------------------------------------
+ID: CP-CLUBS-01
+Módulo: clubs
+Descripción: Modificar la configuración del club
+Precondiciones: sesión del Admin del Club (permiso clubs.manageSettings).
+Pasos:
+  1. Ir a Club > Configuración del club.
+  2. Cambiar la cuota social y el color del club, y el WhatsApp en "Datos de contacto".
+  3. Tocar "Guardar cambios".
+  4. Ir a Club > El club.
+Datos de entrada: cuota social 16000, color #112233, WhatsApp 11 1234-5678.
+Resultado esperado: se guardan los cambios, el nombre del club no cambia, la bitácora registra "Modificación de la
+  configuración del club" con criticidad alta y el detalle de lo que cambió. La sesión trae el color nuevo y
+  "El club" muestra el WhatsApp nuevo.
+Resultado obtenido: PUT /clubs/settings → 200 con cuota 16000 y color #112233; un "name" en el body se ignoró
+  ("Club Valencia"). Bitácora (HIGH): "cuota social: 15000 → 16000. color del club: #2E9BD6 → #112233. información
+  general". GET /auth/me trae session.club.accentColor #112233. GET /clubs/info con un Socio muestra el WhatsApp nuevo.
+  Al final se restauró la configuración original. Falta ver en el navegador la franja del menú con el color nuevo.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CLUBS-02
+Módulo: clubs
+Descripción: Configuración con valores inválidos
+Precondiciones: sesión del Admin.
+Pasos:
+  1. En Configuración del club, cargar cada uno de los valores inválidos y guardar.
+Datos de entrada: cuota social 0; días de atraso 0; margen de conflicto -1; color "red"; email "no-es-email";
+  dirección vacía; una cancha sin dirección; una clave desconocida en la información general; horarios de secretaría
+  que no son una lista.
+Resultado esperado: no se guarda nada y se muestra el mensaje de cada campo.
+Resultado obtenido: 400 en los nueve casos, con los mensajes "La cuota social tiene que ser un número mayor a 0.",
+  "Los días de atraso tienen que ser un número entero mayor o igual a 1.", "El margen de conflicto tiene que ser un
+  número entero de minutos, mayor o igual a 0.", "El color tiene que tener el formato #RRGGBB.", "Ingresá un email
+  válido (hasta 100 caracteres).", "Ingresá la dirección (hasta 100 caracteres).", "Cada cancha necesita nombre y
+  dirección (...)", "La información general no tiene el formato esperado." y "Cada horario de secretaría tiene que
+  tener entre 1 y 100 caracteres (hasta 10 líneas).". Un Socio que intenta PUT /clubs/settings recibe 403.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CLUBS-03
+Módulo: clubs
+Descripción: Activar, desactivar y cambiar la cuota de un deporte
+Precondiciones: sesión del Admin (permiso clubs.manageSports). Futsal y Básquet no están activos en el club.
+Pasos:
+  1. Ir a Club > Deportes del club.
+  2. Activar Básquet sin cargar la cuota y guardar.
+  3. Activar Futsal con cuota 20000 y guardar.
+  4. Desactivar Futsal y guardar. Volver a activarlo sin cambiar la cuota.
+  5. Cambiar la cuota de Vóley a 26000.
+Datos de entrada: los indicados en los pasos.
+Resultado esperado: Básquet sin cuota no se activa. Futsal se activa, se desactiva y al reactivarlo conserva su
+  cuota. Vóley queda con la cuota nueva. Cada cambio queda en la bitácora como "Modificación de un deporte del club".
+Resultado obtenido: Básquet sin cuota → 400 "La cuota deportiva tiene que ser un número mayor a 0.". Futsal: 200
+  activo con 20000; 200 inactivo; 200 activo con 20000 otra vez. Vóley → 200 con 26000. Un deporte inexistente da 404
+  y un isActive que no es booleano, 400. Bitácora (HIGH) con el detalle de cada cambio. Al final se borró el
+  clubSport de Futsal y Vóley quedó con 25000.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CLUBS-04
+Módulo: clubs
+Descripción: Desactivar un deporte que tiene inscriptos
+Precondiciones: sesión del Admin. Un socio con una inscripción a Vóley.
+Pasos:
+  1. En Deportes del club, desactivar Vóley y guardar.
+Datos de entrada: inscripción en estado Aprobada; después Pendiente; después Rechazada.
+Resultado esperado: con una inscripción Aprobada o Pendiente no se desactiva y se muestra "Hay socios inscriptos en
+  este deporte. No se puede desactivar.". Con una Rechazada sí se desactiva.
+Resultado obtenido: Aprobada → 409 con ese mensaje; Pendiente → 409; Rechazada → 200 (inactivo). Mientras estuvo
+  inactivo, "El club" no lo mostró entre los deportes. Después se reactivó con 25000 y se borró la inscripción de
+  prueba. Falta ver en el navegador el mensaje en el Snackbar.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CLUBS-05
+Módulo: clubs
+Descripción: Ver "El club" con cada rol que tiene clubs.viewInfo
+Precondiciones: base del seed. Tienen clubs.viewInfo los roles base Socio, Jugadora y Familia (los demás roles base
+  no lo tienen; el Admin puede sumarlo desde Roles y permisos). Un usuario con cada uno de esos roles.
+Pasos:
+  1. Iniciar sesión con cada usuario y elegir ese rol.
+  2. Ir a Club > El club.
+Datos de entrada: —
+Resultado esperado: se ve el encabezado con el nombre del club y su franja de color, y las tarjetas de contacto (con el
+  link de WhatsApp), horarios de secretaría, canchas, horarios de entrenamiento y deportes con su cuota.
+Resultado obtenido: GET /clubs/info con un Socio → 200 con los datos del seed (3 canchas, Vóley con $25.000). Los
+  roles con clubs.viewInfo salen de la base: Socio, Jugadora y Familia. Falta comprobar la pantalla en el navegador con
+  cada rol.
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-CLUBS-06
+Módulo: clubs
+Descripción: Datos de Valencia en el seed e idempotencia
+Precondiciones: base recreada (DB_FORCE_SYNC=true y después false).
+Pasos:
+  1. Correr `npm run seed`.
+  2. Cambiar el WhatsApp del club y correr el seed de nuevo.
+  3. Renombrar el club a "Valencia", dejar el color en el valor por defecto y la información general vacía, y correr el seed.
+Datos de entrada: —
+Resultado esperado: el club se llama "Club Valencia" y tiene los datos de la sección 2.1 del contexto, el color
+  #2E9BD6 y la información general. Correr el seed otra vez no duplica nada ni pisa lo que cambió el Admin. Si
+  encuentra el club con el nombre viejo, lo renombra en lugar de crear otro, y completa el color y la información.
+Resultado obtenido: club "Club Valencia", dirección, teléfono, email, cuota social 15000, atraso 180, margen 60,
+  color #2E9BD6, información general con 3 canchas y WhatsApp; Vóley con 25000. Con el seed otra vez, las cantidades
+  no cambiaron y el WhatsApp modificado se mantuvo. Con el nombre "Valencia", el seed lo renombró (sin crear otro club),
+  completó accentColor y extraInfo, y lo informó en el resumen. El DVH del club (con su campo JSON) da correcto.
+Estado: Aprobado

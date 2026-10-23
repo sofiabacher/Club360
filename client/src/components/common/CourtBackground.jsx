@@ -13,10 +13,36 @@ function VolleyCourt({ fill, line }) {
   )
 }
 
-// Fondo de pantalla completa "líneas de cancha" (login y encabezados): Marino con la cancha encima y el contenido centrado.
-// En el celular la cancha se pone vertical y se recorta; el contenido siempre queda por encima.
-export default function CourtBackground({ children }) {
+// Fondo "líneas de cancha": Marino con la cancha encima.
+// - Por defecto, de pantalla completa (login) con el contenido centrado. En el celular la cancha se pone vertical y se recorta.
+// - compact: versión baja para el encabezado de una página, con la cancha recortada a la derecha y el contenido a la izquierda.
+// El contenido siempre queda por encima.
+export default function CourtBackground({ children, compact = false, sx }) {
   const theme = useTheme()
+
+  if (compact) {
+    return (
+      <Box sx={[{ position: 'relative', overflow: 'hidden', bgcolor: 'navy.main', borderRadius: 3 }, ...(Array.isArray(sx) ? sx : [sx])]}>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            right: { xs: -140, sm: -40 },
+            aspectRatio: '220 / 120',
+            width: 420,
+            transform: 'translateY(-50%)',
+            pointerEvents: 'none'
+          }}
+        >
+          <VolleyCourt fill={theme.palette.primary.main} line={theme.palette.common.white} />
+        </Box>
+
+        <Box sx={{ position: 'relative', zIndex: 1 }}>
+          {children}
+        </Box>
+      </Box>
+    )
+  }
 
   return (
     <Box

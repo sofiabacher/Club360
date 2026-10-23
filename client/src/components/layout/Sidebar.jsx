@@ -6,20 +6,24 @@ import ListItemText from '@mui/material/ListItemText'
 import Typography from '@mui/material/Typography'
 import { alpha } from '@mui/material/styles'
 
+import AccentStripe from '../common/AccentStripe.jsx'
 import BrandLogo from '../common/BrandLogo.jsx'
 import { groupMenu } from '../../navigation/menu.js'
 
-// Contenido del menú lateral Marino (moodboard): logo, nombre del club y las entradas agrupadas.
-// La entrada activa queda resaltada con fondo claro y un punto.
-export default function Sidebar({ items, clubName, onNavigate }) {
+// Contenido del menú lateral Marino (moodboard): logo, nombre del club con la franja de su color propio
+// (club.accentColor) y las entradas agrupadas. La entrada activa queda resaltada con fondo claro y un punto.
+export default function Sidebar({ items, club, onNavigate }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ px: 3, pt: 3, pb: 2 }}>
         <BrandLogo inverted fontSize="1.6rem" />
-        {clubName && (
-          <Typography variant="body2" sx={{ mt: 0.5, color: 'navy.contrastText', opacity: 0.7 }}>
-            Club {clubName}
-          </Typography>
+        {club?.name && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.75 }}>
+            <AccentStripe color={club.accentColor} size={3} sx={{ height: 18, alignSelf: 'center' }} />
+            <Typography variant="body2" sx={{ color: 'navy.contrastText', opacity: 0.7 }}>
+              {club.name}
+            </Typography>
+          </Box>
         )}
       </Box>
 

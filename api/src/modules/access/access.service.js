@@ -78,7 +78,8 @@ const CIRCUIT_ROLE_NAMES = Object.values(BASE_ROLES).filter(name => name !== BAS
 
 const actorOf = ({ id: userId, clubId, activeRoleId }) => ({ clubId, userId, roleId: activeRoleId })
 
-const userLabel = (user) => `"${user.username ?? user.email}" (id ${user.id})`
+// Usuario o email; si no tiene ninguno (socio menor sin registrar), el nombre
+const userLabel = (user) => `"${user.username ?? user.email ?? `${user.name} ${user.lastName}`}" (id ${user.id})`
 
 // Nombres de una lista de ids de permisos, para los detalles de la bitácora
 const namesOf = (ids, permissionsById) => ids.map(id => permissionsById.get(id).name).join(', ')

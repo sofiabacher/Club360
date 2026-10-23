@@ -22,7 +22,7 @@ const { auth } = require('../../utils/messages')
 async function buildSession(userId, activeRoleId) {
     const user = await User.findByPk(userId, {
         attributes: ['id', 'name', 'lastName', 'email', 'username', 'photo', 'birthDate'],
-        include: [{ model: Club, as: 'club', attributes: ['id', 'name'] }]
+        include: [{ model: Club, as: 'club', attributes: ['id', 'name', 'accentColor'] }]
     })
 
     if (!user) throw createError(auth.userNotFound, 401)
@@ -42,7 +42,7 @@ async function buildSession(userId, activeRoleId) {
             birthDate: user.birthDate,
             isAdult: isAdult(user.birthDate)
         },
-        club: { id: user.club.id, name: user.club.name },
+        club: { id: user.club.id, name: user.club.name, accentColor: user.club.accentColor },
         roles,
         activeRole,
         permissions
@@ -206,8 +206,10 @@ async function registerMember({ numMember, birthDate, username, password }) {
 const RESET_ALLOWED_STATES = [USER_STATES.ACTIVE, USER_STATES.BLOCKED]
 const canResetPassword = (user) => Boolean(user?.password) && RESET_ALLOWED_STATES.includes(user.userStateId)
 
-// El aviso de cambio de contraseña no corta la operación si falla (el sender ya lo registra como MAIL_ERROR)
+// El aviso de cambio de contraseña no corta la operación si falla (el sender ya lo registra como MAIL_ERROR).
+// Un menor sin email no recibe el aviso.
 function notifyPasswordChanged(user) {
+    if (!user.email) return
     sendPasswordChangedNotice(user).catch(() => {})
 }
 
@@ -216,11 +218,12 @@ async function sendRecoveryLink(user) {
     await sendRecoveryEmail(user, generatePasswordResetToken(user))
 }
 
-// Responde siempre lo mismo, exista o no la cuenta, para no revelar qué usuarios existen
+// Responde siempre lo mismo, exista o no la cuenta, para no revelar qué usuarios existen.
+// Un usuario sin email (menor) no puede recibir el link: recupera la contraseña a través del club, con la misma respuesta.
 async function forgotPassword(identifier) {
     const user = await User.findOne({ where: { [Op.or]: [{ username: identifier }, { email: identifier }] } })
 
-    if (canResetPassword(user)) {
+    if (canResetPassword(user) && user.email) {
         // No se espera el envío: así la respuesta tarda lo mismo haya o no email. Si falla, queda MAIL_ERROR en la bitácora
         sendRecoveryLink(user).catch(() => {})
     }
@@ -304,12 +307,19 @@ async function getAccount(userId) {
     }
 }
 
-// Solo email y teléfono: cualquier otro campo que llegue en el body se ignora
+// Solo email y teléfono: cualquier otro campo que llegue en el body se ignora.
+// El email es obligatorio para los mayores de 18 y opcional para los menores.
 async function updateAccount({ id: userId, clubId, activeRoleId }, { email, phone }) {
-    const emailTaken = await User.findOne({ where: { email, id: { [Op.ne]: userId } }, attributes: ['id'] })
-    if (emailTaken) throw createError(auth.emailTaken, 409)
+    email = email || null
 
     const user = await User.findByPk(userId)
+    if (!email && isAdult(user.birthDate)) throw createError(auth.emailRequiredAdult, 400)
+
+    if (email) {
+        const emailTaken = await User.findOne({ where: { email, id: { [Op.ne]: userId } }, attributes: ['id'] })
+        if (emailTaken) throw createError(auth.emailTaken, 409)
+    }
+
     const changes = { email, phone: phone || null }
     const changedFields = Object.keys(changes).filter(field => user[field] !== changes[field])
 

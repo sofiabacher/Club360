@@ -82,7 +82,17 @@ const LOG_ACTIONS = {
     ROLE_ASSIGNED: { message: 'Asignación de rol a un usuario', criticity: CRITICITY.HIGH },
     ROLE_REMOVED: { message: 'Quita de rol a un usuario', criticity: CRITICITY.HIGH },
     PERMISSION_ASSIGNED: { message: 'Asignación de permiso directo', criticity: CRITICITY.HIGH },
-    PERMISSION_REMOVED: { message: 'Quita de permiso directo', criticity: CRITICITY.HIGH }
+    PERMISSION_REMOVED: { message: 'Quita de permiso directo', criticity: CRITICITY.HIGH },
+
+    // Socios
+    MEMBER_CREATED: { message: 'Alta de socio', criticity: CRITICITY.MEDIUM },
+    MEMBER_UPDATED: { message: 'Modificación de socio', criticity: CRITICITY.MEDIUM },
+    MEMBER_DEACTIVATED: { message: 'Baja de socio', criticity: CRITICITY.MEDIUM },
+    MEMBER_REACTIVATED: { message: 'Reactivación de socio', criticity: CRITICITY.MEDIUM },
+
+    // Club: HIGH porque cambian las cuotas y las reglas de todo el club
+    CLUB_SETTINGS_UPDATED: { message: 'Modificación de la configuración del club', criticity: CRITICITY.HIGH },
+    CLUB_SPORT_UPDATED: { message: 'Modificación de un deporte del club', criticity: CRITICITY.HIGH }
 }
 
 // Intentos fallidos de login antes de bloquear al usuario
