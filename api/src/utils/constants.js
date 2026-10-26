@@ -2,7 +2,8 @@
 // IMPORTANTE: estos mapeos se replican en client/src/utils/constants.js. Si se cambia uno, se cambia en los dos.
 // Valores cerrados el 18/10/2026 (decisión D8). El valor 1 es siempre el estado inicial (default del modelo).
 
-// user.userStateId — la baja de un Staff se hace con DELETED (staff no tiene estado propio)
+// user.userStateId — staff no tiene estado propio: la baja de un Staff le quita sus roles de staff y deja el usuario
+// en DELETED solo si no le queda ningún otro rol
 const USER_STATES = { 
     PENDING: 1, 
     ACTIVE: 2, 
@@ -92,7 +93,19 @@ const LOG_ACTIONS = {
 
     // Club: HIGH porque cambian las cuotas y las reglas de todo el club
     CLUB_SETTINGS_UPDATED: { message: 'Modificación de la configuración del club', criticity: CRITICITY.HIGH },
-    CLUB_SPORT_UPDATED: { message: 'Modificación de un deporte del club', criticity: CRITICITY.HIGH }
+    CLUB_SPORT_UPDATED: { message: 'Modificación de un deporte del club', criticity: CRITICITY.HIGH },
+
+    // Staff y activación de su cuenta
+    STAFF_CREATED: { message: 'Alta de staff', criticity: CRITICITY.MEDIUM },
+    STAFF_UPDATED: { message: 'Modificación de staff', criticity: CRITICITY.MEDIUM },
+    STAFF_DEACTIVATED: { message: 'Baja de staff', criticity: CRITICITY.MEDIUM },
+    STAFF_REACTIVATED: { message: 'Reactivación de staff', criticity: CRITICITY.MEDIUM },
+    ACCOUNT_ACTIVATED: { message: 'Activación de cuenta', criticity: CRITICITY.MEDIUM },
+    ACTIVATION_EMAIL_SENT: { message: 'Envío del email de activación', criticity: CRITICITY.MEDIUM },
+
+    // Vínculo familiar
+    FAMILY_LINKED: { message: 'Vínculo como Familia', criticity: CRITICITY.MEDIUM },
+    MEMBER_UNLINKED: { message: 'Desvinculación del adulto responsable', criticity: CRITICITY.MEDIUM }
 }
 
 // Intentos fallidos de login antes de bloquear al usuario
@@ -115,6 +128,10 @@ const BASE_ROLES = {
 // Un socio SUSPENDED por mora los conserva (contexto, secciones 3.6.1 y 6).
 const MEMBERSHIP_ROLES = [BASE_ROLES.MEMBER, BASE_ROLES.PLAYER]
 
+// Roles de staff. Staff activo = usuario con al menos uno de estos roles (isActiveStaff en staff.service).
+// Una persona puede tener varios y trabaja con el rol activo.
+const STAFF_ROLES = [BASE_ROLES.REPRESENTATIVE, BASE_ROLES.COACH, BASE_ROLES.TRAINER]
+
 module.exports = {
     USER_STATES,
     MEMBER_STATES,
@@ -127,5 +144,6 @@ module.exports = {
     LOG_ACTIONS,
     LOGIN_MAX_ATTEMPTS,
     BASE_ROLES,
-    MEMBERSHIP_ROLES
+    MEMBERSHIP_ROLES,
+    STAFF_ROLES
 }

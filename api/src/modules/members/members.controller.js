@@ -86,6 +86,50 @@ const unblock = async (req, res, next) => {
     }
 }
 
+// ---------- Vínculo familiar ----------
+
+const validateFamilyCode = async (req, res, next) => {
+    try {
+        const data = await service.validateFamilyCode(req.body.code)
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const linkWithNewAccount = async (req, res, next) => {
+    try {
+        const { code, name, lastName, dni, birthDate, email, phone, username, password } = req.body
+        const data = await service.linkWithNewAccount({ code, name, lastName, dni, birthDate, email, phone, username, password })
+        res.status(201).json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const linkWithExistingAccount = async (req, res, next) => {
+    try {
+        const { code, username, password } = req.body
+        const data = await service.linkWithExistingAccount({ code, username, password })
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const linkFromAccount = async (req, res, next) => {
+    try {
+        const data = await service.linkFromAccount(req.user, { code: req.body.code })
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
 module.exports = {
     list,
     getById,
@@ -94,5 +138,9 @@ module.exports = {
     update,
     deactivate,
     reactivate,
-    unblock
+    unblock,
+    validateFamilyCode,
+    linkWithNewAccount,
+    linkWithExistingAccount,
+    linkFromAccount
 }

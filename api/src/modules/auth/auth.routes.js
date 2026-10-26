@@ -25,6 +25,10 @@ router.post('/forgot-password', validator.forgotPassword, validateFields, contro
 router.get('/reset-password/validate', validator.validateResetToken, validateFields, controller.validateResetToken)
 router.post('/reset-password', validator.resetPassword, validateFields, controller.resetPassword)
 
+// Activación de la cuenta del staff con el link del email (públicas)
+router.get('/activate/validate', validator.validateActivationToken, validateFields, controller.validateActivationToken)
+router.post('/activate', validator.activateAccount, validateFields, controller.activateAccount)
+
 // Mi cuenta
 const manageAccount = [isAuth, checkPermission(PERMISSIONS.AUTH_MANAGE_ACCOUNT)]
 
@@ -32,5 +36,8 @@ router.get('/account', ...manageAccount, controller.getAccount)
 router.put('/account', ...manageAccount, validator.updateAccount, validateFields, controller.updateAccount)
 router.post('/account/photo', ...manageAccount, upload(UPLOAD_FOLDERS.AVATARS).single('photo'), controller.updatePhoto)
 router.put('/account/password', ...manageAccount, validator.changePassword, validateFields, controller.changePassword)
+
+// El socio mayor de edad se desvincula de su adulto responsable (a los menores getEffectivePermissions les quita el permiso)
+router.post('/account/unlink', isAuth, checkPermission(PERMISSIONS.MEMBERS_UNLINK_ADULT), controller.unlinkAdult)
 
 module.exports = router

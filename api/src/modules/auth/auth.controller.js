@@ -88,7 +88,38 @@ const resetPassword = async (req, res, next) => {
 
 const getAccount = async (req, res, next) => {
     try {
-        const data = await service.getAccount(req.user.id)
+        const data = await service.getAccount(req.user)
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const validateActivationToken = async (req, res, next) => {
+    try {
+        const data = await service.validateActivationToken(req.query.token)
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const activateAccount = async (req, res, next) => {
+    try {
+        const { token, username, password } = req.body
+        const data = await service.activateAccount({ token, username, password })
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const unlinkAdult = async (req, res, next) => {
+    try {
+        const data = await service.unlinkAdult(req.user)
         res.json({ success: true, data })
 
     } catch (error) {
@@ -137,7 +168,10 @@ module.exports = {
     forgotPassword,
     validateResetToken,
     resetPassword,
+    validateActivationToken,
+    activateAccount,
     getAccount,
+    unlinkAdult,
     updateAccount,
     updatePhoto,
     changePassword

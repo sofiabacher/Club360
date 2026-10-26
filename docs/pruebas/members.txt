@@ -1,7 +1,7 @@
 CASOS DE PRUEBA — MÓDULO MEMBERS (SOCIOS)
 =========================================
 
-Club360 · Prompt 07 · 23/10/2026
+Club360 · Prompt 07 · 23/10/2026 (vínculo familiar y mayoría de edad: Prompt 08, casos 17 a 28)
 Formato según CLAUDE.md ("Pruebas"). Los resultados obtenidos salen del script de verificación del back
 (corrido contra la base local recreada el 23/10/2026, con datos de prueba creados con la API y los modelos y borrados
 al final). Lo que solo se puede comprobar en el navegador queda anotado en cada caso.
@@ -262,4 +262,196 @@ Datos de entrada: el id del socio del otro club.
 Resultado esperado: no aparece en el listado y todo lo demás responde "No encontramos el socio.".
 Resultado obtenido: el listado no lo devuelve; detalle, comprobante y baja → 404. Al final se borraron el club, su
   socio y su usuario.
+Estado: Aprobado
+
+
+==================================================
+VÍNCULO FAMILIAR Y MAYORÍA DE EDAD (Prompt 08 · 23/10/2026)
+==================================================
+
+Precondición de estos casos: socias menores dadas de alta (cada una con su código de vínculo, XXXX-XXXX) y algunas ya
+registradas con su número de socio. "Vincularme como Familia" está en el login (/family-link); la vinculación desde la
+app y la desvinculación, en "Mi cuenta".
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-17
+Módulo: members
+Descripción: Vincularme como Familia con un código inválido
+Precondiciones: ninguna.
+Pasos:
+  1. En el login, tocar "Vincularme como Familia".
+  2. Ingresar un código que no existe y tocar "Continuar".
+Datos de entrada: AAAA-2222; también "ABC".
+Resultado esperado: "El código no es válido." y no se avanza al paso 2. El campo pone las mayúsculas y el guion solo.
+Resultado obtenido: POST /family-link/validate → 400 "El código no es válido."; con "ABC" → 400 de formato ("Ingresá el
+  código con el formato XXXX-XXXX."). Falta ver el formato automático del campo en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-18
+Módulo: members
+Descripción: Código válido con una cuenta nueva
+Precondiciones: Lola Menor (13 años) con su código sin usar.
+Pasos:
+  1. En "Vincularme como Familia", ingresar el código de Lola (en minúsculas) y continuar.
+  2. En "Crear mi cuenta", completar los datos y tocar "Crear mi cuenta y vincularme".
+  3. Tocar "Ir a iniciar sesión" e ingresar.
+Datos de entrada: Laura Madre, DNI 60333001, nacida el 10/04/1985, laura.madre@club360.test, usuario test.laura,
+  contraseña Prueba#2026.
+Resultado esperado: el paso 1 muestra "Vas a vincularte como adulto responsable de Lola M., socia de Club Valencia.". La
+  cuenta queda activa en el club del menor, con el rol Familia, y entra directo con ese rol.
+Resultado obtenido: validate → 200 { member: "Lola M.", club: "Club Valencia" }. new-account → 201; usuario ACTIVE en
+  Club Valencia con el rol Familia; member.adultUserId = Laura y linkStatus true; bitácora "Vínculo como Familia". El login
+  entra con Familia. Sin email → 400; DNI que ya tiene usuario en el club → 409 "Ya tenés un usuario en el club. Elegí
+  'Ya tengo usuario' e ingresá con él."; usuario repetido → 409. Falta probar el Stepper en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-19
+Módulo: members
+Descripción: Cuenta nueva de un menor (rechazada)
+Precondiciones: un código sin usar.
+Pasos:
+  1. En "Crear mi cuenta", cargar una fecha de nacimiento de menor de 18.
+Datos de entrada: fecha 01/01/2010.
+Resultado esperado: "Para vincularte como Familia tenés que ser mayor de 18." y no se crea la cuenta.
+Resultado obtenido: 400 con ese mensaje (el selector de fecha del front tampoco deja elegir una fecha de menor).
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-20
+Módulo: members
+Descripción: Código con un usuario existente
+Precondiciones: Mía Menor con su código; Sonia, staff Entrenadora con usuario activo.
+Pasos:
+  1. En "Vincularme como Familia", ingresar el código de Mía.
+  2. En "Ya tengo usuario", ingresar con el usuario de Sonia.
+Datos de entrada: sonia.staff / Prueba#2026.
+Resultado esperado: queda vinculada y suma el rol Familia a su rol de staff.
+Resultado obtenido: existing-account → 200; member.adultUserId = Sonia; roles Entrenadora y Familia.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-21
+Módulo: members
+Descripción: Usuario existente con la contraseña incorrecta
+Precondiciones: el caso anterior, antes de vincular.
+Pasos:
+  1. En "Ya tengo usuario", ingresar una contraseña incorrecta.
+Datos de entrada: sonia.staff / Mala#2026.
+Resultado esperado: "Usuario o contraseña incorrectos." y suma un intento fallido, como en el login (a los 5 se bloquea).
+  Al entrar bien, los intentos vuelven a 0.
+Resultado obtenido: 401 con ese mensaje y failedAttempts 0 → 1. Después, con la contraseña correcta, quedó en 0.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-22
+Módulo: members
+Descripción: Código ya usado
+Precondiciones: el código de Lola, ya usado en el CP-MEMBERS-18.
+Pasos:
+  1. Ingresar el mismo código otra vez.
+Datos de entrada: el código de Lola.
+Resultado esperado: "Este código ya fue usado." y no se crea ninguna cuenta.
+Resultado obtenido: validate → 409 con ese mensaje; new-account con otros datos → 409 y no se creó el usuario.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-23
+Módulo: members
+Descripción: Vincular a una hermana desde la app
+Precondiciones: Laura (Familia de Lola) con la sesión iniciada; Tina Menor con su código.
+Pasos:
+  1. En "Mi cuenta" > "Jugadoras vinculadas", ingresar el código de Tina y tocar "Vincular".
+Datos de entrada: el código de Tina.
+Resultado esperado: sin volver a poner la contraseña, Tina se suma a la lista. Si era su primer vínculo y ahora tiene más
+  de un rol, el aviso le dice que puede cambiar al rol Familia desde el menú.
+Resultado obtenido: POST /family-link → 200 con familyRoleAdded false (ya era Familia). GET /auth/account → linkedMembers
+  Lola Menor (000005, 13 años) y Tina Menor (000007, 13 años). Sin sesión → 401. Falta ver el aviso en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-24
+Módulo: members
+Descripción: El menor ve su código en "Mi cuenta"
+Precondiciones: Lola registrada con su número de socio, antes de que se vincule un adulto.
+Pasos:
+  1. Iniciar sesión como Lola e ir a "Mi cuenta".
+  2. Después de que Laura se vincula, volver a "Mi cuenta".
+Datos de entrada: —
+Resultado esperado: "Mi condición de socio" muestra el número, el estado y el recuadro con el código y el texto para el
+  adulto. Después del vínculo, el código ya no aparece y se ve "Adulto responsable: Laura Madre".
+Resultado obtenido: GET /auth/account → member { isMinor: true, codeFamily: el código }, adult null, canUnlink false.
+  Después del vínculo: codeFamily null y adult "Laura Madre". Falta ver las tarjetas en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-25
+Módulo: members
+Descripción: El menor no puede desvincularse
+Precondiciones: Lola (13 años) vinculada a Laura.
+Pasos:
+  1. Como Lola, ir a "Mi cuenta".
+Datos de entrada: —
+Resultado esperado: no aparece el botón "Desvincularme"; si se llama al endpoint, se rechaza.
+Resultado obtenido: canUnlink false; POST /auth/account/unlink → 403 (getEffectivePermissions le quita
+  members.unlinkAdult por ser menor).
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-26
+Módulo: members
+Descripción: El socio mayor se desvincula; el adulto pierde Familia si no le quedan otros menores
+Precondiciones: Laura vinculada a Lola y a Tina. El Admin cambia la fecha de nacimiento de las dos a la de una mayor.
+Pasos:
+  1. Como Lola, en "Mi cuenta", tocar "Desvincularme" y confirmar.
+  2. Lo mismo como Tina.
+  3. Iniciar sesión como Laura.
+Datos de entrada: fechas 03/03/2000 y 04/04/2000.
+Resultado esperado: el diálogo explica que el adulto deja de ver sus partidos, citaciones y cuotas. Queda sin adulto y el
+  código se borra. Laura conserva Familia mientras le quede Tina; con la segunda desvinculación lo pierde.
+Resultado obtenido: canUnlink true; unlink → 200: adultUserId null, linkStatus false y codeFamily null. Laura siguió con
+  Familia; después de Tina, sin roles (su login → NO_ROLES). Desvincularse otra vez → 409 "No tenés un adulto responsable
+  vinculado.". Bitácora: "Adulto responsable: Laura Madre (id …). Pierde el rol Familia: no le quedan otros menores
+  vinculados". No se notifica al adulto.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-27
+Módulo: members
+Descripción: Alta de socio de un ex staff (aceptada) y de un staff activo (rechazada)
+Precondiciones: Ana, ex staff (sin roles de staff, usuario Eliminado); Fede, staff activo.
+Pasos:
+  1. Dar de alta como socio a Ana y confirmar el diálogo "Ya tiene usuario".
+  2. Dar de alta como socio a Fede.
+Datos de entrada: los DNI de cada uno.
+Resultado esperado: Ana se da de alta sobre su usuario (la regla mira isActiveStaff, no el registro staff) y vuelve a
+  entrar con su contraseña. Fede se rechaza con "Esta persona es staff del club y no puede ser socia.".
+Resultado obtenido: Ana → 409 EXISTING_USER y con existingUserId → 201; su usuario pasó de DELETED a ACTIVE y entra con
+  el rol Socio. Fede → 409 con ese mensaje.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-28
+Módulo: members
+Descripción: Código de un socio de otro club (multi-tenant)
+Precondiciones: un club de prueba con un socio menor y su código.
+Pasos:
+  1. Con un adulto de Valencia, usar ese código en "Ya tengo usuario" y desde "Mi cuenta".
+Datos de entrada: ZZZZ-2222.
+Resultado esperado: "El código no es válido." y no se vincula.
+Resultado obtenido: existing-account → 400 y desde la app → 400, con ese mensaje; linkStatus del socio siguió en false.
+  Al final se borró el club de prueba.
 Estado: Aprobado

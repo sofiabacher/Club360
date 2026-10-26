@@ -219,7 +219,7 @@ export default function MemberDetailPage() {
 
               {!family.code && !family.adult && (
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {family.linked ? 'El vínculo ya se usó.' : 'No tiene vínculo familiar: se dio de alta siendo mayor de edad.'}
+                  {family.linked ? 'El vínculo ya se usó.' : 'No tiene adulto responsable vinculado.'}
                 </Typography>
               )}
             </CardContent>

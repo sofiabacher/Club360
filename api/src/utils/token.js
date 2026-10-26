@@ -62,10 +62,56 @@ function verifyPasswordResetToken(token, user) {
     }
 }
 
+// ---------- Activación de la cuenta (staff) ----------
+//
+// Mismo mecanismo que la recuperación: como el usuario todavía no tiene contraseña, la huella es la del valor vacío.
+// Apenas activa la cuenta (y elige su contraseña), la huella deja de coincidir y todos los links que se le mandaron
+// quedan invalidados. Vence a JWT_ACTIVATION_EXPIRES_IN (48 horas por defecto).
+
+const ACCOUNT_ACTIVATION_PURPOSE = 'account-activation'
+
+// options.expiresIn permite otro vencimiento (lo usan las pruebas para generar un link vencido)
+function generateActivationToken(user, { expiresIn = jwtConfig.activationExpiresIn } = {}) {
+    const payload = { userId: user.id, purpose: ACCOUNT_ACTIVATION_PURPOSE, pwd: passwordFingerprint(user.password ?? '') }
+    return jwt.sign(payload, jwtConfig.activationSecret, { expiresIn })
+}
+
+// Firma, vencimiento y propósito. Devuelve el id del usuario (para buscarlo) o null si el token no sirve
+function getActivationUserId(token) {
+    try {
+        const payload = jwt.verify(String(token), jwtConfig.activationSecret)
+        return payload.purpose === ACCOUNT_ACTIVATION_PURPOSE ? payload.userId : null
+
+    } catch {
+        return null
+    }
+}
+
+// Verificación completa: firma, vencimiento, propósito y que el usuario siga sin contraseña (la huella del valor vacío)
+function verifyActivationToken(token, user) {
+    try {
+        const payload = jwt.verify(String(token), jwtConfig.activationSecret)
+
+        const valid = payload.purpose === ACCOUNT_ACTIVATION_PURPOSE
+            && Boolean(user)
+            && !user.password
+            && payload.userId === user.id
+            && payload.pwd === passwordFingerprint('')
+
+        return valid ? { valid: true, payload } : { valid: false }
+
+    } catch (error) {
+        return { valid: false, error: error.message }
+    }
+}
+
 module.exports = {
     generateLoginToken,
     verifySessionToken,
     generatePasswordResetToken,
     getPasswordResetUserId,
-    verifyPasswordResetToken
+    verifyPasswordResetToken,
+    generateActivationToken,
+    getActivationUserId,
+    verifyActivationToken
 }

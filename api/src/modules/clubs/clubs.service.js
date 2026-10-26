@@ -211,6 +211,7 @@ async function updateSport(actor, sportId, { isActive, priceFee }) {
 }
 
 module.exports = {
+    getActiveSports,
     getInfo,
     getSettings,
     updateSettings,

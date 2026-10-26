@@ -6,18 +6,31 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import CircularProgress from '@mui/material/CircularProgress'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogContentText from '@mui/material/DialogContentText'
+import DialogTitle from '@mui/material/DialogTitle'
 import Divider from '@mui/material/Divider'
 import Grid from '@mui/material/Grid'
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import ListItemText from '@mui/material/ListItemText'
+import Paper from '@mui/material/Paper'
 import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
+import LinkOffRounded from '@mui/icons-material/LinkOffRounded'
 import PhotoCameraRounded from '@mui/icons-material/PhotoCameraRounded'
 
-import { changePassword, getAccount, updateAccount, uploadAccountPhoto } from '../../api/auth.api.js'
+import { changePassword, getAccount, unlinkAdult, updateAccount, uploadAccountPhoto } from '../../api/auth.api.js'
+import { linkFamilyMember } from '../../api/members.api.js'
 import PasswordField from '../../components/auth/PasswordField.jsx'
 import PasswordRequirements from '../../components/auth/PasswordRequirements.jsx'
 import UserAvatar from '../../components/common/UserAvatar.jsx'
+import FamilyCodeField, { isFamilyCode } from '../../components/members/FamilyCodeField.jsx'
+import { MemberStateChip } from '../../components/members/MemberStatusChips.jsx'
 import useAuth from '../../hooks/useAuth.js'
 import { getErrorMessage, getFieldErrors } from '../../utils/apiErrors.js'
 
@@ -51,6 +64,12 @@ export default function AccountPage() {
   const [passwordForm, setPasswordForm] = useState(emptyPasswordForm)
   const [passwordErrors, setPasswordErrors] = useState({})
   const [savingPassword, setSavingPassword] = useState(false)
+
+  const [linkCode, setLinkCode] = useState('')
+  const [linkError, setLinkError] = useState('')
+  const [linking, setLinking] = useState(false)
+  const [unlinkOpen, setUnlinkOpen] = useState(false)
+  const [unlinking, setUnlinking] = useState(false)
 
   const showAccount = (data) => {
     setAccount(data)
@@ -123,6 +142,44 @@ export default function AccountPage() {
     }
   }
 
+  // Vincular a otra socia menor con su código (por ejemplo, una hermana). Puede sumar el rol Familia: se refresca la sesión
+  const handleLinkSubmit = async (event) => {
+    event.preventDefault()
+    setLinkError('')
+    setLinking(true)
+
+    try {
+      const { data } = await linkFamilyMember(linkCode)
+      const [{ data: accountData }, session] = await Promise.all([getAccount(), refreshSession()])
+      showAccount(accountData)
+      setLinkCode('')
+
+      const switchHint = data.familyRoleAdded && session.roles.length > 1
+        ? ' Para ver sus partidos, citaciones y cuotas, cambiá al rol Familia desde el menú de tu usuario.'
+        : ''
+      showNotice('success', `Te vinculaste como Familia de ${data.member.name}.${switchHint}`)
+    } catch (err) {
+      setLinkError(getErrorMessage(err))
+    } finally {
+      setLinking(false)
+    }
+  }
+
+  const handleUnlink = async () => {
+    setUnlinking(true)
+
+    try {
+      const { data } = await unlinkAdult()
+      showAccount(data)
+      showNotice('success', 'Te desvinculaste de tu adulto responsable.')
+    } catch (err) {
+      showNotice('error', getErrorMessage(err))
+    } finally {
+      setUnlinking(false)
+      setUnlinkOpen(false)
+    }
+  }
+
   if (loadError) return <Alert severity="error">{loadError}</Alert>
 
   if (!account) {
@@ -134,6 +191,7 @@ export default function AccountPage() {
   }
 
   const passwordsMatch = passwordForm.confirmPassword === '' || passwordForm.confirmPassword === passwordForm.newPassword
+  const { member } = account
 
   return (
     <>
@@ -175,15 +233,6 @@ export default function AccountPage() {
                   </ReadOnlyField>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}><ReadOnlyField label="Usuario">{account.username}</ReadOnlyField></Grid>
-                {account.numMember && (
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <ReadOnlyField label="Número de socio">
-                      <Typography variant="numeric" sx={{ fontSize: '1.6rem', color: 'navy.main' }}>
-                        {account.numMember}
-                      </Typography>
-                    </ReadOnlyField>
-                  </Grid>
-                )}
               </Grid>
 
               <Divider sx={{ my: 3 }} />
@@ -279,7 +328,119 @@ export default function AccountPage() {
             </CardContent>
           </Card>
         </Grid>
+
+        {member && (
+          <Grid size={{ xs: 12, lg: 6 }}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
+                <Typography variant="h5" component="h2" sx={{ color: 'navy.main', mb: 3 }}>
+                  Mi condición de socio
+                </Typography>
+
+                <Stack direction="row" sx={{ alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                  <ReadOnlyField label="Número de socio">
+                    <Typography variant="numeric" sx={{ fontSize: '1.8rem', color: 'navy.main' }}>
+                      {member.numMember}
+                    </Typography>
+                  </ReadOnlyField>
+                  <MemberStateChip memberStateId={member.memberStateId} />
+                </Stack>
+
+                {member.codeFamily && (
+                  <Paper variant="outlined" sx={{ mt: 3, p: 2.5, bgcolor: 'cream.main', textAlign: 'center' }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>Código de vínculo familiar</Typography>
+                    <Typography variant="numeric" component="p" sx={{ fontSize: '2.4rem', color: 'navy.main', letterSpacing: '0.1em', my: 0.5 }}>
+                      {member.codeFamily}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                      Pasale este código a tu adulto responsable para que se vincule como Familia desde
+                      'Vincularme como Familia'. Sirve una sola vez.
+                    </Typography>
+                  </Paper>
+                )}
+
+                {account.adult && (
+                  <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ mt: 3, gap: 2, alignItems: { sm: 'center' }, justifyContent: 'space-between' }}>
+                    <Typography sx={{ color: 'navy.main' }}>
+                      Adulto responsable: <strong>{account.adult.name}</strong>
+                    </Typography>
+                    {account.canUnlink && (
+                      <Button variant="outlined" color="error" startIcon={<LinkOffRounded />} onClick={() => setUnlinkOpen(true)} sx={{ flexShrink: 0 }}>
+                        Desvincularme
+                      </Button>
+                    )}
+                  </Stack>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        <Grid size={{ xs: 12, lg: member ? 6 : 12 }}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
+              <Typography variant="h5" component="h2" sx={{ color: 'navy.main', mb: 2 }}>
+                Socias vinculadas
+              </Typography>
+
+              {(account.linkedMembers ?? []).length > 0 ? (
+                <List disablePadding sx={{ mb: 2 }}>
+                  {account.linkedMembers?.map((linked) => (
+                    <ListItem key={linked.numMember} disableGutters divider>
+                      <ListItemText
+                        primary={linked.name}
+                        secondary={`${linked.age} años`}
+                        slotProps={{ primary: { sx: { color: 'navy.main', fontWeight: 500 } } }}
+                      />
+                      <Typography variant="numeric" sx={{ fontSize: '1.2rem', color: 'navy.main' }}>
+                        Nº {linked.numMember}
+                      </Typography>
+                    </ListItem>
+                  ))}
+                </List>
+              ) : (
+                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                  Todavía no tenés Socias vinculadas.
+                </Typography>
+              )}
+
+              <Box component="form" onSubmit={handleLinkSubmit} noValidate>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'flex-start' } }}>
+                  <FamilyCodeField
+                    label="Vincular a otra socia menor"
+                    value={linkCode}
+                    onChange={(value) => {
+                      setLinkCode(value)
+                      setLinkError('')
+                    }}
+                    error={Boolean(linkError)}
+                    helperText={linkError || 'Con el código de su comprobante de alta.'}
+                    size="small"
+                    sx={{ flexGrow: 1 }}
+                  />
+                  <Button type="submit" variant="contained" color="secondary" loading={linking} disabled={!isFamilyCode(linkCode)} sx={{ flexShrink: 0 }}>
+                    Vincular
+                  </Button>
+                </Stack>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
+
+      <Dialog open={unlinkOpen} onClose={unlinking ? undefined : () => setUnlinkOpen(false)}>
+        <DialogTitle>Desvincularme de mi adulto responsable</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {account.adult?.name} deja de ver tus partidos, tus citaciones y tus cuotas. El código de vínculo ya no se
+            puede volver a usar.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button color="secondary" onClick={() => setUnlinkOpen(false)} disabled={unlinking}>Cancelar</Button>
+          <Button variant="contained" color="error" onClick={handleUnlink} loading={unlinking}>Desvincularme</Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={notice.open}

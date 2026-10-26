@@ -57,14 +57,14 @@ Seguimiento de todo lo que falta para entregar el proyecto: desarrollo, entregab
 - [x] Alta presencial de Socio: genera el número de socio y crea el usuario pendiente de activación (P07; número de 6 dígitos correlativo y alta sobre un usuario existente con `EXISTING_USER`)
 - [x] Código de vínculo familiar automático para los socios menores de edad (P07, formato `XXXX-XXXX`)
 - [x] Comprobante imprimible del alta con el número de socio y, si es menor, el código de vínculo para el adulto (D3, contexto 3.1 y 3.5) (P07; falta probar la impresión en el navegador)
-- [ ] Código de vínculo visible en el perfil del Socio menor mientras no se haya usado (D3, contexto 3.5)
-- [ ] Pantalla "Vincularme como Familia" desde el login: con el código, crea la cuenta o suma el rol Familia a un usuario existente (un solo uso)
-- [ ] Detección de la mayoría de edad: habilita desvincularse del adulto y pagar las propias cuotas
+- [x] Código de vínculo visible en el perfil del Socio menor mientras no se haya usado (D3, contexto 3.5) (P08: tarjeta "Mi condición de socio" en Mi cuenta; falta probarla a mano en el navegador)
+- [x] Pantalla "Vincularme como Familia" desde el login: con el código, crea la cuenta o suma el rol Familia a un usuario existente (un solo uso) (P08; también desde Mi cuenta para vincular a un hermano)
+- [x] Detección de la mayoría de edad: habilita desvincularse del adulto y pagar las propias cuotas (P08: desvinculación desde Mi cuenta; si el adulto no tiene otros menores, pierde Familia. El permiso de pagar las propias cuotas ya lo habilita getEffectivePermissions; el pago es de la Fase 5)
 - [x] Modificación y baja de Socios (P07; también reactivación de los Inactivos)
-- [ ] Alta, modificación y baja de Staff (impedir que un Staff sea también Socio)
-- [x] Desbloqueo de usuarios por el Admin (desde la gestión de socios y staff) (P07: socios; staff en P08)
-- [~] Front: pantallas del Admin (socios, staff, parámetros del club, deportes) — hechas socios, configuración y deportes del club (P07); falta staff (P08)
-- [ ] Front: perfil del Socio y vinculación de Familia
+- [x] Alta, modificación y baja de Staff (impedir que un Staff sea también Socio) (P08: varios roles de staff por persona, activación de la cuenta por email, reactivación; staff activo = con algún rol de staff, isActiveStaff)
+- [x] Desbloqueo de usuarios por el Admin (desde la gestión de socios y staff) (P07: socios; P08: staff)
+- [x] Front: pantallas del Admin (socios, staff, parámetros del club, deportes) (P07: socios, configuración y deportes del club; P08: staff. Falta probarlas a mano en el navegador)
+- [x] Front: perfil del Socio y vinculación de Familia (P08: "Mi condición de socio" y "Jugadoras vinculadas" en Mi cuenta, "Vincularme como Familia" y activación de la cuenta del staff; falta probarlas a mano en el navegador)
 - [x] Front: pantalla "El club" con la información general (contexto 2.1) (P07; falta probarla a mano en el navegador)
 
 ## Fase 4 — Gestión deportiva
@@ -134,7 +134,7 @@ Formato de referencia: el PDF de HotelDesk.
 - [ ] Especificación de funcionalidad (casos de uso)
 - [ ] Diseño de seguridad técnica: encriptación, dígitos verificadores, patentes y familias
 - [ ] Estrategias de base de datos: backup/restore e integridad (sin particiones)
-- [~] Casos de prueba en `.txt`, uno por módulo, en `docs/pruebas/` (D9; formato en `CLAUDE.md`, "Pruebas"). Hecho: `docs/pruebas/access.txt` (P06), `docs/pruebas/clubs.txt` y `docs/pruebas/members.txt` (P07)
+- [~] Casos de prueba en `.txt`, uno por módulo, en `docs/pruebas/` (D9; formato en `CLAUDE.md`, "Pruebas"). Hecho: `docs/pruebas/access.txt` (P06), `docs/pruebas/clubs.txt` y `docs/pruebas/members.txt` (P07), `docs/pruebas/staff.txt` y los casos de vínculo familiar en `members.txt` (P08)
 - [ ] Manuales de usuario
 - [ ] Armado del documento final con todo lo anterior
 
@@ -171,6 +171,7 @@ Cada una se resuelve en el chat de Claude y se registra en el documento de conte
 
 Lo terminado, con la fecha. Lo más reciente arriba.
 
+- 23/10/2026 — Staff y vínculo familiar (P08): módulo `staff` (alta con uno o más roles de staff, alta sobre un usuario existente con `EXISTING_USER`, modificación, baja que deja el usuario Eliminado solo si no le queda otro rol, reactivación, desbloqueo y reenvío de la activación) con `isActiveStaff`; corrección del alta de socio para usarlo. Activación de la cuenta del staff por email (token `account-activation`, `JWT_ACTIVATION_EXPIRES_IN`). "Vincularme como Familia" con cuenta nueva o usuario existente (validado como el login) y desde Mi cuenta; desvinculación del socio mayor de edad. Front: Staff (listado, alta y edición, detalle), activación de la cuenta, "Vincularme como Familia" (link en el login) y las tarjetas "Mi condición de socio" y "Jugadoras vinculadas" en Mi cuenta. Casos documentados en `docs/pruebas/staff.txt` y `docs/pruebas/members.txt`. Verificado con un script contra la base local y con el build del front
 - 23/10/2026 — Club, deportes y alta de socios (P07): `user.email` opcional para menores y `user.phone` cifrado con AES en el modelo; `club.accentColor` y `club.extraInfo` (D13), con el DVH de los campos JSON independiente del orden de las claves; datos provisorios de Club Valencia en el seed. Módulo `clubs` (información, configuración y deportes del club) y módulo `members` (alta presencial con número correlativo, código de vínculo para menores y alta sobre un usuario existente; listado, detalle, modificación, baja, reactivación, desbloqueo y comprobante). Front: Socios (listado, alta y edición, detalle y comprobante imprimible con forma de carnet), Configuración del club, Deportes del club, "El club" y la franja del color del club en el menú. Base local recreada. Casos documentados en `docs/pruebas/clubs.txt` y `docs/pruebas/members.txt`. Verificado con un script contra la base local y con el build del front
 - 21/10/2026 — Gestión de roles y permisos (P06): módulo `access` con el catálogo de permisos, CRUD de roles (los base no se eliminan ni se renombran; el Admin del Club conserva `LOCKED_ADMIN_PERMISSIONS`; un rol con usuarios no se elimina), asignación manual solo de roles nuevos y Admin del Club (siempre un Admin activo, sin quitarse el rol a sí mismo), permisos directos, helpers `assignBaseRole`/`removeBaseRole` para los circuitos y bitácora de todo con criticidad alta. El seed asigna los permisos de un rol base solo al crearlo. Front: pantallas "Roles y permisos" y "Usuarios y roles" con `PermissionPicker`, y refresco de la sesión al volver a la pestaña. Casos documentados en `docs/pruebas/access.txt`. Verificado con un script contra la base local y con el build del front
 - 21/10/2026 — Decisiones D2 a D7, D9 y D11 cerradas; emails con Gmail SMTP en lugar de Resend, front en Vercel y particiones descartadas (contexto secciones 0, 2.1, 3, 6, 7 y 11). Surgen D12 y D13

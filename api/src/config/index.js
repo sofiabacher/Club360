@@ -31,7 +31,8 @@ module.exports = {
         secret: process.env.JWT_SECRET,
         activationSecret: process.env.JWT_ACTIVATION_SECRET,
         expiresIn: process.env.JWT_EXPIRES_IN || '24h',
-        emailExpiresIn: process.env.JWT_EMAIL_EXPIRES_IN || '1h'
+        emailExpiresIn: process.env.JWT_EMAIL_EXPIRES_IN || '1h',
+        activationExpiresIn: process.env.JWT_ACTIVATION_EXPIRES_IN || '48h'   // Link de activación de la cuenta del staff
     },
 
     encryption: {

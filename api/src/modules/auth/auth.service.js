@@ -5,17 +5,27 @@ const { Op, UniqueConstraintError } = require('sequelize')
 
 const sequelize = require('../../config/db')
 const { User, Member, Club } = require('../../models')
-const { getAvailableRoles, getEffectivePermissions } = require('../access/access.service')
+const { getAvailableRoles, getEffectivePermissions, removeBaseRole } = require('../access/access.service')
 
 const logger = require('../../utils/logger')
 const { createError } = require('../../utils/errors')
 const { hashPassword, comparePassword } = require('../../utils/crypto')
-const { generateLoginToken, generatePasswordResetToken, getPasswordResetUserId, verifyPasswordResetToken } = require('../../utils/token')
+const {
+    generateLoginToken,
+    generatePasswordResetToken,
+    getPasswordResetUserId,
+    verifyPasswordResetToken,
+    getActivationUserId,
+    verifyActivationToken
+} = require('../../utils/token')
 const { sendRecoveryEmail, sendPasswordChangedNotice } = require('../../utils/mailer/senders')
 const { UPLOAD_FOLDERS, toPublicPath, deleteUpload } = require('../../utils/files')
-const { isAdult } = require('../../utils/dates')
-const { USER_STATES, MEMBER_STATES, LOG_ACTIONS, LOGIN_MAX_ATTEMPTS } = require('../../utils/constants')
+const { getAge, isAdult } = require('../../utils/dates')
+const { USER_STATES, MEMBER_STATES, BASE_ROLES, LOG_ACTIONS, LOGIN_MAX_ATTEMPTS } = require('../../utils/constants')
+const { PERMISSIONS } = require('../../utils/permissions')
 const { auth } = require('../../utils/messages')
+
+const fullNameOf = (user) => `${user.name} ${user.lastName}`
 
 // Sesión que recibe el front: se arma siempre acá, para el login, el cambio de rol y /auth/me.
 // Si el rol activo ya no está entre los disponibles, la sesión sale sin rol activo y sin permisos.
@@ -77,7 +87,9 @@ function checkLoginState(user) {
     if (user.userStateId !== USER_STATES.ACTIVE || !user.password) throw createError(auth.pendingUser, 403, 'USER_PENDING')
 }
 
-async function login({ username, password }) {
+// Validación de usuario y contraseña del login: estado, contraseña y suma de intentos fallidos con bloqueo.
+// La usa también "Vincularme como Familia" con un usuario existente. Devuelve el usuario.
+async function verifyCredentials({ username, password }) {
     const user = await User.findOne({ where: { username } })
 
     // Mismo mensaje que con la contraseña incorrecta, para no revelar qué usuarios existen.
@@ -94,6 +106,11 @@ async function login({ username, password }) {
         await user.update({ failedAttempts: 0 })
     }
 
+    return user
+}
+
+async function login({ username, password }) {
+    const user = await verifyCredentials({ username, password })
     const roles = await getAvailableRoles(user.id)
 
     if (roles.length === 0) {
@@ -282,17 +299,94 @@ async function resetPassword({ token, password }) {
     return { username: user.username }
 }
 
+// ---------- Activación de la cuenta (staff) ----------
+
+// Usuario del link de activación. El link no sirve si venció, si la cuenta ya se activó (ya tiene contraseña)
+// o si el usuario ya no está pendiente (por ejemplo, porque le dieron de baja)
+async function findUserByActivationToken(token, options = {}) {
+    const userId = getActivationUserId(token)
+    const user = userId ? await User.findByPk(userId, options) : null
+
+    if (!user || user.userStateId !== USER_STATES.PENDING || !verifyActivationToken(token, user).valid) {
+        throw createError(auth.activationTokenInvalid, 400, 'ACTIVATION_TOKEN_INVALID')
+    }
+
+    return user
+}
+
+// Devuelve el nombre para el saludo de la pantalla de activación
+async function validateActivationToken(token) {
+    const user = await findUserByActivationToken(token)
+    return { name: user.name }
+}
+
+// Guarda el usuario y la contraseña elegidos y deja la cuenta ACTIVE
+async function activateAccount({ token, username, password }) {
+    const user = await findUserByActivationToken(token)
+
+    const usernameTaken = await User.findOne({ where: { username, id: { [Op.ne]: user.id } }, attributes: ['id'] })
+    if (usernameTaken) throw createError(auth.usernameTaken, 409)
+
+    const hashedPassword = await hashPassword(password)
+
+    try {
+        await sequelize.transaction(async (transaction) => {
+            // Se vuelve a leer con bloqueo: si llegan dos pedidos con el mismo link, el segundo ve la cuenta ya activada
+            const locked = await findUserByActivationToken(token, { transaction, lock: transaction.LOCK.UPDATE })
+
+            await locked.update({
+                username,
+                password: hashedPassword,
+                userStateId: USER_STATES.ACTIVE,
+                failedAttempts: 0
+            }, { transaction })
+        })
+
+    } catch (error) {
+        if (error instanceof UniqueConstraintError) throw createError(auth.usernameTaken, 409)   // Otro registro tomó el usuario recién
+        throw error
+    }
+
+    await logger({ clubId: user.clubId, userId: user.id, roleId: null }, LOG_ACTIONS.ACCOUNT_ACTIVATED, `Usuario: ${username}`)
+
+    return { username }
+}
+
 // ---------- Mi cuenta ----------
 // El usuario solo modifica email, teléfono, foto y contraseña. Nombre, apellido, DNI, fecha de nacimiento y usuario
 // los modifica el Admin (la fecha de nacimiento define los permisos de los menores).
 
-async function getAccount(userId) {
+// Datos de la cuenta, con la condición de socio y los vínculos familiares:
+//   - member: si es socio. El código de vínculo solo si es menor y todavía no se usó;
+//   - adult: el adulto responsable, si está vinculado. canUnlink: si puede desvincularse (mayor, vinculado y con
+//     members.unlinkAdult entre sus permisos efectivos);
+//   - linkedMembers: los socios menores de los que es adulto responsable.
+async function getAccount({ id: userId, activeRoleId }) {
     const user = await User.findByPk(userId, {
         attributes: ['id', 'name', 'lastName', 'dni', 'birthDate', 'username', 'email', 'phone', 'photo'],
-        include: [{ model: Member, as: 'member', attributes: ['numMember'] }]
+        include: [{
+            model: Member,
+            as: 'member',
+            attributes: ['numMember', 'memberStateId', 'codeFamily', 'linkStatus', 'adultUserId'],
+            include: [{ model: User, as: 'adultUser', attributes: ['name', 'lastName'] }]
+        }]
     })
 
     if (!user) throw createError(auth.userNotFound, 401)
+
+    const [permissions, dependents] = await Promise.all([
+        getEffectivePermissions(userId, activeRoleId),
+        Member.findAll({
+            where: { adultUserId: userId },
+            attributes: ['numMember'],
+            include: [{ model: User, as: 'user', attributes: ['name', 'lastName', 'birthDate'] }],
+            order: [[{ model: User, as: 'user' }, 'name', 'ASC']]
+        })
+    ])
+
+    const { member } = user
+    const isMinor = !isAdult(user.birthDate)
+    const adult = member?.adultUser ?? null
 
     return {
         name: user.name,
@@ -303,13 +397,56 @@ async function getAccount(userId) {
         email: user.email,
         phone: user.phone,
         photo: user.photo,
-        numMember: user.member?.numMember ?? null   // Solo si es socio
+        member: member ? {
+            numMember: member.numMember,
+            memberStateId: member.memberStateId,
+            isMinor,
+            codeFamily: isMinor && !member.linkStatus ? member.codeFamily : null
+        } : null,
+        adult: adult ? { name: fullNameOf(adult) } : null,
+        canUnlink: Boolean(adult) && !isMinor && permissions.includes(PERMISSIONS.MEMBERS_UNLINK_ADULT),
+        linkedMembers: dependents.map(dependent => ({
+            name: fullNameOf(dependent.user),
+            numMember: dependent.numMember,
+            age: getAge(dependent.user.birthDate)
+        }))
     }
+}
+
+// El socio mayor de edad se desvincula de su adulto responsable. Se borra también el código, para que no se pueda volver
+// a usar. Si el adulto no tiene ningún otro menor vinculado, pierde el rol Familia. No se notifica al adulto (contexto 3.4).
+async function unlinkAdult(actor) {
+    const { id: userId, clubId, activeRoleId } = actor
+
+    const user = await User.findByPk(userId, { attributes: ['id', 'birthDate'] })
+    if (!isAdult(user.birthDate)) throw createError(auth.unlinkAdultOnly, 403)   // checkPermission ya lo corta; por las dudas
+
+    const result = await sequelize.transaction(async (transaction) => {
+        const member = await Member.findOne({ where: { userId, clubId }, transaction, lock: transaction.LOCK.UPDATE })
+        if (!member?.adultUserId) throw createError(auth.notLinked, 409)
+
+        // Con el adulto bloqueado, dos desvinculaciones de hermanos a la vez no lo dejan con el rol Familia sin menores
+        const adult = await User.findByPk(member.adultUserId, { attributes: ['id', 'name', 'lastName'], transaction, lock: transaction.LOCK.UPDATE })
+
+        await member.update({ adultUserId: null, linkStatus: false, codeFamily: null }, { transaction })
+
+        const others = await Member.count({ where: { adultUserId: adult.id }, transaction })
+        const lostFamily = others === 0 && await removeBaseRole(adult.id, BASE_ROLES.FAMILY, { transaction })
+
+        return { adult, lostFamily }
+    })
+
+    const { adult, lostFamily } = result
+    await logger({ clubId, userId, roleId: activeRoleId }, LOG_ACTIONS.MEMBER_UNLINKED,
+        `Adulto responsable: ${fullNameOf(adult)} (id ${adult.id})${lostFamily ? '. Pierde el rol Familia: no le quedan otros menores vinculados' : ''}`)
+
+    return getAccount(actor)
 }
 
 // Solo email y teléfono: cualquier otro campo que llegue en el body se ignora.
 // El email es obligatorio para los mayores de 18 y opcional para los menores.
-async function updateAccount({ id: userId, clubId, activeRoleId }, { email, phone }) {
+async function updateAccount(actor, { email, phone }) {
+    const { id: userId, clubId, activeRoleId } = actor
     email = email || null
 
     const user = await User.findByPk(userId)
@@ -335,7 +472,7 @@ async function updateAccount({ id: userId, clubId, activeRoleId }, { email, phon
         await logger({ clubId, userId, roleId: activeRoleId }, LOG_ACTIONS.USER_UPDATE, `Mi cuenta: ${changedFields.join(', ')}`)
     }
 
-    return getAccount(userId)
+    return getAccount(actor)
 }
 
 // Guarda la foto nueva (ya subida por multer) y borra la anterior del disco
@@ -375,6 +512,7 @@ async function changePassword({ id: userId, clubId, activeRoleId }, { currentPas
 
 module.exports = {
     buildSession,
+    verifyCredentials,
     login,
     switchRole,
     getMe,
@@ -383,7 +521,10 @@ module.exports = {
     forgotPassword,
     validateResetToken,
     resetPassword,
+    validateActivationToken,
+    activateAccount,
     getAccount,
+    unlinkAdult,
     updateAccount,
     updatePhoto,
     changePassword

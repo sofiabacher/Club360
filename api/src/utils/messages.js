@@ -19,7 +19,7 @@ module.exports = {
 
         // Login
         invalidCredentials: 'Usuario o contraseña incorrectos.',
-        pendingUser: 'Tu cuenta todavía no está activada. Si es tu primer ingreso, registrate con tu número de socio.',
+        pendingUser: 'Tu cuenta todavía no está activada. Si es tu primer ingreso como socio, registrate con tu número de socio; si sos parte del staff, usá el link del email de activación.',
         blockedUser: 'Tu cuenta está bloqueada por intentos fallidos. Comunicate con el club.',
         noRoles: 'No tenés roles habilitados en el club. Comunicate con la administración.',
 
@@ -58,7 +58,15 @@ module.exports = {
         emailTaken: 'Ese email ya está registrado.',
         phoneLength: 'El teléfono puede tener hasta 30 caracteres.',
         emailRequiredAdult: 'Ingresá un email: es obligatorio para los mayores de 18.',
-        photoRequired: 'Elegí una imagen para tu foto.'
+        photoRequired: 'Elegí una imagen para tu foto.',
+
+        // Activación de la cuenta (staff)
+        activationTokenInvalid: 'El link de activación venció o ya fue usado. Pedile al club que te envíe uno nuevo.',
+        activationTokenRequired: 'Falta el link de activación. Pedile al club que te envíe uno nuevo.',
+
+        // Desvincularse del adulto responsable
+        notLinked: 'No tenés un adulto responsable vinculado.',
+        unlinkAdultOnly: 'Solo los socios mayores de 18 pueden desvincularse del adulto responsable.'
     },
 
     access: {
@@ -133,8 +141,17 @@ module.exports = {
         suspendedNotReactivable: 'El socio está suspendido por mora: se reactiva solo cuando regulariza sus cuotas.',
         notBlocked: 'El usuario no está bloqueado.',
 
+        // Vínculo familiar
+        codeInvalid: 'El código no es válido.',
+        codeUsed: 'Este código ya fue usado.',
+        familyAdultRequired: 'Para vincularte como Familia tenés que ser mayor de 18.',
+        familyExistingAccount: "Ya tenés un usuario en el club. Elegí 'Ya tengo usuario' e ingresá con él.",
+        familyOwnCode: 'No podés vincularte con tu propio código.',
+
         // Validaciones de formato
         idInvalid: 'El identificador no es válido.',
+        codeFormat: 'Ingresá el código con el formato XXXX-XXXX.',
+        emailRequired: 'Ingresá un email válido (hasta 150 caracteres).',
         nameInvalid: 'Ingresá el nombre (hasta 100 caracteres).',
         lastNameInvalid: 'Ingresá el apellido (hasta 100 caracteres).',
         dniInvalid: 'El DNI tiene que tener 7 u 8 dígitos, sin puntos.',
@@ -150,6 +167,43 @@ module.exports = {
         pageInvalid: 'La página no es válida.'
     },
 
+    staff: {
+        staffNotFound: 'No encontramos a esa persona del staff.',
+        isMember: 'Esta persona es socia del club y no puede ser staff.',
+        alreadyStaff: 'Esta persona ya es parte del staff.',
+        existingUser: (name) => `${name} ya tiene usuario en el club.`,
+        existingUserMismatch: 'Los datos no corresponden al usuario indicado. Volvé a cargar el alta.',
+        sportNotActive: 'Elegí uno de los deportes activos del club.',
+        dniTaken: 'Ese DNI ya está registrado.',
+        emailTaken: 'Ese email ya está registrado.',
+        usernameTaken: 'Ese nombre de usuario ya está en uso.',
+        usernameNotActivated: 'Todavía no activó su cuenta: el nombre de usuario lo elige al activarla.',
+        notActiveStaff: 'Es ex staff: reactivalo para modificar sus datos.',
+        alreadyInactive: 'Ya no es parte del staff.',
+        alreadyActive: 'Ya es parte del staff: para cambiar sus roles, editalo.',
+        notBlocked: 'El usuario no está bloqueado.',
+        notPending: 'Ya activó su cuenta: no hace falta reenviar el email.',
+        activationFailed: 'No pudimos enviar el email de activación. Probá reenviarlo en unos minutos.',
+
+        // Validaciones de formato
+        idInvalid: 'El identificador no es válido.',
+        nameInvalid: 'Ingresá el nombre (hasta 100 caracteres).',
+        lastNameInvalid: 'Ingresá el apellido (hasta 100 caracteres).',
+        dniInvalid: 'El DNI tiene que tener 7 u 8 dígitos, sin puntos.',
+        birthDateInvalid: 'Ingresá una fecha de nacimiento válida, que no sea futura.',
+        emailInvalid: 'Ingresá un email válido (hasta 150 caracteres): es obligatorio, porque por ahí recibe la activación.',
+        phoneInvalid: 'El teléfono puede tener hasta 30 caracteres.',
+        rolesInvalid: 'Elegí al menos un rol de staff.',
+        clubSportIdInvalid: 'Elegí el deporte.',
+        usernameLength: 'El usuario tiene que tener entre 4 y 50 caracteres.',
+        usernameFormat: 'El usuario solo puede tener letras, números, punto y guion bajo.',
+        existingUserIdInvalid: 'El usuario indicado no es válido.',
+        searchLength: 'La búsqueda puede tener hasta 100 caracteres.',
+        roleInvalid: 'El rol no es válido.',
+        stateInvalid: 'El estado no es válido.',
+        pageInvalid: 'La página no es válida.'
+    },
+
     upload: {
         invalidType: 'El archivo tiene que ser una imagen JPG, PNG o WEBP.',
         tooLarge: 'La imagen no puede pesar más de 5 MB.',
@@ -158,6 +212,7 @@ module.exports = {
 
     mail: {
         recoveryFailed: 'No se pudo enviar el correo de recuperación de contraseña',
-        passwordChangedFailed: 'No se pudo enviar el aviso de cambio de contraseña'
+        passwordChangedFailed: 'No se pudo enviar el aviso de cambio de contraseña',
+        activationFailed: 'No se pudo enviar el email de activación'
     }
 }

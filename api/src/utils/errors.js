@@ -1,3 +1,5 @@
+const { UniqueConstraintError } = require('sequelize')
+
 class AppError extends Error {
     constructor(message, statusCode = 500, code, data) {
         super(message)
@@ -11,4 +13,11 @@ class AppError extends Error {
 
 const createError = (message, statusCode, code, data) => new AppError(message, statusCode, code, data)
 
-module.exports = { AppError, createError }
+// true si el error es de un índice único sobre ese campo (sirve tanto con el nombre del campo como con el del índice)
+function isUniqueError(error, field) {
+    if (!(error instanceof UniqueConstraintError)) return false
+    const text = `${Object.keys(error.fields ?? {}).join(' ')} ${error.parent?.sqlMessage ?? ''}`
+    return text.includes(field)
+}
+
+module.exports = { AppError, createError, isUniqueError }

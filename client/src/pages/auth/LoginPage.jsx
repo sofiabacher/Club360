@@ -94,6 +94,9 @@ export default function LoginPage() {
             <Link component={RouterLink} to="/forgot-password" variant="body2" color="secondary" underline="hover">
               ¿Olvidaste tu contraseña?
             </Link>
+            <Link component={RouterLink} to="/family-link" variant="body2" color="secondary" underline="hover">
+              Vincularme como Familia
+            </Link>
           </Stack>
         </Stack>
       </Box>

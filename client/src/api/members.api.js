@@ -27,3 +27,17 @@ export const unblockMember = (id) => axiosClient.post(`/members/${id}/unblock`).
 
 // data: { id, club: { name, accentColor }, fullName, numMember, createdAt, isPendingRegistration, familyCode, registerUrl }
 export const getMemberReceipt = (id) => axiosClient.get(`/members/${id}/receipt`).then((res) => res.data)
+
+// ---------- Vínculo familiar ----------
+
+// Públicas, desde "Vincularme como Familia". data: { member: { name }, club: { name } }
+export const validateFamilyCode = (code) => axiosClient.post('/family-link/validate', { code }).then((res) => res.data)
+
+// payload: { code, name, lastName, dni, birthDate, email, phone, username, password, confirmPassword }. data: { username }
+export const linkWithNewAccount = (payload) => axiosClient.post('/family-link/new-account', payload).then((res) => res.data)
+
+// payload: { code, username, password }. data: { username }
+export const linkWithExistingAccount = (payload) => axiosClient.post('/family-link/existing-account', payload).then((res) => res.data)
+
+// Con la sesión iniciada (por ejemplo, para un hermano). data: { member: { name, numMember }, familyRoleAdded }
+export const linkFamilyMember = (code) => axiosClient.post('/family-link', { code }).then((res) => res.data)

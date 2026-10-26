@@ -1,0 +1,282 @@
+CASOS DE PRUEBA — MÓDULO STAFF (STAFF Y ACTIVACIÓN DE SU CUENTA)
+================================================================
+
+Club360 · Prompt 08 · 23/10/2026
+Formato según CLAUDE.md ("Pruebas"). Los resultados obtenidos salen del script de verificación del back
+(corrido contra la base local el 23/10/2026, con datos de prueba creados con la API y los modelos y borrados al final).
+Los emails de activación salieron por el mailer de desarrollo (sin RESEND_API_KEY se muestran por consola con su link).
+Lo que solo se puede comprobar en el navegador queda anotado en cada caso.
+
+Precondición general: base cargada con `npm run seed` (Club Valencia con Vóley activo y los 7 roles base). Sesión del
+Admin del Club (permiso staff.manage). Las pantallas están en Gestión > Staff.
+
+
+--------------------------------------------------
+ID: CP-STAFF-01
+Módulo: staff
+Descripción: Alta con un rol de staff
+Precondiciones: la persona no tiene usuario en el club.
+Pasos:
+  1. Ir a Staff > "Nuevo integrante del staff".
+  2. Cargar los datos, marcar un rol y elegir el deporte.
+  3. Tocar "Dar de alta".
+Datos de entrada: Paula Preparadora, DNI 60111004, nacida el 10/04/1985, paula.staff@club360.test, rol Preparadora
+  física, deporte Vóley.
+Resultado esperado: se crea el usuario pendiente de activación (sin usuario ni contraseña) con el rol, se le envía el
+  email de activación y se abre su detalle con el aviso "Le enviamos el email de activación a {email}.".
+Resultado obtenido: POST /staff → 201 con staffRoles [Preparadora física] y activation { required: true, sent: true }.
+  Usuario PENDING sin usuario ni contraseña. El email "Activá tu cuenta en Club360" salió por consola con el link
+  /activate?token=... Bitácora: "Alta de staff" y "Envío del email de activación". Falta ver el aviso en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-STAFF-02
+Módulo: staff
+Descripción: Alta con dos roles de staff
+Precondiciones: la persona no tiene usuario en el club.
+Pasos:
+  1. En "Nuevo integrante del staff", marcar dos roles y dar de alta.
+  2. Después de activar la cuenta, iniciar sesión.
+Datos de entrada: Ana Entrenadora, DNI 60111001, ana.staff@club360.test, teléfono 11 3000-1000, roles Entrenadora y
+  Preparadora física.
+Resultado esperado: el usuario queda con los dos roles; al entrar elige con cuál trabajar.
+Resultado obtenido: 201 con los dos roles en user_role. El teléfono quedó cifrado en la base y el detalle lo muestra
+  en claro. El email nombra al club y dice que el link vence en 48 horas. Después de activar, el login responde
+  requiresRoleSelection con los dos roles.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-STAFF-03
+Módulo: staff
+Descripción: Alta sin email, sin roles o con un deporte que no es del club (rechazada)
+Precondiciones: ninguna.
+Pasos:
+  1. Dar de alta sin email. 2. Sin marcar roles. 3. Con un rol que no es de staff. 4. Con un deporte que no está activo
+  en el club (o es de otro club).
+Datos de entrada: los indicados.
+Resultado esperado: no se crea nada y se muestra el mensaje de cada caso.
+Resultado obtenido: 400 en todos los casos: "Ingresá un email válido (hasta 150 caracteres): es obligatorio, porque por
+  ahí recibe la activación.", "Elegí al menos un rol de staff." (también con Socio o con roles repetidos) y "Elegí uno de
+  los deportes activos del club.". No se creó ningún usuario.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-STAFF-04
+Módulo: staff
+Descripción: Alta de una persona que es socia activa (rechazada)
+Precondiciones: un socio Activo (y después Suspendido) del club.
+Pasos:
+  1. Dar de alta como staff con el DNI y el email del socio.
+Datos de entrada: Sonia Socia, DNI 60111002.
+Resultado esperado: "Esta persona es socia del club y no puede ser staff." (contexto 3.6).
+Resultado obtenido: 409 con ese mensaje, tanto con el socio Activo como Suspendido.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-STAFF-05
+Módulo: staff
+Descripción: Alta de un ex socio (Inactivo): aceptada
+Precondiciones: el socio del caso anterior, dado de baja (Inactivo), que nunca se registró.
+Pasos:
+  1. Dar de alta como staff con sus datos.
+  2. Confirmar en el diálogo "Ya tiene usuario".
+Datos de entrada: Sonia Socia, rol Entrenadora.
+Resultado esperado: el staff se crea sobre su usuario. Como nunca eligió contraseña, se le manda la activación.
+Resultado obtenido: el primer POST → 409 EXISTING_USER con su usuario; con existingUserId → 201, usedExistingUser true y
+  activation { required: true, sent: true }. isActiveStaff da verdadero.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-STAFF-06
+Módulo: staff
+Descripción: Alta de una persona que ya es Familia (EXISTING_USER)
+Precondiciones: un usuario ACTIVE con contraseña y el rol Familia.
+Pasos:
+  1. Dar de alta como staff con su DNI.
+  2. Confirmar en el diálogo "Ya tiene usuario".
+  3. Volver a darlo de alta.
+Datos de entrada: Fede Familia, DNI 60111003, rol Representante.
+Resultado esperado: el diálogo pregunta si sumarlo con su usuario; al confirmar conserva Familia, suma el rol de staff y
+  no recibe activación (ya tiene contraseña). El detalle dice "Ya tenía usuario: puede ingresar con él.". Un segundo alta
+  se rechaza con "Esta persona ya es parte del staff.".
+Resultado obtenido: 409 EXISTING_USER "Fede Familia ya tiene usuario en el club."; con existingUserId → 201, sin email,
+  roles Familia y Representante, su email y su usuario sin cambios. El segundo alta → 409 con ese mensaje. Falta ver el
+  diálogo en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-STAFF-07
+Módulo: staff
+Descripción: Activación con un link válido
+Precondiciones: el staff del CP-STAFF-02, pendiente de activación.
+Pasos:
+  1. Abrir el link del email (o el de la consola) en una ventana sin sesión iniciada.
+  2. Elegir usuario y contraseña y tocar "Activar mi cuenta".
+  3. Iniciar sesión.
+Datos de entrada: usuario ana.staff, contraseña Prueba#2026. También un usuario ya usado (el del Admin) y una contraseña
+  que no cumple la política.
+Resultado esperado: la pantalla saluda por el nombre; con un usuario repetido o una contraseña débil no activa; con datos
+  válidos la cuenta queda Activa y se va al login con el usuario precargado.
+Resultado obtenido: GET /auth/activate/validate → 200 con el nombre. Usuario repetido → 409 "Ese nombre de usuario ya
+  está en uso."; contraseña débil → 400. Con datos válidos → 200, usuario ACTIVE con usuario y contraseña, bitácora
+  "Activación de cuenta". El login funciona. Falta probar la pantalla en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-STAFF-08
+Módulo: staff
+Descripción: Activación con un link vencido
+Precondiciones: un staff pendiente de activación.
+Pasos:
+  1. Abrir un link vencido.
+Datos de entrada: token generado con 1 segundo de vencimiento (en la demo: JWT_ACTIVATION_EXPIRES_IN, 48 horas).
+Resultado esperado: "El link de activación venció o ya fue usado. Pedile al club que te envíe uno nuevo.", sin formulario.
+Resultado obtenido: validate → 400 y activate → 400 con ese mensaje.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-STAFF-09
+Módulo: staff
+Descripción: Activación con un link ya usado
+Precondiciones: el staff del CP-STAFF-07, ya activado.
+Pasos:
+  1. Volver a abrir el mismo link.
+Datos de entrada: el mismo token.
+Resultado esperado: el mismo mensaje que con el link vencido; la cuenta no cambia.
+Resultado obtenido: validate → 400 y activate con otro usuario → 400. La huella del token es la de "sin contraseña": deja
+  de coincidir apenas la cuenta tiene contraseña.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-STAFF-10
+Módulo: staff
+Descripción: Reenvío de la activación
+Precondiciones: un staff pendiente de activación (Sonia, CP-STAFF-05) y otro ya activado.
+Pasos:
+  1. En el detalle del pendiente, tocar "Reenviar activación".
+  2. Probar el link anterior y el nuevo.
+  3. Intentar reenviar a quien ya activó.
+Datos de entrada: —
+Resultado esperado: sale un email nuevo; el link anterior sigue sirviendo hasta que la cuenta se activa. Para quien ya
+  activó, el botón no aparece y el back lo rechaza.
+Resultado obtenido: POST /staff/:id/resend-activation → 200 con el email y un envío más. El link anterior seguía válido;
+  después de activar con el nuevo, el anterior → 400. A quien ya activó → 409 "Ya activó su cuenta: no hace falta
+  reenviar el email.".
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-STAFF-11
+Módulo: staff
+Descripción: Baja de quien solo es staff
+Precondiciones: el staff del CP-STAFF-02, activado, sin otros roles.
+Pasos:
+  1. En su detalle, tocar "Dar de baja" y confirmar.
+  2. Intentar iniciar sesión con su usuario.
+Datos de entrada: —
+Resultado esperado: se le quitan los roles de staff, el usuario queda Eliminado y no puede entrar. El registro staff
+  queda (ex staff) y aparece con el filtro "Ex staff". No se puede modificar hasta reactivarlo.
+Resultado obtenido: 200 con isActiveStaff false; usuario DELETED, sin roles y el registro staff sigue. Login → 403
+  USER_DELETED. Otra baja → 409; modificarlo → 409 "Es ex staff: reactivalo para modificar sus datos.". El listado con
+  state=inactive lo devuelve.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-STAFF-12
+Módulo: staff
+Descripción: Baja de quien además es Familia
+Precondiciones: Fede (CP-STAFF-06), con Representante y Familia.
+Pasos:
+  1. Darlo de baja del staff.
+  2. Iniciar sesión con su usuario.
+Datos de entrada: —
+Resultado esperado: pierde Representante, su usuario sigue Activo y entra directo con Familia.
+Resultado obtenido: 200; usuario ACTIVE, getAvailableRoles → [Familia] y el login entra con Familia sin elegir rol. La
+  sesión que tenía abierta ya solo le ofrece Familia. Bitácora: "Roles quitados: Representante; conserva: Familia".
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-STAFF-13
+Módulo: staff
+Descripción: Reactivación
+Precondiciones: los ex staff de los casos 11 y 12, y uno que nunca activó su cuenta y quedó Eliminado.
+Pasos:
+  1. En el detalle, tocar "Reactivar", elegir los roles y confirmar.
+Datos de entrada: Ana → Entrenadora; Fede → Representante y Entrenadora; Paula (nunca activó) → Preparadora física.
+Resultado esperado: Ana vuelve a Activo con su contraseña de siempre; Fede recupera los roles (nunca dejó de estar
+  Activo); Paula vuelve a Pendiente con un email de activación nuevo. Sin roles no se reactiva; un staff activo tampoco.
+Resultado obtenido: Ana → ACTIVE, sin email, y vuelve a entrar. Fede → roles Entrenadora, Familia y Representante. Paula →
+  PENDING con un email nuevo (mientras estuvo DELETED su link anterior no servía). Sin roles → 400; staff activo → 409
+  "Ya es parte del staff: para cambiar sus roles, editalo.". Quien se hizo socio mientras era ex staff → 409.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-STAFF-14
+Módulo: staff
+Descripción: Desbloqueo
+Precondiciones: un staff con el usuario bloqueado por 5 intentos fallidos.
+Pasos:
+  1. En su detalle, tocar "Desbloquear" y confirmar.
+Datos de entrada: —
+Resultado esperado: el usuario vuelve a Activo con los intentos en 0 y queda en la bitácora.
+Resultado obtenido: 200, ACTIVE con failedAttempts 0 y "Usuario desbloqueado" en la bitácora. Desbloquear a quien no está
+  bloqueado → 409.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-STAFF-15
+Módulo: staff
+Descripción: Modificación de datos, roles y deporte
+Precondiciones: un staff activo pendiente de activación.
+Pasos:
+  1. En su detalle, tocar "Editar", cambiar el nombre, la fecha de nacimiento y los roles, y guardar.
+Datos de entrada: nombre Ana María, fecha 01/01/1986, roles Entrenadora y Representante (sin Preparadora física).
+  También: un usuario nuevo (todavía no activó), sin roles y con el email de otra persona.
+Resultado esperado: se guardan los cambios y la bitácora registra cada uno; el usuario solo se cambia si ya activó.
+Resultado obtenido: 200 con los roles nuevos. Bitácora: "nombre, fecha de nacimiento: 1985-04-10 → 1986-01-01, roles
+  agregados: Representante, roles quitados: Preparadora física". Usuario sin activar → 400; sin roles → 400; email de
+  otra persona → 409.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-STAFF-16
+Módulo: staff
+Descripción: Listado, búsqueda y filtros
+Precondiciones: staff activo, pendiente y ex staff.
+Pasos:
+  1. Buscar por apellido. 2. Filtrar por rol. 3. Filtrar por estado.
+  4. Ver el listado en el celular.
+Datos de entrada: búsqueda "entrenadora"; rol Representante; estados Activos, Pendientes de activación y Ex staff.
+Resultado esperado: cada filtro devuelve solo lo que corresponde; en el celular se ve como tarjetas.
+Resultado obtenido: la búsqueda, el filtro por rol y los tres estados devolvieron exactamente las personas esperadas; un
+  estado desconocido → 400. Falta ver la pantalla en el celular.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-STAFF-17
+Módulo: staff
+Descripción: Staff de otro club (multi-tenant)
+Precondiciones: un segundo club de prueba con su deporte y un staff.
+Pasos:
+  1. Con el Admin de Valencia, buscar, abrir y dar de baja al staff del otro club, y dar de alta con el deporte del otro club.
+Datos de entrada: el id del staff y del deporte del otro club.
+Resultado esperado: no aparece en el listado, el detalle y la baja responden "No encontramos a esa persona del staff." y
+  el deporte se rechaza.
+Resultado obtenido: listado vacío; detalle y baja → 404; alta con ese deporte → 400. Al final se borró el club de prueba.
+  Un Socio que pide GET /staff recibe 403.
+Estado: Aprobado

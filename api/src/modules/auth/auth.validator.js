@@ -20,14 +20,17 @@ const login = [
     body('password').isString().withMessage(m.passwordRequired).bail().notEmpty().withMessage(m.passwordRequired)
 ]
 
+// Nombre de usuario que se elige al registrarse o al activar la cuenta
+const usernameRule = body('username')
+    .isString().withMessage(m.usernameLength).bail()
+    .trim()
+    .isLength({ min: 4, max: 50 }).withMessage(m.usernameLength).bail()
+    .matches(/^[A-Za-z0-9._]+$/).withMessage(m.usernameFormat)
+
 const registerMember = [
     body('numMember').isString().withMessage(m.numMemberRequired).bail().trim().notEmpty().withMessage(m.numMemberRequired),
     body('birthDate').isDate({ format: 'YYYY-MM-DD', strictMode: true }).withMessage(m.birthDateInvalid),
-    body('username')
-        .isString().withMessage(m.usernameLength).bail()
-        .trim()
-        .isLength({ min: 4, max: 50 }).withMessage(m.usernameLength).bail()
-        .matches(/^[A-Za-z0-9._]+$/).withMessage(m.usernameFormat),
+    usernameRule,
     body('password').custom(isValidPassword).withMessage(m.passwordPolicy),
     body('confirmPassword').custom((value, { req }) => value === req.body.password).withMessage(m.passwordsDontMatch)
 ]
@@ -55,6 +58,17 @@ const resetPassword = [
     ...newPasswordRules('password')
 ]
 
+// Activación de la cuenta (staff): el link y el usuario y la contraseña que elige, con las reglas del registro
+const activationToken = (location) => location('token').isString().withMessage(m.activationTokenRequired).bail().notEmpty().withMessage(m.activationTokenRequired)
+
+const validateActivationToken = [activationToken(query)]
+
+const activateAccount = [
+    activationToken(body),
+    usernameRule,
+    ...newPasswordRules('password')
+]
+
 // Mi cuenta: solo email y teléfono. Los demás campos del body no se validan porque el service los ignora.
 // El email puede venir vacío: que sea obligatorio para los mayores lo decide el service
 const updateAccount = [
@@ -68,12 +82,15 @@ const changePassword = [
 ]
 
 module.exports = {
+    isValidPassword,   // Lo usa también el vínculo familiar con cuenta nueva (members.validator)
     login,
     registerMember,
     switchRole,
     forgotPassword,
     validateResetToken,
     resetPassword,
+    validateActivationToken,
+    activateAccount,
     updateAccount,
     changePassword
 }

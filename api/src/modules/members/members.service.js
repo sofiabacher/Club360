@@ -2,15 +2,18 @@
 // Lógica de negocio y acceso a modelos. Filtra siempre por el clubId del usuario logueado (nunca el del body),
 // registra las acciones relevantes en la bitácora (utils/logger) y lanza los errores con createError (utils/errors).
 const crypto = require('crypto')
-const { Op, UniqueConstraintError } = require('sequelize')
+const { Op } = require('sequelize')
 
 const sequelize = require('../../config/db')
 const { cors } = require('../../config')
-const { User, Member, Staff, Role, Club } = require('../../models')
+const { User, Member, Role, Club } = require('../../models')
 const { assignBaseRole } = require('../access/access.service')
+const { verifyCredentials } = require('../auth/auth.service')
+const { isActiveStaff } = require('../staff/staff.service')
 
 const logger = require('../../utils/logger')
-const { createError } = require('../../utils/errors')
+const { createError, isUniqueError } = require('../../utils/errors')
+const { hashPassword } = require('../../utils/crypto')
 const { getAge, isAdult } = require('../../utils/dates')
 const { USER_STATES, MEMBER_STATES, BASE_ROLES, LOG_ACTIONS } = require('../../utils/constants')
 const { members: m } = require('../../utils/messages')
@@ -33,13 +36,6 @@ const REGISTRATION_FILTERS = { PENDING: 'pending', REGISTERED: 'registered' }
 const actorOf = ({ id: userId, clubId, activeRoleId }) => ({ clubId, userId, roleId: activeRoleId })
 
 const fullNameOf = (user) => `${user.name} ${user.lastName}`
-
-// true si el error es de un índice único sobre ese campo (sirve tanto con el nombre del campo como con el del índice)
-function isUniqueError(error, field) {
-    if (!(error instanceof UniqueConstraintError)) return false
-    const text = `${Object.keys(error.fields ?? {}).join(' ')} ${error.parent?.sqlMessage ?? ''}`
-    return text.includes(field)
-}
 
 // Mensaje de cada campo único del usuario (DNI, email y usuario son únicos en toda la plataforma)
 const UNIQUE_USER_MESSAGES = { dni: m.dniTaken, email: m.emailTaken, username: m.usernameTaken }
@@ -104,16 +100,13 @@ async function findMatchingUsers(clubId, { dni, email }) {
 
     return User.findAll({
         where: { clubId, [Op.or]: conditions },
-        include: [
-            { model: Staff, as: 'staff', attributes: ['id'] },
-            { model: Member, as: 'member', attributes: ['id', 'numMember'] }
-        ]
+        include: [{ model: Member, as: 'member', attributes: ['id', 'numMember'] }]
     })
 }
 
-// Si es Staff o ya es socia, no puede ser dada de alta
-function assertCanBeMember(user) {
-    if (user.staff) throw createError(m.isStaff, 409)
+// Si es staff activo (tiene algún rol de staff) o ya es socia, no puede ser dada de alta. Un ex staff sí
+async function assertCanBeMember(user, { transaction } = {}) {
+    if (await isActiveStaff(user.id, { transaction })) throw createError(m.isStaff, 409)
     if (user.member) throw createError(m.alreadyMember(user.member.numMember), 409)
 }
 
@@ -273,7 +266,7 @@ async function withRetry(task) {
 }
 
 // Alta presencial. Si la persona ya tiene usuario en el club (por DNI o email):
-//   - si es Staff o ya es socia, se rechaza;
+//   - si es staff activo o ya es socia, se rechaza;
 //   - si no, se responde 409 EXISTING_USER con sus datos, y el front reenvía el alta con existingUserId para crear el
 //     socio sobre ese usuario, sin tocar sus datos ni su contraseña.
 async function createMember(actor, { name, lastName, dni, birthDate, email, phone, existingUserId }) {
@@ -281,7 +274,7 @@ async function createMember(actor, { name, lastName, dni, birthDate, email, phon
     email = email || null
 
     const matches = await findMatchingUsers(clubId, { dni, email })
-    matches.forEach(assertCanBeMember)
+    for (const user of matches) await assertCanBeMember(user)
 
     let member
 
@@ -295,6 +288,13 @@ async function createMember(actor, { name, lastName, dni, birthDate, email, phon
             const locked = await User.findByPk(user.id, { transaction, lock: transaction.LOCK.UPDATE })
             const existing = await Member.findOne({ where: { userId: locked.id }, attributes: ['numMember'], transaction })
             if (existing) throw createError(m.alreadyMember(existing.numMember), 409)
+            if (await isActiveStaff(locked.id, { transaction })) throw createError(m.isStaff, 409)
+
+            // Un ex staff que quedó dado de baja (DELETED) vuelve a tener acceso: ACTIVE si ya tenía contraseña,
+            // o PENDING para registrarse con su número de socio
+            if (locked.userStateId === USER_STATES.DELETED) {
+                await locked.update({ userStateId: locked.password ? USER_STATES.ACTIVE : USER_STATES.PENDING }, { transaction })
+            }
 
             return createMembership(locked, transaction)
         })
@@ -457,6 +457,125 @@ async function unblockMember(actor, memberId) {
     return getMember(actor, member.id)
 }
 
+// ---------- Vínculo familiar ("Vincularme como Familia") ----------
+// El código del socio menor sirve una sola vez (queda usado con linkStatus = true). El adulto tiene que ser mayor de 18
+// y del mismo club que el menor. Al vincular recibe el rol Familia con assignBaseRole.
+
+const normalizeCode = (code) => String(code).trim().toUpperCase()
+
+// Nombre del menor para mostrarle al adulto antes de vincular: nombre e inicial del apellido
+const shortNameOf = (user) => `${user.name} ${user.lastName.charAt(0)}.`
+
+// Socio del código, si existe y no se usó. Con clubId, solo busca en ese club (un código de otro club no es válido)
+async function findCodeMember(code, clubId) {
+    const member = await Member.findOne({
+        where: { codeFamily: normalizeCode(code), ...(clubId && { clubId }) },
+        include: [
+            { model: User, as: 'user', attributes: ['id', 'name', 'lastName'] },
+            { model: Club, as: 'club', attributes: ['id', 'name'] }
+        ]
+    })
+
+    if (!member) throw createError(m.codeInvalid, 400, 'FAMILY_CODE_INVALID')
+    if (member.linkStatus) throw createError(m.codeUsed, 409, 'FAMILY_CODE_USED')
+    return member
+}
+
+// El adulto tiene que ser del club del menor, mayor de edad y otra persona
+function assertCanLink(adult, member) {
+    if (adult.clubId !== member.clubId) throw createError(m.codeInvalid, 400, 'FAMILY_CODE_INVALID')
+    if (adult.id === member.userId) throw createError(m.familyOwnCode, 400)
+    if (!isAdult(adult.birthDate)) throw createError(m.familyAdultRequired, 400)
+}
+
+// Vincula dentro de la transacción. Devuelve true si el adulto recibió el rol Familia (no lo tenía)
+async function linkAdult(memberId, adultUserId, transaction) {
+    // Con el socio bloqueado, si dos adultos usan el mismo código a la vez, el segundo lo ve ya usado
+    const member = await Member.findByPk(memberId, { transaction, lock: transaction.LOCK.UPDATE })
+    if (member.linkStatus) throw createError(m.codeUsed, 409, 'FAMILY_CODE_USED')
+
+    await member.update({ adultUserId, linkStatus: true }, { transaction })
+    return assignBaseRole(adultUserId, BASE_ROLES.FAMILY, { transaction })
+}
+
+const linkDetails = (member, way) => `${way}. Menor: ${fullNameOf(member.user)} (socio Nº ${member.numMember})`
+
+// Paso 1: el código. Responde a quién se va a vincular
+async function validateFamilyCode(code) {
+    const member = await findCodeMember(code)
+    return { member: { name: shortNameOf(member.user) }, club: { name: member.club.name } }
+}
+
+// Camino 1: el adulto crea su cuenta, que queda ACTIVE en el momento, en el club del menor
+async function linkWithNewAccount({ code, name, lastName, dni, birthDate, email, phone, username, password }) {
+    const member = await findCodeMember(code)
+
+    if (!isAdult(birthDate)) throw createError(m.familyAdultRequired, 400)
+
+    const existing = await User.findOne({ where: { clubId: member.clubId, [Op.or]: [{ dni }, { email }] }, attributes: ['id'] })
+    if (existing) throw createError(m.familyExistingAccount, 409, 'FAMILY_EXISTING_ACCOUNT')
+
+    const usernameTaken = await User.findOne({ where: { username }, attributes: ['id'] })
+    if (usernameTaken) throw createError(m.usernameTaken, 409)
+
+    const hashedPassword = await hashPassword(password)
+    let user
+
+    try {
+        user = await sequelize.transaction(async (transaction) => {
+            const created = await User.create({
+                clubId: member.clubId,
+                name,
+                lastName,
+                dni,
+                birthDate,
+                email,
+                phone: phone || null,
+                username,
+                password: hashedPassword,
+                userStateId: USER_STATES.ACTIVE
+            }, { transaction })
+
+            await linkAdult(member.id, created.id, transaction)
+            return created
+        })
+
+    } catch (error) {
+        throw uniqueUserError(error) ?? error   // DNI o email de otro club, o un usuario que se tomó recién
+    }
+
+    await logger({ clubId: member.clubId, userId: user.id, roleId: null }, LOG_ACTIONS.FAMILY_LINKED, linkDetails(member, 'Con una cuenta nueva'))
+
+    return { username }
+}
+
+// Camino 2: el adulto ingresa con su usuario. Se valida como en el login (estado, contraseña e intentos fallidos con bloqueo)
+async function linkWithExistingAccount({ code, username, password }) {
+    const member = await findCodeMember(code)
+    const user = await verifyCredentials({ username, password })
+
+    assertCanLink(user, member)
+
+    await sequelize.transaction(transaction => linkAdult(member.id, user.id, transaction))
+    await logger({ clubId: member.clubId, userId: user.id, roleId: null }, LOG_ACTIONS.FAMILY_LINKED, linkDetails(member, 'Con su usuario'))
+
+    return { username: user.username }
+}
+
+// Desde la app: el usuario logueado (con cualquier rol) vincula a otro menor de su club, por ejemplo un hermano.
+// familyRoleAdded avisa al front que ahora tiene el rol Familia (si tiene más de un rol, puede cambiar a ese).
+async function linkFromAccount(actor, { code }) {
+    const member = await findCodeMember(code, actor.clubId)
+    const user = await User.findByPk(actor.id, { attributes: ['id', 'clubId', 'birthDate'] })
+
+    assertCanLink(user, member)
+
+    const familyRoleAdded = await sequelize.transaction(transaction => linkAdult(member.id, user.id, transaction))
+    await logger(actorOf(actor), LOG_ACTIONS.FAMILY_LINKED, linkDetails(member, 'Desde Mi cuenta'))
+
+    return { member: { name: fullNameOf(member.user), numMember: member.numMember }, familyRoleAdded }
+}
+
 module.exports = {
     generateMemberNumber,
     listMembers,
@@ -466,5 +585,9 @@ module.exports = {
     updateMember,
     deactivateMember,
     reactivateMember,
-    unblockMember
+    unblockMember,
+    validateFamilyCode,
+    linkWithNewAccount,
+    linkWithExistingAccount,
+    linkFromAccount
 }

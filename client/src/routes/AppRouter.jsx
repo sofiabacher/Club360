@@ -7,6 +7,8 @@ import LoginPage from '../pages/auth/LoginPage.jsx'
 import RegisterMemberPage from '../pages/auth/RegisterMemberPage.jsx'
 import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage.jsx'
 import ResetPasswordPage from '../pages/auth/ResetPasswordPage.jsx'
+import ActivateAccountPage from '../pages/auth/ActivateAccountPage.jsx'
+import FamilyLinkPage from '../pages/auth/FamilyLinkPage.jsx'
 import SelectRolePage from '../pages/auth/SelectRolePage.jsx'
 import HomePage from '../pages/HomePage.jsx'
 import AccountPage from '../pages/account/AccountPage.jsx'
@@ -20,12 +22,16 @@ import MembersPage from '../pages/members/MembersPage.jsx'
 import MemberFormPage from '../pages/members/MemberFormPage.jsx'
 import MemberDetailPage from '../pages/members/MemberDetailPage.jsx'
 import MemberReceiptPage from '../pages/members/MemberReceiptPage.jsx'
+import StaffPage from '../pages/staff/StaffPage.jsx'
+import StaffFormPage from '../pages/staff/StaffFormPage.jsx'
+import StaffDetailPage from '../pages/staff/StaffDetailPage.jsx'
 import { getMenuRoutes } from '../navigation/menu.js'
 
 // Pantalla de cada path del menú. Mientras una sección no exista, su ruta muestra ComingSoonPage.
 // La ruta se protege con el mismo permiso que tiene en navigation/menu.js
 const SCREENS = {
   '/members': MembersPage,
+  '/staff': StaffPage,
   '/club': ClubInfoPage,
   '/club/settings': ClubSettingsPage,
   '/club/sports': ClubSportsPage,
@@ -38,7 +44,10 @@ const EXTRA_SCREENS = [
   { path: '/members/new', permission: 'members.manage', Screen: MemberFormPage },
   { path: '/members/:id', permission: 'members.manage', Screen: MemberDetailPage },
   { path: '/members/:id/edit', permission: 'members.manage', Screen: MemberFormPage },
-  { path: '/members/:id/receipt', permission: 'members.manage', Screen: MemberReceiptPage }
+  { path: '/members/:id/receipt', permission: 'members.manage', Screen: MemberReceiptPage },
+  { path: '/staff/new', permission: 'staff.manage', Screen: StaffFormPage },
+  { path: '/staff/:id', permission: 'staff.manage', Screen: StaffDetailPage },
+  { path: '/staff/:id/edit', permission: 'staff.manage', Screen: StaffFormPage }
 ]
 
 // Una ruta por path de navigation/menu.js, protegida con sus permisos (alcanza con uno)
@@ -51,6 +60,8 @@ export default function AppRouter() {
       <Route path="/register" element={<PublicRoute><RegisterMemberPage /></PublicRoute>} />
       <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
       <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
+      <Route path="/activate" element={<PublicRoute><ActivateAccountPage /></PublicRoute>} />
+      <Route path="/family-link" element={<PublicRoute><FamilyLinkPage /></PublicRoute>} />
 
       <Route
         path="/select-role"

@@ -29,6 +29,8 @@ Este documento es el contexto acumulado del proyecto. Está pensado para pegarse
 - **Prioridades si sobra tiempo:** primero los resultados de partidos, después el bot (D11, ver sección 7).
 - **Particiones:** no se implementan porque no son requisito (ver sección 0).
 
+**Última actualización (23/10/2026) — staff y vínculo familiar:** activación de la cuenta del staff por email, varios roles de staff por persona, baja de staff que conserva el rol Familia, circuito "Vincularme como Familia" y desvinculación por mayoría de edad (ver 3.4, 3.5, 3.6 y sección 8).
+
 **Última actualización (21/10/2026) — club y alta de socios:** formato del número de socio y del código de vínculo, datos obligatorios del alta, socios que ya tienen usuario, baja y reactivación (ver 3.1); email opcional para menores, teléfono cifrado y campos nuevos de `club` para el color y la información general (D13, ver sección 8).
 
 **Última actualización (21/10/2026) — gestión de roles y permisos:** reglas para editar roles base, permisos bloqueados del rol Admin del Club, qué roles se asignan a mano y cuáles desde su circuito, y eliminación de roles (ver sección 4, "Gestión de roles y permisos").
@@ -134,11 +136,13 @@ Se usan para el seed, los datos de prueba, la pantalla "El club" y el bot. Se re
 - Por fecha de nacimiento, sin intervención manual.
 - Al cumplir 18: se habilita la opción de desvincularse del adulto responsable + acceso propio a la gestión de cuotas.
 - Si no se desvincula, ambos (Socio y adulto) pueden operar en paralelo — la Bitácora registra quién hizo cada acción.
+- **Desvinculación (23/10/2026):** la hace el propio Socio desde "Mi cuenta". Se borra el vínculo y también el código (para que no se pueda volver a usar). Si el adulto ya no tiene ningún otro menor vinculado, pierde el rol Familia. No se notifica al adulto (no figura en la tabla de canales, sección 6).
 - **Nota de diseño:** este mecanismo (habilitar/deshabilitar acceso según una condición calculada, no según rol fijo) es el caso de uso real para el ítem de consigna "Patentes y Familias".
 
 **3.5 Alta de Familia y código de vínculo familiar**
 - Se registra con el código de vínculo familiar: de un solo uso, un código por cada Socio menor, un adulto por Socio menor.
 - **Entrega del código (21/10/2026, decisión D3):** el adulto lo recibe en mano, en el comprobante del alta presencial del menor (ver 3.1). Además, el código queda visible en el perfil del Socio menor mientras no se haya usado. No se envía por email, porque el adulto todavía no tiene cuenta.
+- **Vincularme como Familia (23/10/2026):** desde la pantalla de inicio de sesión, el adulto ingresa el código y elige entre crear su cuenta (queda activa en el momento, en el club del menor) o ingresar con el usuario que ya tiene (con la validación del login, incluido el bloqueo por intentos). El adulto tiene que ser mayor de 18 y del mismo club. Un usuario que ya tiene sesión iniciada también puede vincular a otro menor desde "Mi cuenta" (por ejemplo, un hermano). Al vincular recibe el rol Familia.
 - Un mismo adulto puede vincularse a varios Socios menores (hermanos) y/o ser Socio independiente él mismo.
 - Si el usuario Familia es también Socio por su cuenta, tiene ambos roles (ver "Rol activo" más abajo).
 - Un usuario Staff puede ser también Familia de un Socio menor (no puede ser Socio, ver 3.6); tiene ambos roles (ver "Rol activo" más abajo).
@@ -148,6 +152,11 @@ Se usan para el seed, los datos de prueba, la pantalla "El club" y el bot. Se re
 **3.6 Alta de Staff** (Representante, entrenadoras, preparadora física)
 - No pasa por el circuito de Socio. Alta directa por el Admin del club, con rol de staff ya asignado.
 - Un usuario Staff **no puede ser además Socio**: o es Staff o es Socio. Sí puede ser además Familia (ver 3.5).
+- **Reglas del alta de Staff (23/10/2026):**
+  - Datos obligatorios: nombre, apellido, DNI, fecha de nacimiento, email, el deporte del club y al menos un rol de staff. **Una persona puede tener más de un rol de staff** (por ejemplo, Entrenadora y Preparadora física) y trabaja con el rol activo (ver 3.5).
+  - **Acceso:** el alta crea el usuario pendiente y le envía un **email de activación** con un link que vence en 48 horas y sirve una sola vez, para que elija su usuario y su contraseña. El Admin puede reenviarlo.
+  - Se considera staff a quien tiene al menos un rol de staff. No puede ser staff quien es Socio Activo o Suspendido; un ex Socio (Inactivo) sí puede. Si la persona ya tiene usuario en el club con otro rol (por ejemplo, Familia), el staff se crea sobre ese usuario, sin activación.
+  - **Baja:** se le quitan los roles de staff. El usuario queda Eliminado **solo si no le queda ningún otro rol**; si además es Familia, sigue entrando con ese rol. El Admin puede reactivarlo eligiendo de nuevo sus roles.
 
 **3.6.1 Login, roles disponibles y rol activo (18/10/2026)**
 - Se inicia sesión con **nombre de usuario** y contraseña. Política de contraseñas igual a HotelDesk: mínimo 8 caracteres, con mayúscula, minúscula, número y carácter especial.
@@ -340,7 +349,7 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 - Todas las entidades de negocio llevan `club_id` (`clubId`) y `dvh`. `created_at`/`updated_at` **no se dibujan explícitamente en el DER**: existen igual a nivel de base por el `timestamps: true` default de Sequelize, pero se consideran implementación, no parte del DER visual. Excepción ya existente: la Bitácora (`log`) solo tiene `createdAt` (sin `updatedAt`, un log no se edita — igual que en el proyecto HotelDesk de referencia).
 - **Patrón de estados por código numérico** (campos `userStateId`, `memberStateId`, `inscriptionState`, `citationState`, `gameState`, `transactionState` en `payment`, `feeState` en `fee`): se modelan como `INT NOT NULL DEFAULT 1`, **sin tabla de estados en la base**. El mapeo nombre↔número vive en un archivo de constantes de la aplicación (mismo patrón que `USER_STATES`/`ROOM_STATES` en el proyecto HotelDesk de referencia). Los campos `TINYINT(1)` tipo `isActive`/`linkStatus` son flags booleanas simples y no siguen este patrón.
 - **Valores de los estados (cerrado el 18/10/2026, decisión D8):** el 1 es siempre el estado inicial (default del modelo). Los mapeos viven en `utils/constants.js`, replicados en `api/` y `client/`.
-  - `user.userStateId`: 1 Pendiente, 2 Activo, 3 Bloqueado, 4 Eliminado. La baja de un Staff se hace con el usuario en Eliminado (`staff` no tiene estado propio).
+  - `user.userStateId`: 1 Pendiente, 2 Activo, 3 Bloqueado, 4 Eliminado. `staff` no tiene estado propio: la baja de un Staff le quita sus roles de staff y deja el usuario en Eliminado solo si no le queda otro rol (ver 3.6, 23/10/2026).
   - `member.memberStateId`: 1 Activo, 2 Suspendido (perdió la condición por mora, se recupera solo al regularizar; ver sección 6), 3 Inactivo (baja dada por el Admin).
   - `inscription.inscriptionState`: 1 Pendiente, 2 Aprobada, 3 Rechazada, 4 Cancelada (incluye la baja del deporte; ver 3.3.1).
   - `fee.feeState`: 1 Pendiente, 2 Pagada, 3 Vencida. Los días de mora no son un estado: se calculan desde `expirationDate`.
@@ -389,7 +398,7 @@ Asistente de consultas generales sobre el club y sobre cómo usar la plataforma,
 
 ## 10. Estado actual y próximos pasos
 
-**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**, **recuperación de contraseña y Mi cuenta (3.6.2 y 3.7, 21/10)**, **decisiones D2 a D7, D9 y D11 y emails de la demo (21/10)**, **gestión de roles y permisos (sección 4, 21/10)**, **club y alta de socios, D13 (3.1 y sección 8, 21/10)**
+**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**, **recuperación de contraseña y Mi cuenta (3.6.2 y 3.7, 21/10)**, **decisiones D2 a D7, D9 y D11 y emails de la demo (21/10)**, **gestión de roles y permisos (sección 4, 21/10)**, **club y alta de socios, D13 (3.1 y sección 8, 21/10)**, **staff y vínculo familiar (3.4, 3.5 y 3.6, 23/10)**
 
 **Pendiente:**
 1. ~~Modelo DER Lógico completo~~ — cerrado el 04/10/2026, actualizado el 10/10/2026 (ver sección 8)

@@ -64,8 +64,21 @@ function buildPasswordChangedNotice({ name }) {   // Aviso después de cambiar o
     return { subject: 'Tu contraseña de Club360 fue modificada', html: signature(body) }
 }
 
+// Activación de la cuenta del staff: elige su usuario y su contraseña. expiresIn es el texto del vencimiento ('48 horas')
+function buildActivationEmail({ name, clubName, link, expiresIn }) {
+    const body = `
+        <p style="margin-top: 0;">Hola ${escapeHtml(name)},</p>
+        <p>Te sumaron al staff de <strong>${escapeHtml(clubName)}</strong> en <strong>Club360</strong>. Para entrar, activá tu cuenta eligiendo tu usuario y tu contraseña:</p>
+        ${button(link, 'Activar mi cuenta')}
+        <p style="font-size: 13px; color: ${BRAND.muted};">El link vence en ${escapeHtml(expiresIn)} y sirve una sola vez. Si venció, pedile al club que te mande uno nuevo. Si el botón no funciona, copiá este link en el navegador:<br><a href="${link}" style="color: ${BRAND.navy}; word-break: break-all;">${link}</a></p>
+    `
+
+    return { subject: 'Activá tu cuenta en Club360', html: signature(body) }
+}
+
 module.exports = {
     signature,
     buildRecoveryEmail,
-    buildPasswordChangedNotice
+    buildPasswordChangedNotice,
+    buildActivationEmail
 }

@@ -179,12 +179,21 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 
 - **Número de socio:** 6 dígitos correlativos con ceros a la izquierda (`000001`), únicos en toda la plataforma. Lo genera `generateMemberNumber` en `members.service.js`.
 - **Código de vínculo familiar:** solo para menores al momento del alta, con formato `XXXX-XXXX` (sin caracteres que se confundan). Se usa una sola vez.
-- **Alta presencial:** DNI y fecha de nacimiento obligatorios; email obligatorio solo para mayores. Si la persona ya tiene usuario en el club: si es Staff, se rechaza; si ya es socia, se rechaza; si es otra cosa (por ejemplo, Familia), se le crea el socio sobre ese mismo usuario (`EXISTING_USER`). El rol Socio se asigna con `assignBaseRole`.
+- **Alta presencial:** DNI y fecha de nacimiento obligatorios; email obligatorio solo para mayores. Si la persona ya tiene usuario en el club: si es staff activo (`isActiveStaff`), se rechaza; si ya es socia, se rechaza; si es otra cosa (por ejemplo, Familia), se le crea el socio sobre ese mismo usuario (`EXISTING_USER`). El rol Socio se asigna con `assignBaseRole`.
 - **Baja del socio:** `member` en INACTIVE, sin tocar el `user`. **Reactivación:** solo de INACTIVE a ACTIVE. Un SUSPENDED por mora no se reactiva a mano.
 - **Estado del socio:** los demás módulos (inscripciones, cuotas, categorías, citaciones) consultan `memberStateId` en lugar de modificarse cuando el socio se da de baja.
 - **Información del club:** los datos de contacto son columnas de `club`; WhatsApp, horarios y canchas van en `club.extraInfo` (JSON). La estructura está comentada en el modelo `Club`.
 - **Deportes del club:** no se puede desactivar un deporte que tiene inscripciones Pendientes o Aprobadas.
 - **Integridad con JSON:** `utils/integrity.js` normaliza objetos y arrays como JSON con las claves ordenadas, así el DVH no depende del orden que devuelve MySQL.
+
+## Staff y vínculo familiar (módulos `staff` y `members`)
+
+- **Staff activo** = usuario con al menos un rol de `STAFF_ROLES` (Representante, Entrenadora, Preparadora física). Se consulta siempre con `isActiveStaff` (`staff.service.js`), nunca solo por la existencia del registro `staff`. Una persona puede tener varios roles de staff.
+- **Staff y socio:** no se da de alta como staff a quien tiene un `member` ACTIVE o SUSPENDED, ni como socio a un staff activo. Un ex socio (INACTIVE) puede ser staff y un ex staff puede ser socio.
+- **Acceso del staff:** el alta crea el usuario en PENDING y le manda un email de activación (token `account-activation`, vence en `JWT_ACTIVATION_EXPIRES_IN`, 48 h por defecto, y deja de servir al activar la cuenta). El Admin puede reenviarlo.
+- **Baja de staff:** se quitan todos sus roles de staff; el usuario pasa a DELETED **solo si no le queda ningún otro rol** (si es Familia, sigue entrando con ese rol). El registro `staff` no se borra.
+- **Vínculo familiar:** el código del menor sirve una sola vez (`linkStatus = true`). El adulto tiene que ser mayor y del mismo club; puede crear una cuenta nueva desde `/family-link` o usar la suya (con la validación del login, que suma intentos fallidos). Al vincular se asigna el rol Familia con `assignBaseRole`.
+- **Desvincularse** (socio mayor, `members.unlinkAdult`): `adultUserId = null`, `linkStatus = false` y `codeFamily = null`. Si el adulto ya no tiene ningún otro menor vinculado, pierde el rol Familia (`removeBaseRole`).
 
 ## Lista de tareas (`docs/TODO.md`)
 

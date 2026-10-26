@@ -29,10 +29,24 @@ export const validateResetToken = (token) =>
 // data: { username }
 export const resetPassword = (payload) => axiosClient.post('/auth/reset-password', payload).then((res) => res.data)
 
+// ---------- Activación de la cuenta (staff) ----------
+
+// data: { name }. Si el link venció o ya se usó, responde 400 con el mensaje
+export const validateActivationToken = (token) =>
+  axiosClient.get('/auth/activate/validate', { params: { token } }).then((res) => res.data)
+
+// payload: { token, username, password, confirmPassword }. data: { username }
+export const activateAccount = (payload) => axiosClient.post('/auth/activate', payload).then((res) => res.data)
+
 // ---------- Mi cuenta ----------
 
-// data: { name, lastName, dni, birthDate, username, email, phone, photo, numMember }
+// data: { name, lastName, dni, birthDate, username, email, phone, photo,
+//         member: { numMember, memberStateId, isMinor, codeFamily } | null, adult: { name } | null, canUnlink,
+//         linkedMembers: [{ name, numMember, age }] }
 export const getAccount = () => axiosClient.get('/auth/account').then((res) => res.data)
+
+// El socio mayor se desvincula de su adulto responsable. data: la cuenta actualizada
+export const unlinkAdult = () => axiosClient.post('/auth/account/unlink').then((res) => res.data)
 
 // Solo email y teléfono. data: la cuenta actualizada
 export const updateAccount = ({ email, phone }) => axiosClient.put('/auth/account', { email, phone }).then((res) => res.data)
