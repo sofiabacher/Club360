@@ -105,7 +105,21 @@ const LOG_ACTIONS = {
 
     // Vínculo familiar
     FAMILY_LINKED: { message: 'Vínculo como Familia', criticity: CRITICITY.MEDIUM },
-    MEMBER_UNLINKED: { message: 'Desvinculación del adulto responsable', criticity: CRITICITY.MEDIUM }
+    MEMBER_UNLINKED: { message: 'Desvinculación del adulto responsable', criticity: CRITICITY.MEDIUM },
+
+    // Ligas, categorías y asignaciones
+    LEAGUE_CREATED: { message: 'Alta de liga', criticity: CRITICITY.MEDIUM },
+    LEAGUE_UPDATED: { message: 'Modificación de liga', criticity: CRITICITY.MEDIUM },
+    LEAGUE_DEACTIVATED: { message: 'Baja de liga', criticity: CRITICITY.MEDIUM },
+    LEAGUE_REACTIVATED: { message: 'Reactivación de liga', criticity: CRITICITY.MEDIUM },
+    CATEGORY_CREATED: { message: 'Alta de categoría', criticity: CRITICITY.MEDIUM },
+    CATEGORY_UPDATED: { message: 'Modificación de categoría', criticity: CRITICITY.MEDIUM },
+    CATEGORY_DEACTIVATED: { message: 'Baja de categoría', criticity: CRITICITY.MEDIUM },
+    CATEGORY_REACTIVATED: { message: 'Reactivación de categoría', criticity: CRITICITY.MEDIUM },
+    PLAYER_ASSIGNED: { message: 'Asignación de jugadora a una categoría', criticity: CRITICITY.MEDIUM },
+    PLAYER_UNASSIGNED: { message: 'Quita de jugadora de una categoría', criticity: CRITICITY.MEDIUM },
+    STAFF_ASSIGNED: { message: 'Asignación de staff a una categoría', criticity: CRITICITY.MEDIUM },
+    STAFF_UNASSIGNED: { message: 'Quita de staff de una categoría', criticity: CRITICITY.MEDIUM }
 }
 
 // Intentos fallidos de login antes de bloquear al usuario
@@ -132,6 +146,42 @@ const MEMBERSHIP_ROLES = [BASE_ROLES.MEMBER, BASE_ROLES.PLAYER]
 // Una persona puede tener varios y trabaja con el rol activo.
 const STAFF_ROLES = [BASE_ROLES.REPRESENTATIVE, BASE_ROLES.COACH, BASE_ROLES.TRAINER]
 
+// Roles de staff que se asignan a las categorías (el Representante gestiona las ligas, no se asigna)
+const CATEGORY_STAFF_ROLES = [BASE_ROLES.COACH, BASE_ROLES.TRAINER]
+
+// Escalas de edad del vóley (contexto, sección 6). Cada liga elige una (league.ageScale) y sus categorías un grupo
+// (category.ageGroup = code). Una jugadora entra si su edad de temporada (getSeasonAge) es <= maxAge; null = sin límite.
+// IMPORTANTE: se replica en client/src/utils/constants.js.
+const AGE_SCALES = {
+    1: [
+        { code: 'SUB11', label: 'Sub-11', maxAge: 11 },
+        { code: 'SUB12', label: 'Sub-12', maxAge: 12 },
+        { code: 'SUB13', label: 'Sub-13', maxAge: 13 },
+        { code: 'SUB15', label: 'Sub-15', maxAge: 15 },
+        { code: 'SUB16', label: 'Sub-16', maxAge: 16 },
+        { code: 'SUB18', label: 'Sub-18', maxAge: 18 },
+        { code: 'SUB21', label: 'Sub-21', maxAge: 21 },
+        { code: 'MAYORES', label: 'Mayores', maxAge: null }
+    ],
+    2: [
+        { code: 'SUB13', label: 'Sub-13', maxAge: 13 },
+        { code: 'SUB15', label: 'Sub-15', maxAge: 15 },
+        { code: 'SUB17', label: 'Sub-17', maxAge: 17 },
+        { code: 'SUB20', label: 'Sub-20', maxAge: 20 },
+        { code: 'SUB23', label: 'Sub-23', maxAge: 23 },
+        { code: 'MAYORES', label: 'Mayores', maxAge: null }
+    ]
+}
+
+// Etiqueta de cada escala para mostrarla
+const AGE_SCALE_LABELS = {
+    1: 'Escala 1: Sub-11 a Sub-21 y Mayores',
+    2: 'Escala 2: Sub-13 a Sub-23 y Mayores'
+}
+
+// Grupo de edad de una escala por su code (undefined si no es de esa escala)
+const findAgeGroup = (ageScale, code) => AGE_SCALES[ageScale]?.find(group => group.code === code)
+
 module.exports = {
     USER_STATES,
     MEMBER_STATES,
@@ -145,5 +195,9 @@ module.exports = {
     LOGIN_MAX_ATTEMPTS,
     BASE_ROLES,
     MEMBERSHIP_ROLES,
-    STAFF_ROLES
+    STAFF_ROLES,
+    CATEGORY_STAFF_ROLES,
+    AGE_SCALES,
+    AGE_SCALE_LABELS,
+    findAgeGroup
 }

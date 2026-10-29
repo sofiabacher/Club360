@@ -71,6 +71,13 @@ async function getRoleNamesByUser(clubId, userIds, { transaction } = {}) {
     return byUser
 }
 
+// Roles de staff de varios usuarios a la vez: Map userId → [roles de staff]. Una lista vacía = no es staff activo
+// (misma regla que isActiveStaff, para los listados)
+async function getStaffRolesOfUsers(clubId, userIds, { transaction } = {}) {
+    const byUser = await getRoleNamesByUser(clubId, userIds, { transaction })
+    return new Map([...byUser].map(([userId, names]) => [userId, sortStaffRoles(names)]))
+}
+
 // Separa los roles de staff de los demás (los demás solo se muestran)
 function splitRoles(names) {
     return {
@@ -556,6 +563,7 @@ async function resendActivation(actor, staffId) {
 
 module.exports = {
     isActiveStaff,
+    getStaffRolesOfUsers,
     listStaff,
     getStaff,
     getOptions,

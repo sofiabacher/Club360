@@ -71,8 +71,8 @@ Seguimiento de todo lo que falta para entregar el proyecto: desarrollo, entregab
 
 - [ ] Solicitud de inscripción a un deporte y aprobación por el Representante (otorga el rol Jugadora)
 - [ ] Baja inmediata de un deporte desde el perfil del Socio: cancela la inscripción, lo saca de sus categorías, cancela sus citaciones pendientes de ese deporte, quita el rol Jugadora si no le queda otro deporte y notifica al Representante (D4, contexto 3.3.1)
-- [ ] Ligas y categorías: crear, modificar, eliminar
-- [ ] Asignación de jugadoras y staff a las categorías
+- [x] Ligas y categorías: crear, modificar, eliminar (P09: baja lógica con cascada a las categorías, escalas de edad del vóley con `league.ageScale` y `category.ageGroup`, alcance del Representante por deporte)
+- [x] Asignación de jugadoras y staff a las categorías (P09: jugadoras con inscripción Aprobada y la edad de la categoría; Entrenadoras y Preparadoras físicas del deporte; funciones para los módulos que vienen en `leagues.service.js`)
 - [ ] Partidos (fixture) con dirección de la cancha
 - [ ] Marcar un partido como Jugado (Representante)
 - [ ] Cancelar un partido: pasa sus citaciones a Cancelada y notifica a las jugadoras citadas
@@ -82,7 +82,7 @@ Seguimiento de todo lo que falta para entregar el proyecto: desarrollo, entregab
 - [ ] Respuesta a la citación: confirmar o rechazar con justificación dentro de las 24 hs
 - [ ] Job: confirmación automática de las citaciones sin respuesta
 - [ ] Rutinas semanales por categoría (texto, imagen, link de video) con historial
-- [ ] Front: pantallas del Representante, la Entrenadora y la Preparadora física
+- [~] Front: pantallas del Representante, la Entrenadora y la Preparadora física — ligas y Mis categorías hechas (P09)
 - [ ] Front: dashboard de la Jugadora (fixtures y citaciones, separados si juega en 2 ligas, y rutina)
 - [ ] Front: vista de solo lectura para la Familia
 
@@ -134,7 +134,7 @@ Formato de referencia: el PDF de HotelDesk.
 - [ ] Especificación de funcionalidad (casos de uso)
 - [ ] Diseño de seguridad técnica: encriptación, dígitos verificadores, patentes y familias
 - [ ] Estrategias de base de datos: backup/restore e integridad (sin particiones)
-- [~] Casos de prueba en `.txt`, uno por módulo, en `docs/pruebas/` (D9; formato en `CLAUDE.md`, "Pruebas"). Hecho: `docs/pruebas/access.txt` (P06), `docs/pruebas/clubs.txt` y `docs/pruebas/members.txt` (P07), `docs/pruebas/staff.txt` y los casos de vínculo familiar en `members.txt` (P08)
+- [~] Casos de prueba en `.txt`, uno por módulo, en `docs/pruebas/` (D9; formato en `CLAUDE.md`, "Pruebas"). Hecho: `docs/pruebas/access.txt` (P06), `docs/pruebas/clubs.txt` y `docs/pruebas/members.txt` (P07), `docs/pruebas/staff.txt` y los casos de vínculo familiar en `members.txt` (P08), `docs/pruebas/leagues.txt` (P09)
 - [ ] Manuales de usuario
 - [ ] Armado del documento final con todo lo anterior
 
@@ -171,6 +171,7 @@ Cada una se resuelve en el chat de Claude y se registra en el documento de conte
 
 Lo terminado, con la fecha. Lo más reciente arriba.
 
+- 28/10/2026 — Ligas y categorías (P09): `league.ageScale` y `category.ageGroup` con las escalas de edad del vóley (`AGE_SCALES`) y la edad de temporada (`getSeasonAge`); base local recreada. Módulo `leagues`: ligas y categorías (alta, modificación, baja lógica con cascada y reactivación), asignación de jugadoras (inscripción Aprobada, Activa o Suspendida, edad máxima de la categoría) y de staff (Entrenadora o Preparadora física del deporte), alcance del Representante por su deporte (`getLeagueScope`), Mis categorías y las funciones para los módulos que vienen. Front: Ligas y categorías, detalle de la categoría con sus jugadoras y su staff, y Mis categorías. Casos documentados en `docs/pruebas/leagues.txt`. Verificado con un script contra la base local y con el build del front
 - 23/10/2026 — Staff y vínculo familiar (P08): módulo `staff` (alta con uno o más roles de staff, alta sobre un usuario existente con `EXISTING_USER`, modificación, baja que deja el usuario Eliminado solo si no le queda otro rol, reactivación, desbloqueo y reenvío de la activación) con `isActiveStaff`; corrección del alta de socio para usarlo. Activación de la cuenta del staff por email (token `account-activation`, `JWT_ACTIVATION_EXPIRES_IN`). "Vincularme como Familia" con cuenta nueva o usuario existente (validado como el login) y desde Mi cuenta; desvinculación del socio mayor de edad. Front: Staff (listado, alta y edición, detalle), activación de la cuenta, "Vincularme como Familia" (link en el login) y las tarjetas "Mi condición de socio" y "Jugadoras vinculadas" en Mi cuenta. Casos documentados en `docs/pruebas/staff.txt` y `docs/pruebas/members.txt`. Verificado con un script contra la base local y con el build del front
 - 23/10/2026 — Club, deportes y alta de socios (P07): `user.email` opcional para menores y `user.phone` cifrado con AES en el modelo; `club.accentColor` y `club.extraInfo` (D13), con el DVH de los campos JSON independiente del orden de las claves; datos provisorios de Club Valencia en el seed. Módulo `clubs` (información, configuración y deportes del club) y módulo `members` (alta presencial con número correlativo, código de vínculo para menores y alta sobre un usuario existente; listado, detalle, modificación, baja, reactivación, desbloqueo y comprobante). Front: Socios (listado, alta y edición, detalle y comprobante imprimible con forma de carnet), Configuración del club, Deportes del club, "El club" y la franja del color del club en el menú. Base local recreada. Casos documentados en `docs/pruebas/clubs.txt` y `docs/pruebas/members.txt`. Verificado con un script contra la base local y con el build del front
 - 21/10/2026 — Gestión de roles y permisos (P06): módulo `access` con el catálogo de permisos, CRUD de roles (los base no se eliminan ni se renombran; el Admin del Club conserva `LOCKED_ADMIN_PERMISSIONS`; un rol con usuarios no se elimina), asignación manual solo de roles nuevos y Admin del Club (siempre un Admin activo, sin quitarse el rol a sí mismo), permisos directos, helpers `assignBaseRole`/`removeBaseRole` para los circuitos y bitácora de todo con criticidad alta. El seed asigna los permisos de un rol base solo al crearlo. Front: pantallas "Roles y permisos" y "Usuarios y roles" con `PermissionPicker`, y refresco de la sesión al volver a la pestaña. Casos documentados en `docs/pruebas/access.txt`. Verificado con un script contra la base local y con el build del front

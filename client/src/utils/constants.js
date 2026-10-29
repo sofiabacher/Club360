@@ -58,3 +58,33 @@ export const GAME_STATES = {
 
 // Niveles de criticidad de la bitácora
 export const CRITICITY = { LOW: 1, MEDIUM: 2, HIGH: 3, CRITICAL: 4 }
+
+// Escalas de edad del vóley (copia de api/src/utils/constants.js). Cada liga elige una (league.ageScale) y sus
+// categorías un grupo (category.ageGroup = code). Una jugadora entra si su edad de temporada (año actual − año de
+// nacimiento) es <= maxAge; null = sin límite (Mayores).
+export const AGE_SCALES = {
+  1: [
+    { code: 'SUB11', label: 'Sub-11', maxAge: 11 },
+    { code: 'SUB12', label: 'Sub-12', maxAge: 12 },
+    { code: 'SUB13', label: 'Sub-13', maxAge: 13 },
+    { code: 'SUB15', label: 'Sub-15', maxAge: 15 },
+    { code: 'SUB16', label: 'Sub-16', maxAge: 16 },
+    { code: 'SUB18', label: 'Sub-18', maxAge: 18 },
+    { code: 'SUB21', label: 'Sub-21', maxAge: 21 },
+    { code: 'MAYORES', label: 'Mayores', maxAge: null }
+  ],
+  2: [
+    { code: 'SUB13', label: 'Sub-13', maxAge: 13 },
+    { code: 'SUB15', label: 'Sub-15', maxAge: 15 },
+    { code: 'SUB17', label: 'Sub-17', maxAge: 17 },
+    { code: 'SUB20', label: 'Sub-20', maxAge: 20 },
+    { code: 'SUB23', label: 'Sub-23', maxAge: 23 },
+    { code: 'MAYORES', label: 'Mayores', maxAge: null }
+  ]
+}
+
+// Etiqueta de cada escala para mostrarla
+export const AGE_SCALE_LABELS = {
+  1: 'Escala 1: Sub-11 a Sub-21 y Mayores',
+  2: 'Escala 2: Sub-13 a Sub-23 y Mayores'
+}

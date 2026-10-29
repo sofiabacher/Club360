@@ -1,0 +1,357 @@
+CASOS DE PRUEBA — MÓDULO LEAGUES (LIGAS, CATEGORÍAS Y ASIGNACIONES)
+===================================================================
+
+Club360 · Prompt 09 · 28/10/2026
+Formato según CLAUDE.md ("Pruebas"). Los resultados obtenidos salen del script de verificación del back
+(corrido contra la base local recreada el 28/10/2026, con datos de prueba creados con los modelos y borrados al final).
+Lo que solo se puede comprobar en el navegador queda anotado en cada caso. Las edades son de la temporada 2026
+(año calendario − año de nacimiento).
+
+Precondición general: base cargada con `npm run seed` y estos datos de prueba:
+  - Vóley activo y un segundo deporte activado en el club;
+  - Rita, Representante de Vóley, y Raúl, Representante del otro deporte (staff con su deporte);
+  - Carla (Entrenadora) y Pía (Preparadora física) de Vóley; Olga, Entrenadora del otro deporte; un ex staff de Vóley;
+  - socias con inscripción Aprobada en Vóley de 14, 15, 16 y 17 años (la de 14 también en el otro deporte), una
+    suspendida, una inactiva, una sin inscripción y una con la inscripción Pendiente.
+Las pantallas están en Gestión > Ligas y categorías (Representante) y en Deportivo > Mis categorías (staff).
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-01
+Módulo: leagues
+Descripción: Crear una liga con la escala 1 y otra con la escala 2
+Precondiciones: sesión de Rita.
+Pasos:
+  1. Tocar "Nueva liga", cargar el nombre, elegir la escala y crear. 2. Repetir con la otra escala.
+Datos de entrada: "Liga Metropolitana", escala 1; "Liga Federal", escala 2. Deporte Vóley (ya elegido: es el único de su
+  alcance).
+Resultado esperado: las dos ligas se crean en Vóley con su escala; el selector muestra la lista de grupos de cada escala.
+Resultado obtenido: 201 en las dos, con "Escala 1: Sub-11 a Sub-21 y Mayores" y escala 2. Una escala 3 → 400. Falta ver
+  el selector en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-02
+Módulo: leagues
+Descripción: Crear una categoría con un grupo de otra escala (rechazada)
+Precondiciones: Liga Metropolitana (escala 1).
+Pasos:
+  1. Crear una categoría con el grupo Sub-17 (que es de la escala 2).
+Datos de entrada: ageGroup SUB17.
+Resultado esperado: "Elegí un grupo de edad de la escala de la liga." (en la pantalla, el selector solo ofrece los grupos
+  de la escala de la liga).
+Resultado obtenido: 400 con ese mensaje. Sub-16 sin nombre se creó como "Sub-16"; Sub-18 A y Sub-18 B (mismo grupo,
+  nombres distintos) y Mayores (sin edad máxima) también. Un nombre repetido en la liga → 409.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-03
+Módulo: leagues
+Descripción: Cambiar la escala de una liga con categorías (rechazado)
+Precondiciones: Liga Metropolitana con categorías; Liga Federal sin categorías.
+Pasos:
+  1. Editar Liga Metropolitana y cambiar la escala. 2. Lo mismo con Liga Federal.
+Datos de entrada: escala 2 y escala 1.
+Resultado esperado: con categorías no se puede (el selector está deshabilitado); sin categorías, sí.
+Resultado obtenido: Liga Metropolitana → 409 "La liga ya tiene categorías: no se puede cambiar su escala de edad."; Liga
+  Federal → 200 con la escala nueva.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-04
+Módulo: leagues
+Descripción: Asignar una jugadora más chica a una categoría superior (aceptada)
+Precondiciones: Sub-16 de Liga Metropolitana.
+Pasos:
+  1. En el detalle de Sub-16, "Agregar jugadoras", elegir a la de 15 y a la de 16.
+Datos de entrada: socias de 15 y 16 años con inscripción Aprobada.
+Resultado esperado: las dos quedan asignadas (solo se valida la edad máxima).
+Resultado obtenido: 200 en las dos.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-05
+Módulo: leagues
+Descripción: Asignar una jugadora que supera la edad (rechazada, con el motivo)
+Precondiciones: Sub-16.
+Pasos:
+  1. Intentar asignar a la de 17. 2. Abrir "Agregar jugadoras".
+Datos de entrada: socia de 17 años.
+Resultado esperado: "{Nombre} supera la edad de Sub-16 (tiene 17 en 2026)."; en el diálogo no aparece, y la nota dice
+  "Solo aparecen las jugadoras de hasta 16 años en 2026.".
+Resultado obtenido: 400 "Diecisiete Prueba supera la edad de Sub-16 (tiene 17 en 2026).". eligible-players no la devuelve
+  (sí a la de 14 y a la suspendida). Falta ver la nota del diálogo en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-06
+Módulo: leagues
+Descripción: Asignar a Mayores a una jugadora de cualquier edad
+Precondiciones: la categoría Mayores.
+Pasos:
+  1. Asignar a la de 14.
+Datos de entrada: socia de 14 años.
+Resultado esperado: se asigna; el diálogo dice "Mayores: todas las edades.".
+Resultado obtenido: 200.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-07
+Módulo: leagues
+Descripción: Jugadora asignada que pasa a superar la edad al cambiar el año
+Precondiciones: la de 16 asignada a Sub-16.
+Pasos:
+  1. Ver el detalle de Sub-16 con el año siguiente (en la prueba, llamando al service con year = 2027).
+Datos de entrada: año 2027.
+Resultado esperado: no se la quita; aparece con "Supera la edad" (exceedsAge) para que el Representante la reasigne. La de
+  15 no aparece marcada.
+Resultado obtenido: con 2027, la de 16 → exceedsAge true y la de 15 → false. Con el año actual, nadie supera la edad.
+  getSeasonAge da 18 en 2026 para nacidas en enero y en diciembre de 2008.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-08
+Módulo: leagues
+Descripción: Crear una liga con un nombre repetido
+Precondiciones: Liga Metropolitana activa en Vóley.
+Pasos:
+  1. Crear otra liga "Liga Metropolitana" en Vóley. 2. Renombrar Liga Federal a "Liga Metropolitana".
+Datos de entrada: el mismo nombre.
+Resultado esperado: "Ya hay una liga activa con ese nombre en este deporte." en los dos casos.
+Resultado obtenido: 409 en los dos. El renombre a "Liga Federal 2026" → 200 y queda en la bitácora con el detalle.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-09
+Módulo: leagues
+Descripción: Crear una liga en un deporte inactivo o fuera del alcance
+Precondiciones: un deporte del club desactivado; un usuario con leagues.manage por permiso directo (el Admin).
+Pasos:
+  1. Con el Admin, crear una liga en el deporte inactivo. 2. Con Rita, crear una liga en el otro deporte.
+Datos de entrada: —
+Resultado esperado: "Elegí uno de los deportes activos del club." y "Solo podés gestionar las ligas de tu deporte.".
+Resultado obtenido: 400 con cada mensaje. Sin el permiso directo, el Admin recibe 403.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-10
+Módulo: leagues
+Descripción: Dar de baja una liga y que se den de baja sus categorías
+Precondiciones: Liga Metropolitana con 4 categorías y jugadoras.
+Pasos:
+  1. En el menú de la liga, "Dar de baja" y confirmar.
+  2. Ver el listado con y sin "Mostrar dadas de baja".
+Datos de entrada: —
+Resultado esperado: la liga y sus 4 categorías quedan dadas de baja; el listado normal no la muestra; con el switch
+  aparece con el chip "Dada de baja".
+Resultado obtenido: 200 con las 4 categorías en isActive false; otra baja → 409. Sin includeInactive no aparece; con
+  includeInactive=true, sí.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-11
+Módulo: leagues
+Descripción: Reactivar una liga y sus categorías
+Precondiciones: el caso anterior.
+Pasos:
+  1. Reactivar una categoría con la liga dada de baja. 2. Reactivar la liga. 3. Reactivar cada categoría.
+Datos de entrada: —
+Resultado esperado: con la liga dada de baja no se reactiva la categoría. La liga vuelve sin sus categorías; cada una se
+  reactiva aparte y conserva sus jugadoras.
+Resultado obtenido: categoría con la liga de baja → 409; liga → 200 con las categorías todavía de baja; después de
+  reactivarlas, Sub-16 sigue con sus 2 jugadoras.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-12
+Módulo: leagues
+Descripción: Crear una categoría en una liga dada de baja
+Precondiciones: Liga Metropolitana dada de baja.
+Pasos:
+  1. Crear una categoría Sub-13.
+Datos de entrada: —
+Resultado esperado: "La liga está dada de baja. Reactivala primero." (en la pantalla no aparece "Agregar categoría").
+Resultado obtenido: 409 con ese mensaje.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-13
+Módulo: leagues
+Descripción: Asignar una jugadora con inscripción aprobada
+Precondiciones: Sub-16 activa.
+Pasos:
+  1. Agregar una jugadora de la lista.
+Datos de entrada: socia de 15 años con inscripción Aprobada.
+Resultado esperado: aparece en la pestaña Jugadoras con su número de socio, su edad de temporada y la bitácora lo registra.
+Resultado obtenido: 200 y "Asignación de jugadora a una categoría" en la bitácora.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-14
+Módulo: leagues
+Descripción: Asignar una socia sin inscripción (rechazada)
+Precondiciones: una socia sin inscripción y otra con la inscripción Pendiente.
+Pasos:
+  1. Intentar asignarlas a Sub-18 A. 2. Asignar varias juntas, con una que no cumple.
+Datos de entrada: —
+Resultado esperado: "{Nombre} no tiene una inscripción aprobada en Vóley."; si se mandan varias y una no cumple, no se
+  asigna ninguna.
+Resultado obtenido: 400 con ese mensaje en las dos; con varias, 400 con un solo motivo (el de la que falla) y la otra no
+  quedó asignada.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-15
+Módulo: leagues
+Descripción: Asignar una socia inactiva (rechazada)
+Precondiciones: una socia dada de baja con inscripción Aprobada.
+Pasos:
+  1. Intentar asignarla.
+Datos de entrada: —
+Resultado esperado: "{Nombre} es una socia inactiva." y no aparece en la lista para agregar.
+Resultado obtenido: 400 con ese mensaje; eligible-players no la devuelve.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-16
+Módulo: leagues
+Descripción: Asignar una socia suspendida (aceptada)
+Precondiciones: una socia suspendida por mora con inscripción Aprobada.
+Pasos:
+  1. Asignarla a Sub-18 A y a Sub-16.
+Datos de entrada: —
+Resultado esperado: se asigna (la mora impide ser citada, no jugar) y aparece con el chip "Suspendida" (en Mis categorías,
+  "Mora").
+Resultado obtenido: 200, con memberStateId Suspendido en el detalle y en Mis categorías. Falta ver los chips.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-17
+Módulo: leagues
+Descripción: La misma jugadora en dos categorías de ligas distintas
+Precondiciones: la de 14, con inscripción Aprobada en los dos deportes.
+Pasos:
+  1. Asignarla a Mayores (Liga Metropolitana) y a Sub-15 de la liga del otro deporte.
+Datos de entrada: —
+Resultado esperado: queda en las dos (es el caso que genera superposiciones de horario).
+Resultado obtenido: 200 en las dos; getCategoriesOfMember devuelve las dos con su liga.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-18
+Módulo: leagues
+Descripción: Asignar una entrenadora y una preparadora física del deporte
+Precondiciones: Carla y Pía de Vóley.
+Pasos:
+  1. En la pestaña Staff de Sub-16, "Agregar staff" y elegir a las dos.
+Datos de entrada: —
+Resultado esperado: la lista ofrece solo entrenadoras y preparadoras físicas activas de Vóley; las dos quedan asignadas y
+  ya no aparecen para agregar.
+Resultado obtenido: eligible-staff con Carla y Pía, sin la Representante, el ex staff ni la entrenadora del otro deporte.
+  200 al asignar; después eligible-staff vacío. Staff del otro deporte → 400 "{Nombre} es staff de otro deporte.";
+  ex staff → 400 "{Nombre} ya no es parte del staff.".
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-19
+Módulo: leagues
+Descripción: Asignar a un Representante como staff de categoría (rechazado)
+Precondiciones: Rita, Representante de Vóley.
+Pasos:
+  1. Intentar asignarla al staff de Sub-16.
+Datos de entrada: —
+Resultado esperado: "{Nombre} no es Entrenadora ni Preparadora física." (no aparece en la lista para agregar).
+Resultado obtenido: 400 con ese mensaje.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-20
+Módulo: leagues
+Descripción: Quitar y volver a asignar
+Precondiciones: una jugadora y una preparadora asignadas a Sub-16.
+Pasos:
+  1. Tocar "Quitar" y confirmar. 2. Volver a agregarlas.
+Datos de entrada: —
+Resultado esperado: dejan de aparecer; el registro no se borra (isActive false) y al volver a asignarlas se reutiliza.
+Resultado obtenido: 200; el registro de categoryPlayer quedó con isActive false; quitarla otra vez → 404; al volver a
+  asignarla, sigue habiendo un solo registro, activo. Igual con categoryStaff. Un staff dado de baja sigue en la
+  categoría con "Ya no es staff" y no cuenta en la cantidad de staff.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-21
+Módulo: leagues
+Descripción: Un Representante que no ve las ligas de otro deporte
+Precondiciones: Raúl, Representante del otro deporte, con su liga.
+Pasos:
+  1. Con Raúl, ver el listado e intentar editar una liga de Vóley, ver una categoría de Vóley y asignar en ella.
+  2. Con un usuario con leagues.manage por permiso directo y sin staff, ver el listado.
+Datos de entrada: los ids de las ligas y categorías de Vóley.
+Resultado esperado: Raúl solo ve su liga y su deporte; lo de Vóley responde "No encontramos…". El usuario sin staff ve
+  todas.
+Resultado obtenido: listado con solo su liga y un solo deporte; editar, ver y asignar → 404. Rita tampoco ve la liga de
+  Raúl. El Admin con el permiso directo ve las tres ligas.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-22
+Módulo: leagues
+Descripción: "Mis categorías" de una entrenadora
+Precondiciones: Carla asignada a Sub-16 y a Sub-18 A.
+Pasos:
+  1. Iniciar sesión como Carla e ir a Mis categorías.
+  2. Dar de baja Sub-18 A y volver a entrar.
+Datos de entrada: —
+Resultado esperado: una tarjeta por categoría con la liga, el grupo, las jugadoras (las suspendidas con "Mora") y el resto
+  del staff. La categoría dada de baja deja de aparecer.
+Resultado obtenido: 2 categorías, Sub-16 con su liga, "Sub-16", la suspendida con su estado y Pía como el resto del
+  staff. Después de la baja, solo Sub-16. Falta ver las tarjetas en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-23
+Módulo: leagues
+Descripción: "Mis categorías" de un staff sin categorías
+Precondiciones: Olga, sin categorías asignadas.
+Pasos:
+  1. Iniciar sesión como Olga e ir a Mis categorías.
+Datos de entrada: —
+Resultado esperado: "Todavía no tenés categorías asignadas. El Representante del deporte te las va a asignar."
+Resultado obtenido: 200 con la lista vacía. Falta ver el estado vacío en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-24
+Módulo: leagues
+Descripción: Permisos
+Precondiciones: una Jugadora y una Entrenadora con sesión.
+Pasos:
+  1. Con la Jugadora, pedir el listado de ligas y Mis categorías. 2. Con la Entrenadora, pedir el detalle de gestión de
+  una categoría.
+Datos de entrada: —
+Resultado esperado: acceso denegado en los tres casos.
+Resultado obtenido: 403 en los tres.
+Estado: Aprobado

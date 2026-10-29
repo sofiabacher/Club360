@@ -29,6 +29,8 @@ Este documento es el contexto acumulado del proyecto. Está pensado para pegarse
 - **Prioridades si sobra tiempo:** primero los resultados de partidos, después el bot (D11, ver sección 7).
 - **Particiones:** no se implementan porque no son requisito (ver sección 0).
 
+**Última actualización (28/10/2026) — ligas y categorías:** alcance del Representante por deporte, escalas de edad del vóley con validación de la edad máxima, quiénes se pueden asignar a una categoría y bajas lógicas de ligas, categorías y asignaciones (ver sección 6, "Ligas y categorías", y sección 8).
+
 **Última actualización (23/10/2026) — staff y vínculo familiar:** activación de la cuenta del staff por email, varios roles de staff por persona, baja de staff que conserva el rol Familia, circuito "Vincularme como Familia" y desvinculación por mayoría de edad (ver 3.4, 3.5, 3.6 y sección 8).
 
 **Última actualización (21/10/2026) — club y alta de socios:** formato del número de socio y del código de vínculo, datos obligatorios del alta, socios que ya tienen usuario, baja y reactivación (ver 3.1); email opcional para menores, teléfono cifrado y campos nuevos de `club` para el color y la información general (D13, ver sección 8).
@@ -267,6 +269,17 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 
 ## 6. Reglas de negocio clave
 
+- **Ligas y categorías (26/10/2026):**
+  - Cada liga pertenece a un deporte del club y tiene categorías. Las jugadoras y el staff se asignan a las categorías.
+  - El Representante gestiona solo las ligas de su deporte.
+  - **Escalas de edad (28/10/2026):** las categorías del vóley van por edad y hay dos escalas en uso. Cada liga elige una, y sus categorías se eligen de esa lista:
+    - **Escala 1:** Sub-11, Sub-12, Sub-13, Sub-15, Sub-16, Sub-18, Sub-21 y Mayores.
+    - **Escala 2:** Sub-13, Sub-15, Sub-17, Sub-20, Sub-23 y Mayores.
+
+    La **edad de temporada** es el año calendario menos el año de nacimiento (en 2026, alguien nacido en 2008 tiene 18 todo el año). Cada categoría Sub-N cubre las edades desde la siguiente a la categoría anterior hasta N (por ejemplo, Sub-18 en la escala 1 es para 17 y 18), pero **una jugadora más chica puede jugar en una categoría superior**: solo se valida la edad máxima. En Mayores puede jugar cualquiera. Si con el cambio de año una jugadora ya asignada supera la edad de su categoría, no se la quita sola: queda marcada para que el Representante la reasigne. Una liga puede tener dos categorías del mismo grupo con nombres distintos (por ejemplo, Sub-18 A y Sub-18 B).
+  - **Jugadoras asignables:** Socias Activas o Suspendidas (la mora impide ser citada, no jugar) con inscripción Aprobada en el deporte de la liga y que cumplen la edad máxima de la categoría. Una jugadora puede estar en varias categorías, incluso de ligas distintas: es el caso que genera superposiciones de horario.
+  - **Staff asignable:** Entrenadoras y Preparadoras físicas activas del mismo deporte; una categoría puede tener varias y una persona puede estar en varias categorías.
+  - **Bajas:** las de ligas, categorías y asignaciones son lógicas. Dar de baja una liga da de baja sus categorías. Las socias o el staff dados de baja no se quitan solos de las categorías, pero no aparecen para asignar y los demás módulos los excluyen.
 - **Conflictos de horario:** los resuelven las entrenadoras entre sí; el sistema solo avisa y registra en bitácora quién lo resolvió. No se guarda una entidad de conflicto: se calculan a partir de los partidos de cada jugadora y el margen configurado.
 - **Deportes del club (21/10/2026):** el Admin activa o desactiva los deportes del catálogo y fija su cuota deportiva. No se puede desactivar un deporte que tiene inscripciones Pendientes o Aprobadas.
 - **Margen de conflicto:** el margen mínimo entre partidos para considerarlo "conflicto" es un parámetro configurable por el Admin del club (no fijo en código).
@@ -368,6 +381,7 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
   - (11/10) Los tres campos que estaban en snake_case pasan a camelCase como el resto: `dvv.tableName`, `routine.imageUrl` y `routine.videoUrl`.
   - (21/10) `user.email` admite NULL (sigue siendo único): es obligatorio para los mayores de 18 y opcional para los menores, que pueden no tener email propio y no pueden repetir el del adulto si son hermanos. Un menor sin email recupera su contraseña a través del club.
   - (21/10) `user.phone` pasa a `VARCHAR(255)` y se guarda **cifrado con AES** (encriptación reversible de la consigna). El DNI y el email no se cifran porque se buscan y son únicos.
+  - (28/10) `league` suma `ageScale` (`TINYINT NOT NULL`, 1 o 2) y `category` suma `ageGroup` (`VARCHAR(10) NOT NULL`, código del grupo de edad, por ejemplo `SUB18` o `MAYORES`). Las edades máximas de cada grupo viven en la constante `AGE_SCALES` de la aplicación, no en la base (ver sección 6, "Escalas de edad").
   - (21/10, decisión D13) `club` suma `accentColor` (`VARCHAR(7)`, NOT NULL, color propio del club en hex) y `extraInfo` (JSON, NULL: WhatsApp, horarios de secretaría, canchas y horarios de entrenamiento). Los carga el seed y los edita el Admin en la configuración del club.
 - **FK y borrado (11/10):** las FK son NOT NULL salvo `log.userId`, `log.roleId`, `notification.transmitterId` (NULL cuando notifica el sistema) y `member.adultUserId`. Las bajas son lógicas (por estado o `isActive`), por eso las relaciones usan `RESTRICT` al borrar, salvo las tablas intermedias (`CASCADE`) y esas cuatro FK opcionales (`SET NULL`). Las flags booleanas son NOT NULL con default (`isActive` en true; `isBase`, `isRead` y `linkStatus` en false).
 - Permisos por rol (`RolPermiso`) y también directos por usuario (`UsuarioPermiso`), para excepciones puntuales sin crear un rol nuevo.
@@ -398,7 +412,7 @@ Asistente de consultas generales sobre el club y sobre cómo usar la plataforma,
 
 ## 10. Estado actual y próximos pasos
 
-**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**, **recuperación de contraseña y Mi cuenta (3.6.2 y 3.7, 21/10)**, **decisiones D2 a D7, D9 y D11 y emails de la demo (21/10)**, **gestión de roles y permisos (sección 4, 21/10)**, **club y alta de socios, D13 (3.1 y sección 8, 21/10)**, **staff y vínculo familiar (3.4, 3.5 y 3.6, 23/10)**
+**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**, **recuperación de contraseña y Mi cuenta (3.6.2 y 3.7, 21/10)**, **decisiones D2 a D7, D9 y D11 y emails de la demo (21/10)**, **gestión de roles y permisos (sección 4, 21/10)**, **club y alta de socios, D13 (3.1 y sección 8, 21/10)**, **staff y vínculo familiar (3.4, 3.5 y 3.6, 23/10)**, **ligas y categorías (sección 6, 26/10)**
 
 **Pendiente:**
 1. ~~Modelo DER Lógico completo~~ — cerrado el 04/10/2026, actualizado el 10/10/2026 (ver sección 8)

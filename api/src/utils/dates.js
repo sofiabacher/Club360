@@ -24,8 +24,19 @@ function getAge(birthDate) {
 
 const isAdult = (birthDate) => getAge(birthDate) >= ADULT_AGE
 
+// Año en curso en Argentina
+const currentYear = () => dateParts(today()).year
+
+// Edad de temporada (categorías del vóley): año calendario − año de nacimiento, haya cumplido o no.
+// En 2026, alguien nacido en 2008 tiene 18 todo el año.
+function getSeasonAge(birthDate, year = currentYear()) {
+    return year - dateParts(birthDate).year
+}
+
 module.exports = {
     today,
     getAge,
-    isAdult
+    isAdult,
+    currentYear,
+    getSeasonAge
 }

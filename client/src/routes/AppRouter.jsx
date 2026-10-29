@@ -25,6 +25,9 @@ import MemberReceiptPage from '../pages/members/MemberReceiptPage.jsx'
 import StaffPage from '../pages/staff/StaffPage.jsx'
 import StaffFormPage from '../pages/staff/StaffFormPage.jsx'
 import StaffDetailPage from '../pages/staff/StaffDetailPage.jsx'
+import LeaguesPage from '../pages/leagues/LeaguesPage.jsx'
+import CategoryDetailPage from '../pages/leagues/CategoryDetailPage.jsx'
+import MyCategoriesPage from '../pages/leagues/MyCategoriesPage.jsx'
 import { getMenuRoutes } from '../navigation/menu.js'
 
 // Pantalla de cada path del menú. Mientras una sección no exista, su ruta muestra ComingSoonPage.
@@ -32,6 +35,8 @@ import { getMenuRoutes } from '../navigation/menu.js'
 const SCREENS = {
   '/members': MembersPage,
   '/staff': StaffPage,
+  '/leagues': LeaguesPage,
+  '/my-categories': MyCategoriesPage,
   '/club': ClubInfoPage,
   '/club/settings': ClubSettingsPage,
   '/club/sports': ClubSportsPage,
@@ -47,7 +52,8 @@ const EXTRA_SCREENS = [
   { path: '/members/:id/receipt', permission: 'members.manage', Screen: MemberReceiptPage },
   { path: '/staff/new', permission: 'staff.manage', Screen: StaffFormPage },
   { path: '/staff/:id', permission: 'staff.manage', Screen: StaffDetailPage },
-  { path: '/staff/:id/edit', permission: 'staff.manage', Screen: StaffFormPage }
+  { path: '/staff/:id/edit', permission: 'staff.manage', Screen: StaffFormPage },
+  { path: '/leagues/categories/:id', permission: ['leagues.manage', 'leagues.assignPlayers', 'leagues.assignStaff'], Screen: CategoryDetailPage }
 ]
 
 // Una ruta por path de navigation/menu.js, protegida con sus permisos (alcanza con uno)

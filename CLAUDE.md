@@ -14,6 +14,7 @@ Plataforma web de gestión para clubes deportivos (proyecto integrador escolar).
   - `dvv.table_name`, `routine.image_url` y `routine.video_url` pasan a camelCase: `tableName`, `imageUrl`, `videoUrl`.
   - `user.email` admite NULL (sigue siendo único): es obligatorio para mayores de 18 y opcional para menores. La regla va en los services.
   - `user.phone` es `VARCHAR(255)` y se guarda cifrado con AES (getter y setter en el modelo).
+  - `league` suma `ageScale` (1 o 2) y `category` suma `ageGroup` (código de la escala, ver `AGE_SCALES`).
   - `club` suma `accentColor` (`VARCHAR(7)`, color propio del club) y `extraInfo` (JSON: WhatsApp, horarios de secretaría, canchas y horarios de entrenamiento).
 - `docs/pruebas/`: casos de prueba documentados en `.txt`, uno por módulo (ver "Pruebas").
 
@@ -194,6 +195,15 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 - **Baja de staff:** se quitan todos sus roles de staff; el usuario pasa a DELETED **solo si no le queda ningún otro rol** (si es Familia, sigue entrando con ese rol). El registro `staff` no se borra.
 - **Vínculo familiar:** el código del menor sirve una sola vez (`linkStatus = true`). El adulto tiene que ser mayor y del mismo club; puede crear una cuenta nueva desde `/family-link` o usar la suya (con la validación del login, que suma intentos fallidos). Al vincular se asigna el rol Familia con `assignBaseRole`.
 - **Desvincularse** (socio mayor, `members.unlinkAdult`): `adultUserId = null`, `linkStatus = false` y `codeFamily = null`. Si el adulto ya no tiene ningún otro menor vinculado, pierde el rol Familia (`removeBaseRole`).
+
+## Ligas y categorías (módulo `leagues`)
+
+- Las jugadoras y el staff se asignan a la **categoría**, no a la liga. Las asignaciones se quitan con `isActive = false` (no se borran).
+- **Alcance:** un staff activo con permisos de `leagues` trabaja solo con las ligas del deporte de su registro `staff`; un usuario con esos permisos que no es staff ve todas las del club (`getLeagueScope`).
+- **Escalas de edad:** cada liga elige una escala (`AGE_SCALES`, en `utils/constants.js` de api y client) y cada categoría tiene un grupo (`ageGroup`) con su edad máxima. La edad de temporada es año calendario − año de nacimiento (`getSeasonAge`). Una jugadora entra si su edad de temporada es ≤ `maxAge` (las más chicas pueden subir; en Mayores, cualquiera). Si una ya asignada supera la edad, no se la quita: se marca "Supera la edad".
+- **Jugadora asignable:** socia ACTIVE o SUSPENDED con inscripción Aprobada en el deporte de la liga y que cumple la edad de la categoría. Puede estar en varias categorías. **Staff asignable:** staff activo con rol Entrenadora o Preparadora física, del mismo deporte.
+- **Socias o staff dados de baja** no se quitan solos de las categorías: los demás módulos los excluyen al consultar.
+- Los demás módulos usan las funciones de `leagues.service.js` (`getActivePlayersOfCategory`, `getCategoriesOfMember`, `getCategoriesOfStaff`, `isStaffAssignedToCategory`, `removeMemberFromSportCategories`) en lugar de consultar `categoryPlayer` y `categoryStaff` por su cuenta.
 
 ## Lista de tareas (`docs/TODO.md`)
 

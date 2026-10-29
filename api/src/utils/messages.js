@@ -204,6 +204,47 @@ module.exports = {
         pageInvalid: 'La página no es válida.'
     },
 
+    leagues: {
+        leagueNotFound: 'No encontramos la liga.',
+        categoryNotFound: 'No encontramos la categoría.',
+        sportNotActive: 'Elegí uno de los deportes activos del club.',
+        sportOutOfScope: 'Solo podés gestionar las ligas de tu deporte.',
+        leagueNameTaken: 'Ya hay una liga activa con ese nombre en este deporte.',
+        categoryNameTaken: 'Ya hay una categoría activa con ese nombre en esta liga.',
+        ageScaleLocked: 'La liga ya tiene categorías: no se puede cambiar su escala de edad.',
+        ageGroupInvalid: 'Elegí un grupo de edad de la escala de la liga.',
+        leagueInactive: 'La liga está dada de baja. Reactivala primero.',
+        leagueAlreadyInactive: 'La liga ya está dada de baja.',
+        leagueAlreadyActive: 'La liga ya está activa.',
+        categoryInactive: 'La categoría está dada de baja: no acepta asignaciones.',
+        categoryAlreadyInactive: 'La categoría ya está dada de baja.',
+        categoryAlreadyActive: 'La categoría ya está activa.',
+        membersNotFound: 'Alguna de las socias elegidas no existe.',
+        staffNotFound: 'Alguna de las personas del staff elegidas no existe.',
+        playerNotAssigned: 'La jugadora no está en esta categoría.',
+        staffNotAssigned: 'Esa persona no está en el staff de esta categoría.',
+
+        // Motivos por los que no se puede asignar (con el nombre)
+        memberInactive: (name) => `${name} es una socia inactiva.`,
+        noInscription: (name, sport) => `${name} no tiene una inscripción aprobada en ${sport}.`,
+        exceedsAge: (name, label, age, year) => `${name} supera la edad de ${label} (tiene ${age} en ${year}).`,
+        notStaff: (name) => `${name} ya no es parte del staff.`,
+        otherSport: (name) => `${name} es staff de otro deporte.`,
+        notCategoryStaff: (name) => `${name} no es Entrenadora ni Preparadora física.`,
+
+        // Validaciones de formato
+        idInvalid: 'El identificador no es válido.',
+        nameInvalid: 'Ingresá el nombre (hasta 100 caracteres).',
+        categoryNameInvalid: 'El nombre puede tener hasta 100 caracteres.',
+        clubSportIdInvalid: 'Elegí el deporte.',
+        ageScaleInvalid: 'Elegí la escala de edad.',
+        ageGroupRequired: 'Elegí el grupo de edad.',
+        memberIdsInvalid: 'Elegí al menos una jugadora.',
+        staffIdsInvalid: 'Elegí al menos una persona del staff.',
+        includeInactiveInvalid: 'El filtro no es válido.',
+        searchLength: 'La búsqueda puede tener hasta 100 caracteres.'
+    },
+
     upload: {
         invalidType: 'El archivo tiene que ser una imagen JPG, PNG o WEBP.',
         tooLarge: 'La imagen no puede pesar más de 5 MB.',

@@ -6,6 +6,7 @@ const League = sequelize.define('League', {
     clubId: { type: DataTypes.INTEGER, allowNull: false },
     clubSportId: { type: DataTypes.INTEGER, allowNull: false },
     name: { type: DataTypes.STRING(100), allowNull: false },
+    ageScale: { type: DataTypes.TINYINT, allowNull: false },   // Escala de edad: 1 o 2, una clave de AGE_SCALES en utils/constants.js
     isActive: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     dvh: { type: DataTypes.INTEGER, allowNull: true }
 }, {

@@ -6,6 +6,7 @@ const Category = sequelize.define('Category', {
     clubId: { type: DataTypes.INTEGER, allowNull: false },
     leagueId: { type: DataTypes.INTEGER, allowNull: false },
     name: { type: DataTypes.STRING(100), allowNull: false },
+    ageGroup: { type: DataTypes.STRING(10), allowNull: false },   // Grupo de edad: un code de AGE_SCALES[league.ageScale] (utils/constants.js), ej. 'SUB18'
     isActive: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     dvh: { type: DataTypes.INTEGER, allowNull: true }
 }, {
