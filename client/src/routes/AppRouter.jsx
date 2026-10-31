@@ -28,6 +28,8 @@ import StaffDetailPage from '../pages/staff/StaffDetailPage.jsx'
 import LeaguesPage from '../pages/leagues/LeaguesPage.jsx'
 import CategoryDetailPage from '../pages/leagues/CategoryDetailPage.jsx'
 import MyCategoriesPage from '../pages/leagues/MyCategoriesPage.jsx'
+import NotificationsPage from '../pages/notifications/NotificationsPage.jsx'
+import SendNoticePage from '../pages/notifications/SendNoticePage.jsx'
 import { getMenuRoutes } from '../navigation/menu.js'
 
 // Pantalla de cada path del menú. Mientras una sección no exista, su ruta muestra ComingSoonPage.
@@ -37,6 +39,7 @@ const SCREENS = {
   '/staff': StaffPage,
   '/leagues': LeaguesPage,
   '/my-categories': MyCategoriesPage,
+  '/notifications/send': SendNoticePage,
   '/club': ClubInfoPage,
   '/club/settings': ClubSettingsPage,
   '/club/sports': ClubSportsPage,
@@ -88,7 +91,7 @@ export default function AppRouter() {
         />
         <Route
           path="/notifications"
-          element={<PermissionRoute permission="notifications.view"><ComingSoonPage title="Notificaciones" /></PermissionRoute>}
+          element={<PermissionRoute permission="notifications.view"><NotificationsPage /></PermissionRoute>}
         />
 
         {EXTRA_SCREENS.map(({ path, permission, Screen }) => (

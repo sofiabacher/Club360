@@ -29,6 +29,8 @@ Este documento es el contexto acumulado del proyecto. Está pensado para pegarse
 - **Prioridades si sobra tiempo:** primero los resultados de partidos, después el bot (D11, ver sección 7).
 - **Particiones:** no se implementan porque no son requisito (ver sección 0).
 
+**Última actualización (31/10/2026) — notificaciones:** a quién le llegan los avisos generales según el permiso de quien envía, envío de emails después de confirmar la operación y destinatarios sin email (ver sección 6, "Canal de cada notificación").
+
 **Última actualización (28/10/2026) — ligas y categorías:** alcance del Representante por deporte, escalas de edad del vóley con validación de la edad máxima, quiénes se pueden asignar a una categoría y bajas lógicas de ligas, categorías y asignaciones (ver sección 6, "Ligas y categorías", y sección 8).
 
 **Última actualización (23/10/2026) — staff y vínculo familiar:** activación de la cuenta del staff por email, varios roles de staff por persona, baja de staff que conserva el rol Familia, circuito "Vincularme como Familia" y desvinculación por mayoría de edad (ver 3.4, 3.5, 3.6 y sección 8).
@@ -307,7 +309,9 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
   | Baja de un deporte (ver 3.3.1) | Representante del deporte | in-app |
   | Avisos generales (Admin, Representante, Entrenadora) | Según el permiso de envío | in-app, y email si quien envía lo elige |
 
-  El email es un aviso corto que invita a entrar a la plataforma; el detalle se ve in-app. Los emails de seguridad (recuperación y cambio de contraseña, ver 3.7) no son notificaciones: se envían siempre por email.
+  El email es un aviso corto que invita a entrar a la plataforma; el detalle se ve in-app. Los emails de seguridad (recuperación y cambio de contraseña, ver 3.7; activación de la cuenta del staff, ver 3.6) no son notificaciones: se envían siempre por email.
+  - **Destinatarios de los avisos generales (31/10/2026):** el Admin los envía a todo el club o a uno o más grupos: socios, staff (todo o por rol), socios con cuotas vencidas y familias, con la opción de sumar a las familias de los socios menores (los avisos manuales a socios con cuotas vencidas no reemplazan los automáticos de mora); el Representante, a las jugadoras de su deporte, a sus familias y a las entrenadoras y preparadoras físicas de ese deporte (elige uno o más grupos); la Entrenadora, a las jugadoras de sus categorías y, si quiere, a sus familias. Antes de enviar se muestra a cuántas personas les llega y cuántas por email.
+  - **Funcionamiento (31/10/2026):** los emails se envían después de confirmar la operación que los genera (si la operación falla, no sale ningún email) y no demoran la respuesta. A quien no tiene email (por ejemplo, un menor) solo le llega in-app; en los avisos para "Socio, y Familia si es menor", el adulto vinculado recibe también el suyo. Si un email falla, se registra en la bitácora y la notificación in-app se mantiene. Las notificaciones llegan a usuarios Activos o Bloqueados del club.
 - Formato de exportación de la bitácora: CSV.
 
 ---
@@ -412,7 +416,7 @@ Asistente de consultas generales sobre el club y sobre cómo usar la plataforma,
 
 ## 10. Estado actual y próximos pasos
 
-**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**, **recuperación de contraseña y Mi cuenta (3.6.2 y 3.7, 21/10)**, **decisiones D2 a D7, D9 y D11 y emails de la demo (21/10)**, **gestión de roles y permisos (sección 4, 21/10)**, **club y alta de socios, D13 (3.1 y sección 8, 21/10)**, **staff y vínculo familiar (3.4, 3.5 y 3.6, 23/10)**, **ligas y categorías (sección 6, 26/10)**
+**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**, **recuperación de contraseña y Mi cuenta (3.6.2 y 3.7, 21/10)**, **decisiones D2 a D7, D9 y D11 y emails de la demo (21/10)**, **gestión de roles y permisos (sección 4, 21/10)**, **club y alta de socios, D13 (3.1 y sección 8, 21/10)**, **staff y vínculo familiar (3.4, 3.5 y 3.6, 23/10)**, **ligas y categorías (sección 6, 26/10)**, **notificaciones (sección 6, 31/10)**
 
 **Pendiente:**
 1. ~~Modelo DER Lógico completo~~ — cerrado el 04/10/2026, actualizado el 10/10/2026 (ver sección 8)

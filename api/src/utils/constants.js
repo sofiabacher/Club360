@@ -119,7 +119,10 @@ const LOG_ACTIONS = {
     PLAYER_ASSIGNED: { message: 'Asignación de jugadora a una categoría', criticity: CRITICITY.MEDIUM },
     PLAYER_UNASSIGNED: { message: 'Quita de jugadora de una categoría', criticity: CRITICITY.MEDIUM },
     STAFF_ASSIGNED: { message: 'Asignación de staff a una categoría', criticity: CRITICITY.MEDIUM },
-    STAFF_UNASSIGNED: { message: 'Quita de staff de una categoría', criticity: CRITICITY.MEDIUM }
+    STAFF_UNASSIGNED: { message: 'Quita de staff de una categoría', criticity: CRITICITY.MEDIUM },
+
+    // Notificaciones
+    NOTIFICATION_SENT: { message: 'Envío de aviso general', criticity: CRITICITY.MEDIUM }
 }
 
 // Intentos fallidos de login antes de bloquear al usuario
@@ -179,6 +182,24 @@ const AGE_SCALE_LABELS = {
     2: 'Escala 2: Sub-13 a Sub-23 y Mayores'
 }
 
+// Tipos de notificación (notification.type guarda la clave) y su canal, según la tabla "Canal de cada notificación"
+// del contexto, sección 6 (D5). Es la ÚNICA fuente de qué va por email: notify() la consulta y ningún módulo decide
+// por su cuenta. email: true (in-app y email), false (solo in-app) u 'optional' (email solo si quien envía lo elige).
+// IMPORTANTE: el ícono y la ruta de cada tipo están en client/src/utils/notificationTypes.js.
+const NOTIFICATION_TYPES = {
+    CITATION_NEW: { email: true },          // Citación nueva (jugadora)
+    GAME_CANCELLED: { email: true },        // Partido cancelado con citaciones (jugadoras citadas)
+    FEE_OVERDUE: { email: true },           // Cuota vencida y avisos de mora
+    MEMBER_SUSPENDED: { email: true },      // Suspensión por mora
+    FIXTURE_PUBLISHED: { email: false },    // Fixture publicado o modificado
+    SCHEDULE_CONFLICT: { email: false },    // Conflicto de horario (entrenadoras)
+    ROUTINE_PUBLISHED: { email: false },    // Rutina publicada
+    FEE_DUE_SOON: { email: false },         // Cuota por vencer
+    INSCRIPTION_RESULT: { email: false },   // Inscripción aprobada o rechazada
+    SPORT_WITHDRAWAL: { email: false },     // Baja de un deporte (Representante)
+    GENERAL: { email: 'optional' }          // Avisos generales del Admin, el Representante y la Entrenadora
+}
+
 // Grupo de edad de una escala por su code (undefined si no es de esa escala)
 const findAgeGroup = (ageScale, code) => AGE_SCALES[ageScale]?.find(group => group.code === code)
 
@@ -199,5 +220,6 @@ module.exports = {
     CATEGORY_STAFF_ROLES,
     AGE_SCALES,
     AGE_SCALE_LABELS,
-    findAgeGroup
+    findAgeGroup,
+    NOTIFICATION_TYPES
 }

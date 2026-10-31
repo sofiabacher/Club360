@@ -76,9 +76,23 @@ function buildActivationEmail({ name, clubName, link, expiresIn }) {
     return { subject: 'Activá tu cuenta en Club360', html: signature(body) }
 }
 
+// Notificación por email: aviso corto que invita a entrar a la plataforma. El título y el mensaje los puede escribir un
+// usuario (avisos generales): se escapan, y los saltos de línea del mensaje se respetan
+function buildNotificationEmail({ clubName, title, message, link }) {
+    const body = `
+        <p style="margin-top: 0; font-size: 13px; color: ${BRAND.muted};">${escapeHtml(clubName)}</p>
+        <h2 style="margin: 0 0 12px; font-size: 20px; color: ${BRAND.navy};">${escapeHtml(title)}</h2>
+        <p style="white-space: pre-line;">${escapeHtml(message)}</p>
+        ${button(link, 'Entrar a Club360')}
+    `
+
+    return { subject: `${clubName}: ${title}`, html: signature(body) }
+}
+
 module.exports = {
     signature,
     buildRecoveryEmail,
     buildPasswordChangedNotice,
-    buildActivationEmail
+    buildActivationEmail,
+    buildNotificationEmail
 }

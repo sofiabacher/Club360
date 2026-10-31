@@ -2,7 +2,7 @@ const transporter = require('../../config/mail')
 const logger = require('../logger')
 
 const { cors, jwt: jwtConfig } = require('../../config')
-const { buildRecoveryEmail, buildPasswordChangedNotice, buildActivationEmail } = require('./templates')
+const { buildRecoveryEmail, buildPasswordChangedNotice, buildActivationEmail, buildNotificationEmail } = require('./templates')
 const { LOG_ACTIONS } = require('../constants')
 const { mail } = require('../messages')
 
@@ -47,8 +47,15 @@ async function sendActivationEmail(user, token, clubName) {   // Activación de 
     await send(user, buildActivationEmail({ name: user.name, clubName, link, expiresIn }), mail.activationFailed)
 }
 
+// Email de una notificación (lo usa solo notify()). notification: { clubName, title, message }
+async function sendNotificationEmail(user, notification) {
+    const link = `${cors.origin}/notifications`
+    await send(user, buildNotificationEmail({ ...notification, link }), mail.notificationFailed)
+}
+
 module.exports = {
     sendRecoveryEmail,
     sendPasswordChangedNotice,
-    sendActivationEmail
+    sendActivationEmail,
+    sendNotificationEmail
 }

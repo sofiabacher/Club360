@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link as RouterLink, Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import AppBar from '@mui/material/AppBar'
 import Box from '@mui/material/Box'
@@ -11,9 +11,9 @@ import Typography from '@mui/material/Typography'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { useTheme } from '@mui/material/styles'
 import MenuRounded from '@mui/icons-material/MenuRounded'
-import NotificationsRounded from '@mui/icons-material/NotificationsRounded'
 
 import Sidebar from '../components/layout/Sidebar.jsx'
+import NotificationBell from '../components/notifications/NotificationBell.jsx'
 import UserMenu from '../components/layout/UserMenu.jsx'
 import useAuth from '../hooks/useAuth.js'
 import usePermission from '../hooks/usePermission.js'
@@ -78,11 +78,7 @@ export default function DashboardLayout() {
               {title}
             </Typography>
 
-            {hasPermission('notifications.view') && (
-              <IconButton component={RouterLink} to="/notifications" aria-label="Notificaciones">
-                <NotificationsRounded />
-              </IconButton>
-            )}
+            {hasPermission('notifications.view') && <NotificationBell />}
 
             <UserMenu onError={setError} />
           </Toolbar>

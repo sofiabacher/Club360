@@ -98,14 +98,14 @@ Seguimiento de todo lo que falta para entregar el proyecto: desarrollo, entregab
 
 ## Fase 6 — Funciones transversales
 
-- [ ] Reemplazar Resend por nodemailer con Gmail SMTP en `config/mail.js` y `utils/mailer/`, manteniendo la salida por consola en desarrollo sin credenciales (contexto sección 11, "Emails"; `CLAUDE.md`, "Emails")
-- [ ] Notificaciones in-app para todos los tipos y email solo para los de la tabla del contexto, sección 6 (D5)
-- [ ] Envío de notificaciones generales (Admin) y a jugadoras, familias y entrenadoras (Representante, Entrenadora), con la opción de mandarlas también por email
+- [x] Reemplazar Resend por nodemailer con Gmail SMTP en `config/mail.js` y `utils/mailer/`, manteniendo la salida por consola en desarrollo sin credenciales (contexto sección 11, "Emails"; `CLAUDE.md`, "Emails") (P10; verificación del servidor de email al arrancar. Falta un envío real con la cuenta de Gmail del equipo)
+- [x] Notificaciones in-app para todos los tipos y email solo para los de la tabla del contexto, sección 6 (D5) (P10: `notify()` y `NOTIFICATION_TYPES`; cada módulo la llama cuando se construya)
+- [x] Envío de notificaciones generales (Admin) y a jugadoras, familias y entrenadoras (Representante, Entrenadora), con la opción de mandarlas también por email (P10)
 - [ ] Bitácora: consulta con filtros y exportación CSV
 - [ ] Integridad: verificar DVH/DVV de todas las tablas y reparar
 - [ ] Backup y restore de la base
 - [-] Particiones de la base — descartado el 21/10/2026: no es requisito del trabajo (contexto sección 0; queda en Futuro)
-- [ ] Front: pantallas de bitácora, integridad, backup y notificaciones
+- [~] Front: pantallas de bitácora, integridad, backup y notificaciones — notificaciones hechas (P10)
 
 ## Fase 7 — Deploy de la demo
 
@@ -134,7 +134,7 @@ Formato de referencia: el PDF de HotelDesk.
 - [ ] Especificación de funcionalidad (casos de uso)
 - [ ] Diseño de seguridad técnica: encriptación, dígitos verificadores, patentes y familias
 - [ ] Estrategias de base de datos: backup/restore e integridad (sin particiones)
-- [~] Casos de prueba en `.txt`, uno por módulo, en `docs/pruebas/` (D9; formato en `CLAUDE.md`, "Pruebas"). Hecho: `docs/pruebas/access.txt` (P06), `docs/pruebas/clubs.txt` y `docs/pruebas/members.txt` (P07), `docs/pruebas/staff.txt` y los casos de vínculo familiar en `members.txt` (P08), `docs/pruebas/leagues.txt` (P09)
+- [~] Casos de prueba en `.txt`, uno por módulo, en `docs/pruebas/` (D9; formato en `CLAUDE.md`, "Pruebas"). Hecho: `docs/pruebas/access.txt` (P06), `docs/pruebas/clubs.txt` y `docs/pruebas/members.txt` (P07), `docs/pruebas/staff.txt` y los casos de vínculo familiar en `members.txt` (P08), `docs/pruebas/leagues.txt` (P09), `docs/pruebas/notifications.txt` (P10)
 - [ ] Manuales de usuario
 - [ ] Armado del documento final con todo lo anterior
 
@@ -171,6 +171,7 @@ Cada una se resuelve en el chat de Claude y se registra en el documento de conte
 
 Lo terminado, con la fecha. Lo más reciente arriba.
 
+- 31/10/2026 — Emails con Gmail y notificaciones (P10): nodemailer con Gmail SMTP en lugar de Resend (por consola en desarrollo sin credenciales, verificación al arrancar). `notify()` con `NOTIFICATION_TYPES` como única fuente del canal, familias de los menores, emails después del commit y en segundo plano, y errores de email en la bitácora. Módulo `notifications`: listado, contador y lectura; avisos generales del Admin (todo el club o por grupos), el Representante (su deporte) y la Entrenadora (sus categorías), con resumen previo. Front: campana con contador, Notificaciones y Enviar avisos. Casos documentados en `docs/pruebas/notifications.txt`. Verificado con un script contra la base local y con el build del front
 - 28/10/2026 — Ligas y categorías (P09): `league.ageScale` y `category.ageGroup` con las escalas de edad del vóley (`AGE_SCALES`) y la edad de temporada (`getSeasonAge`); base local recreada. Módulo `leagues`: ligas y categorías (alta, modificación, baja lógica con cascada y reactivación), asignación de jugadoras (inscripción Aprobada, Activa o Suspendida, edad máxima de la categoría) y de staff (Entrenadora o Preparadora física del deporte), alcance del Representante por su deporte (`getLeagueScope`), Mis categorías y las funciones para los módulos que vienen. Front: Ligas y categorías, detalle de la categoría con sus jugadoras y su staff, y Mis categorías. Casos documentados en `docs/pruebas/leagues.txt`. Verificado con un script contra la base local y con el build del front
 - 23/10/2026 — Staff y vínculo familiar (P08): módulo `staff` (alta con uno o más roles de staff, alta sobre un usuario existente con `EXISTING_USER`, modificación, baja que deja el usuario Eliminado solo si no le queda otro rol, reactivación, desbloqueo y reenvío de la activación) con `isActiveStaff`; corrección del alta de socio para usarlo. Activación de la cuenta del staff por email (token `account-activation`, `JWT_ACTIVATION_EXPIRES_IN`). "Vincularme como Familia" con cuenta nueva o usuario existente (validado como el login) y desde Mi cuenta; desvinculación del socio mayor de edad. Front: Staff (listado, alta y edición, detalle), activación de la cuenta, "Vincularme como Familia" (link en el login) y las tarjetas "Mi condición de socio" y "Jugadoras vinculadas" en Mi cuenta. Casos documentados en `docs/pruebas/staff.txt` y `docs/pruebas/members.txt`. Verificado con un script contra la base local y con el build del front
 - 23/10/2026 — Club, deportes y alta de socios (P07): `user.email` opcional para menores y `user.phone` cifrado con AES en el modelo; `club.accentColor` y `club.extraInfo` (D13), con el DVH de los campos JSON independiente del orden de las claves; datos provisorios de Club Valencia en el seed. Módulo `clubs` (información, configuración y deportes del club) y módulo `members` (alta presencial con número correlativo, código de vínculo para menores y alta sobre un usuario existente; listado, detalle, modificación, baja, reactivación, desbloqueo y comprobante). Front: Socios (listado, alta y edición, detalle y comprobante imprimible con forma de carnet), Configuración del club, Deportes del club, "El club" y la franja del color del club en el menú. Base local recreada. Casos documentados en `docs/pruebas/clubs.txt` y `docs/pruebas/members.txt`. Verificado con un script contra la base local y con el build del front

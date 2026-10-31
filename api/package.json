@@ -19,7 +19,7 @@
     "mysql2": "^3.14.0",
     "mysqldump": "^3.2.0",
     "node-cron": "^4.2.1",
-    "resend": "^6.0.0",
+    "nodemailer": "^10.3.1",
     "sequelize": "^6.37.7"
   }
 }

@@ -1,0 +1,259 @@
+CASOS DE PRUEBA — MÓDULO NOTIFICATIONS (NOTIFICACIONES, AVISOS Y EMAILS)
+=========================================================================
+
+Club360 · Prompt 10 · 31/10/2026
+Formato según CLAUDE.md ("Pruebas"). Los resultados obtenidos salen del script de verificación del back
+(corrido contra la base local el 31/10/2026, sin SMTP_*: los emails salen por consola; con datos de prueba creados con
+los modelos y borrados al final). Lo que solo se puede comprobar en el navegador queda anotado en cada caso.
+
+Precondición general: base cargada con `npm run seed` y estos usuarios de prueba en Club Valencia:
+  - Admin (notifications.sendAll); Rep, Representante de Vóley (sendSport); Coach, Entrenadora (sendCategory), y
+    Trainer, Preparadora física, los tres con su registro staff de Vóley;
+  - Socio (adulta, con email, Jugadora, en la categoría Mayores de Coach); Menor (sin email, en Mayores, vinculada a
+    Familia); Suspendida; Inactiva (socio dado de baja); Pendiente (usuario PENDING); Bloqueada (usuario BLOCKED);
+  - Socio, Menor, Suspendida e Inactiva con inscripción Aprobada en Vóley;
+  - una categoría Sub-18 que no es de Coach y un usuario de otro club.
+La campana está en la barra superior; el listado, en /notifications; los avisos, en Club > Enviar avisos.
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-01
+Módulo: notifications
+Descripción: Un tipo sin email y un tipo con email
+Precondiciones: —
+Pasos:
+  1. notify() con FIXTURE_PUBLISHED para Socio. 2. notify() con CITATION_NEW para Socio.
+Datos de entrada: título "Citación <b>nueva</b>".
+Resultado esperado: FIXTURE_PUBLISHED queda solo in-app; CITATION_NEW, in-app y por email (lo decide NOTIFICATION_TYPES).
+  El email tiene el asunto "{club}: {título}", el texto escapado y el botón "Entrar a Club360" a /notifications.
+Resultado obtenido: FIXTURE_PUBLISHED → 1 notificación y ningún email en la consola. CITATION_NEW → 1 notificación y 1
+  email con asunto "Club Valencia: Citación <b>nueva</b>" y el link a /notifications. El HTML escapa "<script>", con
+  encabezado Marino y botón Naranja. sendEmail no cambia el canal de un tipo sin email. Un tipo inexistente → error.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-02
+Módulo: notifications
+Descripción: Aviso GENERAL con y sin la opción de email
+Precondiciones: —
+Pasos:
+  1. notify() con GENERAL sin sendEmail. 2. Con sendEmail.
+Datos de entrada: —
+Resultado esperado: sin la opción, solo in-app; con la opción, también email.
+Resultado obtenido: emails programados: 0 y 1; en la consola salió un solo email.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-03
+Módulo: notifications
+Descripción: Destinatario sin email
+Precondiciones: Menor, sin email.
+Pasos:
+  1. notify() con CITATION_NEW para Menor, sin includeFamily.
+Datos de entrada: —
+Resultado esperado: le llega in-app y no se intenta ningún email.
+Resultado obtenido: 1 notificación, 0 emails.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-04
+Módulo: notifications
+Descripción: includeFamily con un socio menor vinculado
+Precondiciones: Menor vinculada a Familia.
+Pasos:
+  1. notify() con CITATION_NEW para Menor e includeFamily.
+Datos de entrada: —
+Resultado esperado: notificación para los dos; email solo para el adulto (la menor no tiene).
+Resultado obtenido: 2 notificaciones (Menor y Familia) y 1 email, a familia@club360.test. También: destinatarios
+  repetidos → una sola notificación; un usuario de otro club → descartado; una usuaria Bloqueada la recibe y una
+  Pendiente no.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-05
+Módulo: notifications
+Descripción: El email no sale si la transacción se deshace
+Precondiciones: —
+Pasos:
+  1. notify() con MEMBER_SUSPENDED dentro de una transacción que después falla.
+  2. Lo mismo con una transacción que se confirma.
+Datos de entrada: —
+Resultado esperado: con rollback, no queda la notificación ni sale el email. Con commit, el email sale recién después
+  de confirmar.
+Resultado obtenido: rollback → 0 notificaciones nuevas y ningún email en la consola. Commit → dentro de la transacción
+  todavía no había salido el email; después del commit, 1 notificación y 1 email.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-06
+Módulo: notifications
+Descripción: Error de email registrado en la bitácora sin perder la notificación
+Precondiciones: el transporte de email reemplazado por uno que falla.
+Pasos:
+  1. notify() con FEE_OVERDUE para Socio.
+Datos de entrada: error simulado "SMTP caído".
+Resultado esperado: la notificación in-app queda; en la bitácora, "Error en el envío de correo".
+Resultado obtenido: la notificación se creó; MAIL_ERROR: "No se pudo enviar el email de la notificación a
+  socio@club360.test: SMTP caído (simulado)".
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-07
+Módulo: notifications
+Descripción: Marcar una notificación como leída y marcar todas
+Precondiciones: Socio con varias notificaciones sin leer, con la sesión iniciada.
+Pasos:
+  1. Ver el contador de la campana. 2. Tocar una notificación. 3. Ver "Sin leer". 4. "Marcar todas como leídas".
+Datos de entrada: —
+Resultado esperado: el contador baja de a una; "Sin leer" solo muestra las no leídas; al marcar todas, queda en 0.
+Resultado obtenido: unread-count = 9 (igual a la base); el listado trae las más nuevas primero y transmitter null para las
+  del sistema ("Club Valencia" en la pantalla). Marcar una → 8; el filtro unread=true devolvió las 8; read-all marcó 8 y
+  el contador quedó en 0. Falta ver la campana y el listado en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-08
+Módulo: notifications
+Descripción: Intentar marcar una notificación ajena
+Precondiciones: una notificación de Familia.
+Pasos:
+  1. Con la sesión de Socio, POST /notifications/:id/read con el id de la de Familia.
+Datos de entrada: —
+Resultado esperado: "No encontramos la notificación." y la ajena sigue sin leer.
+Resultado obtenido: 404 con ese mensaje; la notificación de Familia siguió sin leer.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-09
+Módulo: notifications
+Descripción: Aviso del Admin a todo el club
+Precondiciones: sesión del Admin.
+Pasos:
+  1. En Enviar avisos, "Todo el club", título y mensaje, marcar "Enviar también por email".
+  2. Ver el resumen y tocar "Enviar aviso".
+Datos de entrada: "Aviso de prueba".
+Resultado esperado: le llega a todos los usuarios Activos del club (no a quien envía); el resumen muestra la misma
+  cantidad que el envío; queda en la bitácora.
+Resultado obtenido: 16 destinatarios (los ACTIVE del club, sin el Admin; sin la Pendiente ni la Bloqueada), 15 por email;
+  preview devolvió los mismos números. Las notificaciones son GENERAL con el Admin como transmitter. Bitácora: '"Aviso de
+  prueba" a todo el club: 16 destinatarios, 15 por email'. Falta ver el resumen en vivo en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-10
+Módulo: notifications
+Descripción: Aviso del Admin por grupos
+Precondiciones: sesión del Admin.
+Pasos:
+  1. "Elegir grupos" con cada combinación y enviar.
+Datos de entrada: Socios (con y sin "Incluir a las familias"); Staff solo Entrenadoras; Staff completo; Familias;
+  Socios + Staff; Socios con familias + Familias.
+Resultado esperado: cada grupo llega a quien corresponde, combinados sin repetidos.
+Resultado obtenido:
+  - Socios: Socio, Menor, Suspendida y Bloqueada (sin la Inactiva ni la Pendiente); con familias, también Familia.
+  - Staff solo Entrenadoras: Coach. Staff completo: Rep, Coach y Trainer (sin quien todavía no activó su cuenta).
+  - Familias: Familia.
+  - Socios + Staff: los 7, sin repetidos. Socios con familias + Familias: el adulto una sola vez.
+  En todos, preview = envío.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-11
+Módulo: notifications
+Descripción: Grupo "Socios con cuotas vencidas"
+Precondiciones: sin cuotas vencidas; después, una cuota Vencida de Menor y una Pagada de Socio (creadas por script).
+Pasos:
+  1. Elegir "Socios con cuotas vencidas". 2. Con la cuota vencida, otra vez, con y sin las familias.
+Datos de entrada: cuota 2026-09 Vencida.
+Resultado esperado: sin cuotas vencidas, "No hay destinatarios para esta opción."; con la cuota, solo esa socia (y su
+  adulto, con las familias).
+Resultado obtenido: sin cuotas: preview 0 y envío → 400 con ese mensaje. Con la cuota: Menor; con las familias: Menor y
+  Familia. La socia con la cuota Pagada no entró.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-12
+Módulo: notifications
+Descripción: Aviso del Representante a un grupo
+Precondiciones: sesión de Rep.
+Pasos:
+  1. Marcar Jugadoras y Familias y enviar. 2. Marcar Entrenadoras y preparadoras y enviar.
+  3. Intentar la opción "Todo el club".
+Datos de entrada: —
+Resultado esperado: jugadoras con inscripción Aprobada en Vóley (Activas o Suspendidas) y sus familias; después, las
+  entrenadoras y preparadoras de Vóley. La opción del Admin se rechaza.
+Resultado obtenido: Socio, Menor, Suspendida y Familia (sin la Inactiva); después, Coach y Trainer. preview = envío.
+  "Todo el club" → 403 "No podés enviar avisos a esos destinatarios.".
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-13
+Módulo: notifications
+Descripción: Aviso de una Entrenadora a una categoría propia y a una ajena
+Precondiciones: sesión de Coach, asignada a Mayores (no a Sub-18).
+Pasos:
+  1. Elegir Mayores con "Incluir a las familias" y enviar. 2. Intentar con Sub-18.
+Datos de entrada: —
+Resultado esperado: llega a las jugadoras de su categoría y a sus familias; la categoría ajena se rechaza.
+Resultado obtenido: Socio, Menor y Familia. Sub-18 → 403 "Solo podés enviar avisos a tus categorías." (también el
+  preview). send-options solo le ofrece Mayores.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-14
+Módulo: notifications
+Descripción: Aviso sin destinatarios y validaciones
+Precondiciones: sesión del Admin; una Jugadora con sesión.
+Pasos:
+  1. Enviar a un grupo vacío. 2. Enviar con un título de 2 caracteres, un mensaje de 2001, sin grupos o con un rol que no
+  es de staff. 3. Con la Jugadora, intentar enviar.
+Datos de entrada: —
+Resultado esperado: "No hay destinatarios para esta opción."; errores de formato; la Jugadora no tiene acceso.
+Resultado obtenido: grupo vacío → 400 con ese mensaje (CP-NOTIFICATIONS-11); los cuatro casos de formato → 400; la
+  Jugadora → 403 al enviar y en send-options. En la pantalla, "Enviar aviso" queda deshabilitado sin destinatarios.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-15
+Módulo: notifications
+Descripción: Contador de la campana
+Precondiciones: dos sesiones: el Admin y una socia (en otro navegador o en una ventana privada).
+Pasos:
+  1. Con el Admin, mandar un aviso a todo el club.
+  2. En la sesión de la socia, esperar hasta un minuto o volver a la pestaña.
+  3. Abrir la campana y tocar el aviso.
+Datos de entrada: —
+Resultado esperado: el contador Naranja sube sin recargar (cada 60 segundos o al volver a la pestaña); la campana muestra
+  las últimas 5 con "hace …"; al tocar el aviso (GENERAL, sin ruta) se marca como leído y el contador baja.
+Resultado obtenido: el back responde el contador (CP-NOTIFICATIONS-07). Falta probar la campana en el navegador.
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-16
+Módulo: notifications
+Descripción: Mailer con Gmail SMTP
+Precondiciones: sin SMTP_USER ni SMTP_PASS; después, con credenciales inválidas.
+Pasos:
+  1. Pedir la recuperación de contraseña y dar de alta un staff. 2. Arrancar el servidor con credenciales inválidas.
+Datos de entrada: —
+Resultado esperado: sin credenciales, en desarrollo los emails (recuperación, activación) salen por consola con su link.
+  Con credenciales, el arranque verifica el servidor de email y muestra "Servidor de email listo" o el error, sin cortar.
+Resultado obtenido: los dos emails salieron por consola con el link /reset-password y /activate. package.json ya no
+  tiene resend (nodemailer ^10.3.1). Con credenciales inválidas, Gmail respondió "535 Username and Password not
+  accepted", el servidor lo mostró y siguió levantado (/health → 200). Falta un envío real con la cuenta del equipo.
+Estado: Pendiente

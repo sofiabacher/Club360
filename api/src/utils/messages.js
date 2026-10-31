@@ -245,6 +245,28 @@ module.exports = {
         searchLength: 'La búsqueda puede tener hasta 100 caracteres.'
     },
 
+    notifications: {
+        notificationNotFound: 'No encontramos la notificación.',
+        invalidType: 'El tipo de notificación no existe.',
+        noRecipients: 'No hay destinatarios para esta opción.',
+        audienceNotAllowed: 'No podés enviar avisos a esos destinatarios.',
+        categoryNotAllowed: 'Solo podés enviar avisos a tus categorías.',
+
+        // Validaciones de formato
+        idInvalid: 'El identificador no es válido.',
+        pageInvalid: 'La página no es válida.',
+        unreadInvalid: 'El filtro no es válido.',
+        titleInvalid: 'El título tiene que tener entre 3 y 150 caracteres.',
+        messageInvalid: 'El mensaje tiene que tener entre 1 y 2000 caracteres.',
+        sendEmailInvalid: 'Indicá si se envía también por email.',
+        audienceInvalid: 'Elegí a quién le llega el aviso.',
+        segmentsInvalid: 'Elegí al menos un grupo.',
+        staffRolesInvalid: 'Los roles de staff no son válidos.',
+        groupsInvalid: 'Elegí al menos un grupo.',
+        categoryIdsInvalid: 'Elegí al menos una categoría.',
+        includeFamiliesInvalid: 'Indicá si se incluye a las familias.'
+    },
+
     upload: {
         invalidType: 'El archivo tiene que ser una imagen JPG, PNG o WEBP.',
         tooLarge: 'La imagen no puede pesar más de 5 MB.',
@@ -254,6 +276,7 @@ module.exports = {
     mail: {
         recoveryFailed: 'No se pudo enviar el correo de recuperación de contraseña',
         passwordChangedFailed: 'No se pudo enviar el aviso de cambio de contraseña',
-        activationFailed: 'No se pudo enviar el email de activación'
+        activationFailed: 'No se pudo enviar el email de activación',
+        notificationFailed: 'No se pudo enviar el email de la notificación'
     }
 }

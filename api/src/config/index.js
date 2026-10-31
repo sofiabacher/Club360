@@ -39,10 +39,18 @@ module.exports = {
         key: process.env.ENCRYPTION_KEY
     },
 
-    email: {
-        apiKey: process.env.RESEND_API_KEY,
-        from: process.env.EMAIL_FROM
-    },
+    // Emails con nodemailer y Gmail SMTP. pass es una contraseña de aplicación de Gmail, no la de la cuenta
+    smtp: (() => {
+        const port = parseInt(process.env.SMTP_PORT, 10) || 465
+        return {
+            host: process.env.SMTP_HOST || 'smtp.gmail.com',
+            port,
+            secure: port === 465,   // 465: SSL directo; 587: STARTTLS
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+            from: process.env.MAIL_FROM || (process.env.SMTP_USER ? `Club360 <${process.env.SMTP_USER}>` : undefined)
+        }
+    })(),
 
     cors: {
         origin: process.env.FRONTEND_URL || 'http://localhost:5173'

@@ -124,6 +124,14 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
 - **Qué notificaciones van por email:** solo las marcadas en `docs/contexto.md`, sección 6 ("Canal de cada notificación"). El resto es solo in-app. Gmail tiene un límite diario de envíos, así que no se mandan emails fuera de esa tabla.
 - Los emails son avisos cortos en español rioplatense, con encabezado Marino y botón Naranja con estilos en línea, que invitan a entrar a la plataforma.
 
+## Notificaciones
+
+- **Todo aviso a un usuario pasa por `notify()`** (`modules/notifications/notifications.service.js`): ningún módulo crea `notification` ni manda emails de notificación por su cuenta.
+- **El tipo define el canal:** `NOTIFICATION_TYPES` (en `utils/constants.js`) dice qué tipos van también por email, según la tabla del contexto, sección 6. `GENERAL` va por email solo si quien envía lo elige.
+- `includeFamily: true` suma al adulto Familia de los socios menores vinculados (para "Socio, y Familia si es menor").
+- **Momento del envío:** los emails salen **después de confirmar la transacción** (`afterCommit`) y en segundo plano. Un error de email se registra en la bitácora y no deshace la notificación in-app.
+- En el front, `client/src/utils/notificationTypes.js` define el ícono y la ruta de cada tipo.
+
 ## Pruebas
 
 - Sin tests automatizados.

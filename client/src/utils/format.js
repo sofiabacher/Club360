@@ -1,5 +1,6 @@
 // Formatos de fechas y montos para mostrar en pantalla
-import { format, parseISO } from 'date-fns'
+import { format, formatDistanceToNow, parseISO } from 'date-fns'
+import { es } from 'date-fns/locale/es'
 
 // '2026-10-21' o '2026-10-21T15:00:00.000Z' → '21/10/2026'
 export function formatDate(value) {
@@ -26,4 +27,10 @@ export function getWhatsAppUrl(number) {
   if (digits.startsWith('0')) digits = digits.slice(1)
 
   return `https://wa.me/549${digits}`
+}
+
+// Fecha relativa: 'hace 2 horas', 'hace 3 días'
+export function formatRelative(value) {
+  if (!value) return ''
+  return formatDistanceToNow(typeof value === 'string' ? parseISO(value) : value, { addSuffix: true, locale: es })
 }
