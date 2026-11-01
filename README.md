@@ -47,6 +47,27 @@ npm install
 npm run dev              # http://localhost:5173
 ```
 
+## Cambios en el modelo
+
+Cuando un cambio del modelo obliga a recrear las tablas (por ejemplo, una columna nueva), se recrea la base **conservando
+los datos cargados**. Desde `api/`:
+
+1. Guardar los datos:
+   ```bash
+   npm run db:snapshot      # guarda todas las tablas en api/backups/snapshot-AAAAMMDD-HHmmss.json
+   ```
+2. Recrear las tablas: poner `DB_FORCE_SYNC=true` en `api/.env`, correr `npm run dev` hasta que diga
+   "Tablas sincronizadas", frenarlo con Ctrl+C y volver a `DB_FORCE_SYNC=false` (si no, cada arranque borra todo).
+3. Volver a cargar los datos, **sin** correr el seed antes:
+   ```bash
+   npm run db:restore       # usa el snapshot más reciente; o: npm run db:restore -- <archivo>
+   ```
+
+El restore frena si la base no está vacía, inserta las filas tal cual estaban (con sus ids, el teléfono cifrado y los
+dígitos verificadores) y al final verifica la integridad. Si avisa que hay DVH que no coinciden porque cambió el tipo de
+una columna, repetir los pasos 2 y 3 con `npm run db:restore -- --recompute-dvh`. Es una herramienta de desarrollo: en la
+demo, las copias de seguridad son del módulo de backup.
+
 ## Documentación
 
 - `CLAUDE.md`: convenciones técnicas del proyecto.

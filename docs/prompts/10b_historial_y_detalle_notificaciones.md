@@ -1,5 +1,10 @@
 # Prompt 10b — Detalle de una notificación e historial de avisos enviados
 
+> **Cómo usarlo:** con el P10 ya integrado a `main`, en una rama nueva (`git checkout -b p10b-notifications-history`), con `CLAUDE.md` y `docs/contexto.md` reemplazados por las versiones nuevas, escribí en la terminal:
+> `Leé docs/prompts/PROMPT_10b_historial_y_detalle.md y ejecutalo.`
+
+---
+
 Vas a sumar dos cosas al módulo de notificaciones que hizo el P10:
 - ver una notificación completa en una ventana flotante;
 - el historial de los avisos enviados, con quiénes los leyeron.

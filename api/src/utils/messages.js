@@ -247,6 +247,9 @@ module.exports = {
 
     notifications: {
         notificationNotFound: 'No encontramos la notificación.',
+        sentNotFound: 'No encontramos ese envío.',
+        batchIdInvalid: 'El envío no es válido.',
+        senderIdInvalid: 'El remitente no es válido.',
         invalidType: 'El tipo de notificación no existe.',
         noRecipients: 'No hay destinatarios para esta opción.',
         audienceNotAllowed: 'No podés enviar avisos a esos destinatarios.',

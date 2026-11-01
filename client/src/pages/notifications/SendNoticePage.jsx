@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -24,6 +25,7 @@ import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import Typography from '@mui/material/Typography'
 import CampaignRounded from '@mui/icons-material/CampaignRounded'
+import ManageHistoryRounded from '@mui/icons-material/ManageHistoryRounded'
 
 import { getSendOptions, previewNotice, sendNotice } from '../../api/notifications.api.js'
 import { getErrorMessage, getFieldErrors } from '../../utils/apiErrors.js'
@@ -79,6 +81,7 @@ function buildAudience(mode, target) {
 // "Enviar avisos": a quién le llega según los permisos de envío, el mensaje, el email opcional y el resumen en vivo.
 // Pantalla de notifications.sendAll, sendSport o sendCategory
 export default function SendNoticePage() {
+  const navigate = useNavigate()
   const [options, setOptions] = useState(null)
   const [loadError, setLoadError] = useState('')
   const [mode, setMode] = useState(null)
@@ -143,7 +146,8 @@ export default function SendNoticePage() {
       setNotice({
         open: true,
         severity: 'success',
-        message: `Enviamos el aviso a ${data.recipients} ${data.recipients === 1 ? 'persona' : 'personas'}${data.emails > 0 ? ` (${data.emails} por email)` : ''}.`
+        message: `Enviamos el aviso a ${data.recipients} ${data.recipients === 1 ? 'persona' : 'personas'}${data.emails > 0 ? ` (${data.emails} por email)` : ''}.`,
+        batchId: data.batchId
       })
     } catch (err) {
       setErrors(getFieldErrors(err))
@@ -174,12 +178,17 @@ export default function SendNoticePage() {
 
   return (
     <Box sx={{ maxWidth: 820 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Enviar avisos</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Llegan como notificación en Club360 y, si lo elegís, también por email.
-        </Typography>
-      </Box>
+      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between', gap: 1, mb: 3 }}>
+        <Box>
+          <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Enviar avisos</Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Llegan como notificación en Club360 y, si lo elegís, también por email.
+          </Typography>
+        </Box>
+        <Button component={RouterLink} to="/notifications/sent" color="secondary" startIcon={<ManageHistoryRounded />} sx={{ flexShrink: 0, alignSelf: { xs: 'flex-start', sm: 'center' } }}>
+          Ver avisos enviados
+        </Button>
+      </Stack>
 
       <Card>
         <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
@@ -346,7 +355,18 @@ export default function SendNoticePage() {
       </Dialog>
 
       <Snackbar open={notice.open} autoHideDuration={6000} onClose={closeNotice} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-        <Alert severity={notice.severity} variant="filled" onClose={closeNotice}>{notice.message}</Alert>
+        <Alert
+          severity={notice.severity}
+          variant="filled"
+          onClose={closeNotice}
+          action={notice.batchId && (
+            <Button color="inherit" size="small" onClick={() => navigate(`/notifications/sent?batch=${notice.batchId}`)}>
+              Ver en el historial
+            </Button>
+          )}
+        >
+          {notice.message}
+        </Alert>
       </Snackbar>
     </Box>
   )

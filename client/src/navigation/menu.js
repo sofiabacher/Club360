@@ -21,6 +21,7 @@ import HistoryRounded from '@mui/icons-material/HistoryRounded'
 import HomeRounded from '@mui/icons-material/HomeRounded'
 import HowToRegRounded from '@mui/icons-material/HowToRegRounded'
 import ManageAccountsRounded from '@mui/icons-material/ManageAccountsRounded'
+import ManageHistoryRounded from '@mui/icons-material/ManageHistoryRounded'
 import PaymentsRounded from '@mui/icons-material/PaymentsRounded'
 import RequestQuoteRounded from '@mui/icons-material/RequestQuoteRounded'
 import SettingsRounded from '@mui/icons-material/SettingsRounded'
@@ -65,6 +66,9 @@ export const MENU_ITEMS = [
   { label: 'Enviar avisos', path: '/notifications/send', icon: CampaignRounded, permission: 'notifications.sendAll', group: 'Club' },
   { label: 'Enviar avisos', path: '/notifications/send', icon: CampaignRounded, permission: 'notifications.sendSport', group: 'Club' },
   { label: 'Enviar avisos', path: '/notifications/send', icon: CampaignRounded, permission: 'notifications.sendCategory', group: 'Club' },
+  { label: 'Avisos enviados', path: '/notifications/sent', icon: ManageHistoryRounded, permission: 'notifications.sendAll', group: 'Club' },
+  { label: 'Avisos enviados', path: '/notifications/sent', icon: ManageHistoryRounded, permission: 'notifications.sendSport', group: 'Club' },
+  { label: 'Avisos enviados', path: '/notifications/sent', icon: ManageHistoryRounded, permission: 'notifications.sendCategory', group: 'Club' },
 
   { label: 'Roles y permisos', path: '/access/roles', icon: AdminPanelSettingsRounded, permission: 'access.manageRoles', group: 'Sistema' },
   { label: 'Usuarios y roles', path: '/access/users', icon: ManageAccountsRounded, permission: 'access.assignRoles', group: 'Sistema' },

@@ -7,6 +7,9 @@ import axiosClient from './axiosClient.js'
 export const getNotifications = ({ unread, page } = {}) =>
   axiosClient.get('/notifications', { params: { unread: unread ? 'true' : undefined, page } }).then((res) => res.data)
 
+// Una notificación propia (para el detalle, si no está en la lista cargada). Una ajena responde 404
+export const getNotification = (id) => axiosClient.get(`/notifications/${id}`).then((res) => res.data)
+
 // data: { count }
 export const getUnreadCount = () => axiosClient.get('/notifications/unread-count').then((res) => res.data)
 
@@ -27,3 +30,13 @@ export const previewNotice = (audience) => axiosClient.post('/notifications/prev
 
 // payload: { audience, title, message, sendEmail }. data: { recipients, emails }
 export const sendNotice = (payload) => axiosClient.post('/notifications/send', payload).then((res) => res.data)
+
+// ---------- Historial de avisos enviados ----------
+
+// data: { canSeeAll, senders: [{ id, name }], items: [{ batchId, sentAt, sender, title, message, recipientsCount, readCount }],
+//         total, page, pageSize, totalPages }. senderId solo filtra para quien ve todos los envíos (el Admin)
+export const getSentNotices = ({ page, senderId } = {}) =>
+  axiosClient.get('/notifications/sent', { params: { page, senderId: senderId || undefined } }).then((res) => res.data)
+
+// data: { batchId, sentAt, sender, title, message, recipientsCount, readCount, recipients: [{ userId, name, relation, isRead }] }
+export const getSentNotice = (batchId) => axiosClient.get(`/notifications/sent/${batchId}`).then((res) => res.data)

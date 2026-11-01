@@ -1,7 +1,7 @@
 CASOS DE PRUEBA — MÓDULO NOTIFICATIONS (NOTIFICACIONES, AVISOS Y EMAILS)
 =========================================================================
 
-Club360 · Prompt 10 · 31/10/2026
+Club360 · Prompt 10 · 31/10/2026 (detalle e historial: Prompt 10b, casos 17 a 26)
 Formato según CLAUDE.md ("Pruebas"). Los resultados obtenidos salen del script de verificación del back
 (corrido contra la base local el 31/10/2026, sin SMTP_*: los emails salen por consola; con datos de prueba creados con
 los modelos y borrados al final). Lo que solo se puede comprobar en el navegador queda anotado en cada caso.
@@ -257,3 +257,165 @@ Resultado obtenido: los dos emails salieron por consola con el link /reset-passw
   tiene resend (nodemailer ^10.3.1). Con credenciales inválidas, Gmail respondió "535 Username and Password not
   accepted", el servidor lo mostró y siguió levantado (/health → 200). Falta un envío real con la cuenta del equipo.
 Estado: Pendiente
+
+
+==================================================
+DETALLE DE UNA NOTIFICACIÓN E HISTORIAL DE AVISOS ENVIADOS (Prompt 10b · 01/11/2026)
+==================================================
+
+Precondición de estos casos: base recreada con db:snapshot y db:restore (columna notification.batchId). Usuarios de
+prueba: el Admin; CoachA y CoachB, Entrenadoras de Vóley (CoachA asignada a "Mayores Historial"); Jugadora y Menor en
+esa categoría, con inscripción Aprobada; Familia, adulto vinculado a Menor. El historial está en Club > Avisos enviados.
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-17
+Módulo: notifications
+Descripción: Abrir una notificación desde la campana
+Precondiciones: la Jugadora con un aviso sin leer de CoachA.
+Pasos:
+  1. Abrir la campana y tocar el aviso.
+Datos de entrada: —
+Resultado esperado: se cierra la campana y se abre la ventana flotante (pantalla completa en el celular) con el ícono, el
+  título, la fecha completa ("sábado 1 de noviembre, 16:44"), quién lo envió y el mensaje completo con sus saltos de
+  línea. Queda leída y el contador de la campana baja. No navega a otra pantalla.
+Resultado obtenido: GET /notifications/:id devuelve la notificación con el mensaje completo ("…\nsegunda línea") y el
+  remitente "CoachA Historial"; marcarla como leída responde 200 y el contador baja (CP-NOTIFICATIONS-07). Falta ver la
+  ventana flotante en el navegador.
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-18
+Módulo: notifications
+Descripción: Botón "Ir a…" con un tipo que tiene ruta
+Precondiciones: una notificación CITATION_NEW para una Jugadora (rol activo Jugadora, con citations.respond).
+Pasos:
+  1. Abrir la notificación y tocar "Ir a mis citaciones".
+Datos de entrada: —
+Resultado esperado: el diálogo muestra "Ir a mis citaciones"; al tocarlo, se cierra y lleva a /my-citations. Si el rol
+  activo no tiene esa sección (por ejemplo, Familia), el botón no aparece.
+Resultado obtenido: la ruta sale de getNotificationTarget (notificationTypes.js), que solo la devuelve si el rol activo
+  tiene el permiso de esa ruta del menú. Falta probarlo en el navegador.
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-19
+Módulo: notifications
+Descripción: Notificación sin ruta
+Precondiciones: un aviso GENERAL.
+Pasos:
+  1. Abrir el aviso.
+Datos de entrada: —
+Resultado esperado: el diálogo solo muestra "Cerrar" (GENERAL no tiene sección).
+Resultado obtenido: GENERAL no tiene ruta en notificationTypes.js, así que no se arma el botón. Falta verlo en el
+  navegador.
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-20
+Módulo: notifications
+Descripción: Abrir una notificación ajena por URL
+Precondiciones: el id de una notificación de Familia.
+Pasos:
+  1. Con la sesión de la Jugadora, ir a /notifications?id={id de la de Familia}.
+Datos de entrada: —
+Resultado esperado: el diálogo muestra "No encontramos la notificación." y la ajena no se marca como leída.
+Resultado obtenido: GET /notifications/:id de una ajena → 404 "No encontramos la notificación.". Falta ver el mensaje en
+  el diálogo.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-21
+Módulo: notifications
+Descripción: Historial de una Entrenadora
+Precondiciones: CoachA envió 2 avisos y el Admin 1; CoachB no envió ninguno.
+Pasos:
+  1. Como CoachA, ir a Avisos enviados. 2. Como CoachB, lo mismo.
+Datos de entrada: —
+Resultado esperado: CoachA ve sus 2 envíos, los más nuevos primero, con "Leído por x de n"; CoachB ve "Todavía no
+  enviaste avisos.". Las notificaciones del sistema no aparecen.
+Resultado obtenido: CoachA → total 2 ("Cambio de horario" y "Entrenamiento del sábado"), cada uno con 3 destinatarios y 0
+  leídos; CoachB → 0. Una FIXTURE_PUBLISHED creada con notify() quedó con batchId en NULL y no aparece. Si CoachA manda
+  senderId, se ignora. Una Jugadora → 403.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-22
+Módulo: notifications
+Descripción: Historial del Admin con el filtro por remitente
+Precondiciones: el caso anterior.
+Pasos:
+  1. Como Admin, ir a Avisos enviados. 2. Elegir a CoachA en "Remitente".
+Datos de entrada: —
+Resultado esperado: el Admin ve los 3 envíos del club con su remitente; con el filtro, solo los 2 de CoachA.
+Resultado obtenido: total 3, con la lista de remitentes (Admin y CoachA) para el filtro; con senderId de CoachA → 2. Un
+  senderId inválido → 400.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-23
+Módulo: notifications
+Descripción: Detalle de un envío con el conteo de lectura
+Precondiciones: el aviso "Entrenamiento del sábado" de CoachA (a Jugadora, Menor y Familia).
+Pasos:
+  1. La Jugadora y Familia abren el aviso. 2. CoachA abre el envío en Avisos enviados y prueba "Solo sin leer".
+Datos de entrada: —
+Resultado esperado: "Leído por 2 de 3"; la lista con el rol o vínculo de cada uno y su estado ("Leído" o "Sin leer");
+  con "Solo sin leer" queda solo Menor.
+Resultado obtenido: readCount = 2 en el listado y en el detalle; recipientsCount = 3. Vínculos: Jugadora = "Jugadora",
+  Menor = "Jugadora" (sin leer), Familia = "Familia de Menor". El envío generó 3 notificaciones con el mismo batchId y el
+  log NOTIFICATION_SENT lo incluye. Falta ver el panel y el filtro en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-24
+Módulo: notifications
+Descripción: Detalle de un envío ajeno
+Precondiciones: envíos de CoachA y del Admin.
+Pasos:
+  1. Como CoachB, pedir GET /notifications/sent/{batchId de CoachA}. 2. Como CoachA, el del Admin.
+Datos de entrada: —
+Resultado esperado: "No encontramos ese envío." en los dos. El Admin sí ve el de CoachA.
+Resultado obtenido: 404 en los dos; el Admin → 200. Un batchId con formato inválido → 400.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-25
+Módulo: notifications
+Descripción: db:snapshot y db:restore al agregar una columna
+Precondiciones: base con datos (Admin, usuarios y socias de demo, liga, notificaciones) y un socio de control con
+  teléfono y contraseña.
+Pasos:
+  1. npm run db:snapshot. 2. DB_FORCE_SYNC=true, npm run dev hasta "Tablas sincronizadas", volver a false.
+  3. npm run db:restore (sin el seed).
+Datos de entrada: —
+Resultado esperado: las mismas filas en cada tabla; el teléfono se lee bien (no se cifró dos veces); el Admin y los
+  socios entran con su contraseña de siempre; notification.batchId existe con su índice; la integridad da correcta.
+Resultado obtenido: snapshot de 239 filas en 24 tablas. Después del restore: las mismas cantidades por tabla, el teléfono
+  "11 5555-0101" con el cifrado idéntico al original, las contraseñas del Admin y del socio de control válidas,
+  batchId char(36) NULL con el índice notification_batchId, DVH y DVV correctos. Las notificaciones restauradas quedaron
+  con batchId en NULL. En una base de prueba aparte, el restore completo dejó las mismas filas y un usuario nuevo tomó el
+  id siguiente al último.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-NOTIFICATIONS-26
+Módulo: notifications
+Descripción: db:restore con la base no vacía (rechazado)
+Precondiciones: base con datos.
+Pasos:
+  1. npm run db:restore.
+Datos de entrada: —
+Resultado esperado: "La base no está vacía: recreala con DB_FORCE_SYNC antes de restaurar. No corras el seed antes." y no
+  inserta nada.
+Resultado obtenido: frena con ese mensaje, lista las tablas con datos y termina con código 1.
+Estado: Aprobado

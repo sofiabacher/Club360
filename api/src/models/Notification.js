@@ -10,9 +10,11 @@ const Notification = sequelize.define('Notification', {
     title: { type: DataTypes.STRING(150), allowNull: false },
     message: { type: DataTypes.TEXT, allowNull: false },
     isRead: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    batchId: { type: DataTypes.CHAR(36), allowNull: true },   // Mismo valor en todas las notificaciones de un aviso general (historial de enviados). NULL en las del sistema
     dvh: { type: DataTypes.INTEGER, allowNull: true }
 }, {
-    tableName: 'notification'
+    tableName: 'notification',
+    indexes: [{ name: 'notification_batchId', fields: ['batchId'] }]
 })
 
 module.exports = Notification
