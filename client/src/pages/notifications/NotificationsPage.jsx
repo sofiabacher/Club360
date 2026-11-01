@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -16,6 +17,7 @@ import NotificationsNoneRounded from '@mui/icons-material/NotificationsNoneRound
 
 import { getNotifications, markAllAsRead } from '../../api/notifications.api.js'
 import EmptyState from '../../components/common/EmptyState.jsx'
+import NotificationDialog from '../../components/notifications/NotificationDialog.jsx'
 import NotificationItem from '../../components/notifications/NotificationItem.jsx'
 import useAuth from '../../hooks/useAuth.js'
 import useOpenNotification, { NOTIFICATIONS_CHANGED, emitNotificationsChanged } from '../../hooks/useOpenNotification.js'
@@ -23,11 +25,13 @@ import { getErrorMessage } from '../../utils/apiErrors.js'
 
 const TABS = { ALL: 'all', UNREAD: 'unread' }
 
-// Notificaciones del usuario, las más nuevas primero. Tocar una la marca como leída y lleva a su pantalla.
+// Notificaciones del usuario, las más nuevas primero. Tocar una abre su detalle (NotificationDialog), que la marca
+// como leída. Con ?id= en la URL se abre esa notificación aunque no esté en la página cargada.
 // Pantalla de notifications.view
 export default function NotificationsPage() {
   const { club } = useAuth()
-  const openNotification = useOpenNotification()
+  const { dialogProps, openNotification, openNotificationById } = useOpenNotification()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [tab, setTab] = useState(TABS.ALL)
   const [page, setPage] = useState(1)
@@ -51,6 +55,15 @@ export default function NotificationsPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  // Link directo a una notificación (/notifications?id=5): se abre el detalle y se limpia la URL
+  useEffect(() => {
+    const id = Number(searchParams.get('id'))
+    if (!id) return
+
+    openNotificationById(id)
+    setSearchParams({}, { replace: true })
+  }, [searchParams, setSearchParams, openNotificationById])
 
   // Si se marcan desde la campana, la lista se actualiza
   useEffect(() => {
@@ -121,6 +134,8 @@ export default function NotificationsPage() {
           <Pagination count={result.totalPages} page={result.page} onChange={(event, value) => setPage(value)} color="secondary" />
         </Stack>
       )}
+
+      <NotificationDialog {...dialogProps} />
 
       <Snackbar open={notice.open} autoHideDuration={4000} onClose={closeNotice} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
         <Alert severity={notice.severity} variant="filled" onClose={closeNotice}>{notice.message}</Alert>

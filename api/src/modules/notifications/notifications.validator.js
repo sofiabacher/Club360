@@ -40,6 +40,14 @@ const byId = [param('id').isInt({ min: 1 }).withMessage(m.idInvalid).bail().toIn
 
 const preview = [...audience]
 
+// Historial de enviados
+const sentList = [
+    query('page').optional().isInt({ min: 1 }).withMessage(m.pageInvalid),
+    query('senderId').optional({ values: 'falsy' }).isInt({ min: 1 }).withMessage(m.senderIdInvalid)
+]
+
+const byBatch = [param('batchId').isUUID().withMessage(m.batchIdInvalid)]
+
 const send = [
     ...audience,
     body('title').isString().withMessage(m.titleInvalid).bail().trim().isLength({ min: 3, max: 150 }).withMessage(m.titleInvalid),
@@ -51,5 +59,7 @@ module.exports = {
     list,
     byId,
     preview,
-    send
+    send,
+    sentList,
+    byBatch
 }

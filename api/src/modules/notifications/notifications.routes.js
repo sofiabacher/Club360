@@ -26,6 +26,12 @@ router.post('/read-all', ...view, controller.markAllAsRead)
 router.get('/send-options', ...sendAny, controller.sendOptions)
 router.post('/preview', ...sendAny, validator.preview, validateFields, controller.preview)
 router.post('/send', ...sendAny, validator.send, validateFields, controller.send)
+
+// Historial de avisos enviados (el Admin ve todos los del club; el resto, los suyos)
+router.get('/sent', ...sendAny, validator.sentList, validateFields, controller.sentList)
+router.get('/sent/:batchId', ...sendAny, validator.byBatch, validateFields, controller.sentDetail)
+
+router.get('/:id', ...view, validator.byId, validateFields, controller.getById)
 router.post('/:id/read', ...view, validator.byId, validateFields, controller.markAsRead)
 
 module.exports = router

@@ -29,6 +29,12 @@ export function getWhatsAppUrl(number) {
   return `https://wa.me/549${digits}`
 }
 
+// Fecha y hora completas: 'sábado 1 de noviembre, 16:44'
+export function formatDateTimeLong(value) {
+  if (!value) return ''
+  return format(typeof value === 'string' ? parseISO(value) : value, "EEEE d 'de' MMMM, HH:mm", { locale: es })
+}
+
 // Fecha relativa: 'hace 2 horas', 'hace 3 días'
 export function formatRelative(value) {
   if (!value) return ''

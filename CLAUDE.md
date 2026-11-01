@@ -15,6 +15,7 @@ Plataforma web de gestión para clubes deportivos (proyecto integrador escolar).
   - `user.email` admite NULL (sigue siendo único): es obligatorio para mayores de 18 y opcional para menores. La regla va en los services.
   - `user.phone` es `VARCHAR(255)` y se guarda cifrado con AES (getter y setter en el modelo).
   - `league` suma `ageScale` (1 o 2) y `category` suma `ageGroup` (código de la escala, ver `AGE_SCALES`).
+  - `notification` suma `batchId` (`CHAR(36)` NULL): identifica las notificaciones de un mismo aviso general; las del sistema lo tienen en NULL.
   - `club` suma `accentColor` (`VARCHAR(7)`, color propio del club) y `extraInfo` (JSON: WhatsApp, horarios de secretaría, canchas y horarios de entrenamiento).
 - `docs/pruebas/`: casos de prueba documentados en `.txt`, uno por módulo (ver "Pruebas").
 
@@ -33,6 +34,8 @@ Plataforma web de gestión para clubes deportivos (proyecto integrador escolar).
 npm run dev      # servidor con recarga automática (node --watch)
 npm start        # servidor
 npm run seed     # carga inicial del club (se corre a mano, no al arrancar)
+npm run db:snapshot  # guarda todos los datos de la base en api/backups/ (antes de recrearla)
+npm run db:restore   # vuelve a cargar el último snapshot en una base recién recreada
 
 # client/
 npm run dev      # Vite en http://localhost:5173
@@ -106,6 +109,12 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
 - Las tablas se crean con `sequelize.sync()` (sin migraciones). `DB_FORCE_SYNC=true` borra y recrea todo; `DB_ALTER_SYNC=true` ajusta sin borrar. Ambos están bloqueados en producción.
 - Los nombres de tabla son los del DER (`freezeTableName: true`).
 - **Sin particiones:** no se implementan (no son requisito del trabajo).
+- **Cambios en el modelo con datos cargados (desde el 01/11/2026):** se recrea la base **conservando los datos**:
+  1. `npm run db:snapshot`;
+  2. `DB_FORCE_SYNC=true`, `npm run dev` y volver a `false`;
+  3. `npm run db:restore`, **sin** correr el seed antes.
+
+  El restore inserta las filas tal cual estaban (`bulkInsert`, con los ids, el teléfono cifrado y los `dvh` originales) y al final verifica la integridad. Es una herramienta de desarrollo y la única excepción a la regla de escribir datos solo por Sequelize. Las columnas nuevas tienen que admitir NULL o tener default, para que los datos viejos entren. No se usan parches de SQL ni `DB_ALTER_SYNC`.
 
 ## Imágenes
 
@@ -131,6 +140,8 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
 - `includeFamily: true` suma al adulto Familia de los socios menores vinculados (para "Socio, y Familia si es menor").
 - **Momento del envío:** los emails salen **después de confirmar la transacción** (`afterCommit`) y en segundo plano. Un error de email se registra en la bitácora y no deshace la notificación in-app.
 - En el front, `client/src/utils/notificationTypes.js` define el ícono y la ruta de cada tipo.
+- **Detalle:** tocar una notificación (en la campana o en el listado) abre `NotificationDialog` con el mensaje completo y un botón "Ir a…" si el tipo tiene ruta; no navega directo.
+- **Historial de enviados:** cada aviso general lleva un `batchId` común. Quien tiene `notifications.sendAll` ve todos los envíos del club; el resto, solo los suyos. Muestra cuántos destinatarios lo leyeron.
 
 ## Pruebas
 

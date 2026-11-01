@@ -15,6 +15,7 @@ import NotificationsRounded from '@mui/icons-material/NotificationsRounded'
 import { getNotifications, getUnreadCount, markAllAsRead } from '../../api/notifications.api.js'
 import useAuth from '../../hooks/useAuth.js'
 import useOpenNotification, { NOTIFICATIONS_CHANGED, emitNotificationsChanged } from '../../hooks/useOpenNotification.js'
+import NotificationDialog from './NotificationDialog.jsx'
 import NotificationItem from './NotificationItem.jsx'
 
 const REFRESH_MS = 60 * 1000
@@ -25,7 +26,7 @@ const LATEST = 5
 // cambian las leídas (evento NOTIFICATIONS_CHANGED)
 export default function NotificationBell() {
   const { club } = useAuth()
-  const openNotification = useOpenNotification()
+  const { dialogProps, openNotification } = useOpenNotification()
 
   const [count, setCount] = useState(0)
   const [anchor, setAnchor] = useState(null)
@@ -69,9 +70,10 @@ export default function NotificationBell() {
 
   const close = () => setAnchor(null)
 
-  const handleItem = async (notification) => {
+  // Tocar un resumen cierra la campana y abre el detalle (que la marca como leída)
+  const handleItem = (notification) => {
     close()
-    await openNotification(notification)
+    openNotification(notification)
   }
 
   const handleReadAll = async () => {
@@ -137,6 +139,8 @@ export default function NotificationBell() {
           <Button component={RouterLink} to="/notifications" color="secondary" onClick={close} fullWidth>Ver todas</Button>
         </Box>
       </Popover>
+
+      <NotificationDialog {...dialogProps} />
     </>
   )
 }

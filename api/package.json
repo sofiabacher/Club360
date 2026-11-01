@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "seed": "node src/seed/seed.js"
+    "seed": "node src/seed/seed.js",
+    "db:snapshot": "node src/scripts/db/snapshot.js",
+    "db:restore": "node src/scripts/db/restore.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

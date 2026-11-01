@@ -46,5 +46,23 @@ export function getNotificationPath(type, permissions) {
   return required && required.some((name) => permissions.includes(name)) ? path : null
 }
 
+// Nombre de cada sección para el botón del detalle: "Ir a mis citaciones"
+const SECTION_LABELS = {
+  '/my-citations': 'mis citaciones',
+  '/my-games': 'mis partidos',
+  '/my-fees': 'mis cuotas',
+  '/family/fees': 'el estado de cuenta',
+  '/games/assigned': 'los partidos',
+  '/my-routine': 'mi rutina',
+  '/my-sports': 'mis deportes',
+  '/inscriptions': 'las inscripciones'
+}
+
+// Ruta y nombre de la sección de una notificación, o null si no tiene o no está disponible para el rol activo
+export function getNotificationTarget(type, permissions) {
+  const path = getNotificationPath(type, permissions)
+  return path ? { path, label: SECTION_LABELS[path] ?? 'la sección' } : null
+}
+
 export const getNotificationIcon = (type) => typeOf(type).icon
 export const getNotificationTone = (type) => typeOf(type).tone

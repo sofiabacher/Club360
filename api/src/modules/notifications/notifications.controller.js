@@ -16,6 +16,16 @@ const list = async (req, res, next) => {
     }
 }
 
+const getById = async (req, res, next) => {
+    try {
+        const data = await service.getNotification(req.user, req.params.id)
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
 const unreadCount = async (req, res, next) => {
     try {
         const data = await service.getUnreadCount(req.user)
@@ -79,9 +89,35 @@ const send = async (req, res, next) => {
     }
 }
 
+// ---------- Historial de avisos enviados ----------
+
+const sentList = async (req, res, next) => {
+    try {
+        const { page, senderId } = req.query
+        const data = await service.listSent(req.user, { page, senderId })
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const sentDetail = async (req, res, next) => {
+    try {
+        const data = await service.getSent(req.user, req.params.batchId)
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
 module.exports = {
     list,
+    getById,
     unreadCount,
+    sentList,
+    sentDetail,
     markAsRead,
     markAllAsRead,
     sendOptions,

@@ -3,11 +3,12 @@
 // registra las acciones relevantes en la bitácora (utils/logger) y lanza los errores con createError (utils/errors).
 //
 // Todo aviso a un usuario pasa por notify(): ningún módulo crea notification ni manda emails de notificación por su cuenta.
-const { Op } = require('sequelize')
+const crypto = require('crypto')
+const { Op, fn, col } = require('sequelize')
 
 const { Notification, User, Member, Club, ClubSport, Sport, Fee, Inscription, Staff, UserRole, Role } = require('../../models')
 const { getEffectivePermissions } = require('../access/access.service')
-const { isActiveStaff } = require('../staff/staff.service')
+const { isActiveStaff, getStaffRolesOfUsers } = require('../staff/staff.service')
 const { getActivePlayersOfCategory, getCategoriesOfStaff, isStaffAssignedToCategory } = require('../leagues/leagues.service')
 
 const logger = require('../../utils/logger')
@@ -19,6 +20,7 @@ const {
     MEMBER_STATES,
     INSCRIPTION_STATES,
     FEE_STATES,
+    BASE_ROLES,
     STAFF_ROLES,
     CATEGORY_STAFF_ROLES,
     NOTIFICATION_TYPES,
@@ -87,11 +89,12 @@ function dispatchEmails(recipients, content) {
 // Crea una notificación por destinatario y, si el tipo lo indica, programa los emails.
 //   - type: clave de NOTIFICATION_TYPES (que define si va por email; GENERAL, solo con sendEmail);
 //   - includeFamily: suma al adulto Familia de cada destinatario que sea un socio menor vinculado;
-//   - transmitterId: null si la genera el sistema.
+//   - transmitterId: null si la genera el sistema;
+//   - batchId: el mismo en todas las notificaciones de un aviso general (historial de enviados); null en las del sistema.
 // Si viene una transacción, las notificaciones se crean en ella y los emails salen después de confirmarla (si se
 // deshace, no sale ninguno). A quien no tiene email (por ejemplo, un menor) no se le manda.
 // Devuelve { created, emails }.
-async function notify({ clubId, type, recipientUserIds, title, message, transmitterId = null, includeFamily = false, sendEmail = false }, { transaction } = {}) {
+async function notify({ clubId, type, recipientUserIds, title, message, transmitterId = null, includeFamily = false, sendEmail = false, batchId = null }, { transaction } = {}) {
     const channel = NOTIFICATION_TYPES[type]
     if (!channel) throw createError(m.invalidType, 500)
 
@@ -101,7 +104,7 @@ async function notify({ clubId, type, recipientUserIds, title, message, transmit
     }, { transaction })
 
     for (const user of recipients) {
-        await Notification.create({ clubId, recipientId: user.id, transmitterId, type, title, message, isRead: false }, { transaction })
+        await Notification.create({ clubId, recipientId: user.id, transmitterId, type, title, message, isRead: false, batchId }, { transaction })
     }
 
     const withEmail = channel.email === true || (channel.email === 'optional' && sendEmail)
@@ -296,6 +299,9 @@ async function sendNotice(user, { audience, title, message, sendEmail = false })
     const { recipients } = await recipientsOf(user, audience)
     if (recipients.length === 0) throw createError(m.noRecipients, 400)
 
+    // Un batchId por envío agrupa sus notificaciones en el historial de enviados
+    const batchId = crypto.randomUUID()
+
     // Se pasa la lista final ya resuelta (con las familias), así notify crea exactamente lo que mostró el resumen
     const result = await notify({
         clubId: user.clubId,
@@ -304,38 +310,54 @@ async function sendNotice(user, { audience, title, message, sendEmail = false })
         title,
         message,
         transmitterId: user.id,
-        sendEmail
+        sendEmail,
+        batchId
     })
 
     await logger(actorOf(user), LOG_ACTIONS.NOTIFICATION_SENT,
-        `"${title}" a ${describeAudience(audience)}: ${result.created} destinatarios${sendEmail ? `, ${result.emails} por email` : ''}`)
+        `"${title}" a ${describeAudience(audience)}: ${result.created} destinatarios${sendEmail ? `, ${result.emails} por email` : ''}. Envío ${batchId}`)
 
-    return { recipients: result.created, emails: result.emails }
+    return { batchId, recipients: result.created, emails: result.emails }
 }
 
 // ---------- Notificaciones del usuario ----------
+
+const fullNameOf = (user) => `${user.name} ${user.lastName}`
+
+const includeTransmitter = { model: User, as: 'transmitter', attributes: ['name', 'lastName'] }
+
+function formatNotification(notification) {
+    return {
+        id: notification.id,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        isRead: notification.isRead,
+        createdAt: notification.createdAt,
+        transmitter: notification.transmitter ? fullNameOf(notification.transmitter) : null   // null: la mandó el sistema
+    }
+}
+
+// Una notificación propia completa (para el detalle, si no está en la lista cargada). Una ajena responde 404
+async function getNotification({ id: userId, clubId }, notificationId) {
+    const notification = await Notification.findOne({ where: { id: notificationId, recipientId: userId, clubId }, include: [includeTransmitter] })
+    if (!notification) throw createError(m.notificationNotFound, 404)
+    return formatNotification(notification)
+}
 
 async function listNotifications({ id: userId, clubId }, { unread, page = 1 }) {
     page = Number(page) || 1   // Con Express 5 req.query es de solo lectura: el toInt del validator no llega hasta acá
 
     const { count, rows } = await Notification.findAndCountAll({
         where: { recipientId: userId, clubId, ...(unread === 'true' && { isRead: false }) },
-        include: [{ model: User, as: 'transmitter', attributes: ['name', 'lastName'] }],
+        include: [includeTransmitter],
         order: [['createdAt', 'DESC'], ['id', 'DESC']],
         limit: NOTIFICATIONS_PAGE_SIZE,
         offset: (page - 1) * NOTIFICATIONS_PAGE_SIZE
     })
 
     return {
-        items: rows.map(notification => ({
-            id: notification.id,
-            type: notification.type,
-            title: notification.title,
-            message: notification.message,
-            isRead: notification.isRead,
-            createdAt: notification.createdAt,
-            transmitter: notification.transmitter ? `${notification.transmitter.name} ${notification.transmitter.lastName}` : null   // null: la mandó el sistema
-        })),
+        items: rows.map(formatNotification),
         total: count,
         page,
         pageSize: NOTIFICATIONS_PAGE_SIZE,
@@ -362,6 +384,138 @@ async function markAllAsRead({ id: userId, clubId }) {
     return { updated: unread.length }
 }
 
+// ---------- Historial de avisos enviados ----------
+// Cada aviso general tiene un batchId común. Quien tiene notifications.sendAll (el Admin) ve todos los envíos del club;
+// el resto, solo los suyos. Un envío que no le corresponde responde 404.
+
+const SENT_PAGE_SIZE = 20
+
+async function canSeeAllSent(user) {
+    const permissions = await getEffectivePermissions(user.id, user.activeRoleId)
+    return permissions.includes(PERMISSIONS.NOTIFICATIONS_SEND_ALL)
+}
+
+// Avisos generales visibles para el usuario (solo los que tienen batchId: las notificaciones del sistema no entran)
+function sentWhere(user, seeAll, senderId) {
+    return {
+        clubId: user.clubId,
+        batchId: { [Op.ne]: null },
+        ...(seeAll ? (senderId && { transmitterId: senderId }) : { transmitterId: user.id })
+    }
+}
+
+// Envíos agrupados por batchId, los más nuevos primero. Las cantidades se calculan en la base (GROUP BY), sin traer las
+// filas. senderId es un filtro solo para quien ve todo (para el resto se ignora: siempre ve los suyos)
+async function listSent(user, { page = 1, senderId }) {
+    page = Number(page) || 1   // Con Express 5 req.query es de solo lectura: el toInt del validator no llega hasta acá
+    const seeAll = await canSeeAllSent(user)
+    const where = sentWhere(user, seeAll, seeAll && senderId ? Number(senderId) : null)
+
+    const [total, batches] = await Promise.all([
+        Notification.count({ where, distinct: true, col: 'batchId' }),
+        Notification.findAll({
+            where,
+            attributes: [
+                'batchId',
+                [fn('MIN', col('createdAt')), 'sentAt'],
+                [fn('MIN', col('transmitterId')), 'transmitterId'],
+                [fn('MIN', col('title')), 'title'],
+                [fn('MIN', col('message')), 'message'],
+                [fn('COUNT', col('id')), 'recipientsCount'],
+                [fn('SUM', col('isRead')), 'readCount']
+            ],
+            group: ['batchId'],
+            order: [[fn('MIN', col('createdAt')), 'DESC'], ['batchId', 'ASC']],
+            limit: SENT_PAGE_SIZE,
+            offset: (page - 1) * SENT_PAGE_SIZE,
+            raw: true
+        })
+    ])
+
+    // Nombres de los remitentes de la página y, para quien ve todo, de todos los que enviaron avisos (para el filtro)
+    const senderRows = seeAll
+        ? await Notification.findAll({ where: sentWhere(user, true, null), attributes: [[fn('DISTINCT', col('transmitterId')), 'transmitterId']], raw: true })
+        : []
+    const senderIds = unique([...batches.map(batch => batch.transmitterId), ...senderRows.map(row => row.transmitterId)])
+    const senders = await User.findAll({ where: { id: senderIds }, attributes: ['id', 'name', 'lastName'] })
+    const nameOf = new Map(senders.map(sender => [sender.id, fullNameOf(sender)]))
+
+    return {
+        canSeeAll: seeAll,
+        senders: seeAll ? senders.map(sender => ({ id: sender.id, name: fullNameOf(sender) })).sort((a, b) => a.name.localeCompare(b.name, 'es')) : [],
+        items: batches.map(batch => ({
+            batchId: batch.batchId,
+            sentAt: batch.sentAt,
+            sender: batch.transmitterId ? { id: batch.transmitterId, name: nameOf.get(batch.transmitterId) ?? null } : null,
+            title: batch.title,
+            message: batch.message,
+            recipientsCount: Number(batch.recipientsCount),
+            readCount: Number(batch.readCount ?? 0)
+        })),
+        total,
+        page,
+        pageSize: SENT_PAGE_SIZE,
+        totalPages: Math.max(1, Math.ceil(total / SENT_PAGE_SIZE))
+    }
+}
+
+// Rol o vínculo de cada destinatario, para mostrar: sus roles de staff, "Jugadora" o "Socia" y "Familia de …"
+async function relationsOf(clubId, userIds) {
+    const [staffRoles, members, players, dependents] = await Promise.all([
+        getStaffRolesOfUsers(clubId, userIds),
+        Member.findAll({ where: { clubId, userId: userIds, memberStateId: CURRENT_MEMBER_STATES }, attributes: ['userId'], raw: true }),
+        UserRole.findAll({ where: { userId: userIds }, attributes: ['userId'], include: [{ model: Role, as: 'role', attributes: [], where: { clubId, name: BASE_ROLES.PLAYER } }], raw: true }),
+        Member.findAll({
+            where: { clubId, adultUserId: userIds, linkStatus: true },
+            attributes: ['adultUserId'],
+            include: [{ model: User, as: 'user', attributes: ['name'] }]
+        })
+    ])
+
+    const memberIds = new Set(members.map(row => row.userId))
+    const playerIds = new Set(players.map(row => row.userId))
+
+    return new Map(userIds.map(userId => {
+        const children = dependents.filter(row => row.adultUserId === userId).map(row => row.user.name)
+        const parts = [
+            ...(staffRoles.get(userId) ?? []),
+            memberIds.has(userId) && (playerIds.has(userId) ? 'Jugadora' : 'Socia'),
+            children.length > 0 && `Familia de ${children.join(' y ')}`
+        ].filter(Boolean)
+
+        return [userId, parts.join(' · ') || null]
+    }))
+}
+
+// Detalle de un envío con sus destinatarios y si lo leyeron
+async function getSent(user, batchId) {
+    const seeAll = await canSeeAllSent(user)
+
+    const rows = await Notification.findAll({
+        where: { ...sentWhere(user, seeAll, null), batchId },
+        include: [{ model: User, as: 'recipient', attributes: ['id', 'name', 'lastName'] }, includeTransmitter],
+        order: [['id', 'ASC']]
+    })
+
+    if (rows.length === 0) throw createError(m.sentNotFound, 404)
+
+    const [first] = rows
+    const relations = await relationsOf(user.clubId, rows.map(row => row.recipient.id))
+
+    return {
+        batchId,
+        sentAt: first.createdAt,
+        sender: first.transmitter ? { id: first.transmitterId, name: fullNameOf(first.transmitter) } : null,
+        title: first.title,
+        message: first.message,
+        recipientsCount: rows.length,
+        readCount: rows.filter(row => row.isRead).length,
+        recipients: rows
+            .map(row => ({ userId: row.recipient.id, name: fullNameOf(row.recipient), relation: relations.get(row.recipient.id), isRead: row.isRead }))
+            .sort((a, b) => a.name.localeCompare(b.name, 'es'))
+    }
+}
+
 module.exports = {
     notify,
     resolveAudience,
@@ -369,6 +523,9 @@ module.exports = {
     previewNotice,
     sendNotice,
     listNotifications,
+    getNotification,
+    listSent,
+    getSent,
     getUnreadCount,
     markAsRead,
     markAllAsRead
