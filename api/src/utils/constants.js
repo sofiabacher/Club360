@@ -136,7 +136,14 @@ const LOG_ACTIONS = {
     CITATION_CANCELLED: { message: 'Cancelación de citación', criticity: CRITICITY.MEDIUM },
     CITATION_CONFIRMED: { message: 'Citación confirmada', criticity: CRITICITY.MEDIUM },
     CITATION_REJECTED: { message: 'Citación rechazada', criticity: CRITICITY.MEDIUM },
-    CITATION_AUTO_CONFIRMED: { message: 'Citación confirmada automáticamente', criticity: CRITICITY.LOW }
+    CITATION_AUTO_CONFIRMED: { message: 'Citación confirmada automáticamente', criticity: CRITICITY.LOW },
+
+    // Inscripciones a deportes y baja de un deporte
+    INSCRIPTION_REQUESTED: { message: 'Solicitud de inscripción a un deporte', criticity: CRITICITY.MEDIUM },
+    INSCRIPTION_APPROVED: { message: 'Aprobación de inscripción', criticity: CRITICITY.MEDIUM },
+    INSCRIPTION_REJECTED: { message: 'Rechazo de inscripción', criticity: CRITICITY.MEDIUM },
+    INSCRIPTION_CANCELLED: { message: 'Cancelación de solicitud de inscripción', criticity: CRITICITY.MEDIUM },
+    SPORT_WITHDRAWN: { message: 'Baja de un deporte', criticity: CRITICITY.MEDIUM }
 }
 
 // Intentos fallidos de login antes de bloquear al usuario
@@ -213,6 +220,8 @@ const NOTIFICATION_TYPES = {
     SPORT_WITHDRAWAL: { email: false },     // Baja de un deporte (Representante)
     CITATION_CANCELLED: { email: false },   // Citación cancelada por la entrenadora (jugadora y Familia)
     CONFLICT_RESOLVED: { email: false },    // Conflicto de horario resuelto: qué partido juega (jugadora y Familia)
+    CITATION_RESPONSE: { email: false },    // Una jugadora confirmó o rechazó su citación (entrenadoras de la categoría)
+    INSCRIPTION_REQUEST: { email: false },  // Solicitud de inscripción nueva (Representante del deporte)
     GENERAL: { email: 'optional' }          // Avisos generales del Admin, el Representante y la Entrenadora
 }
 
@@ -220,9 +229,10 @@ const NOTIFICATION_TYPES = {
 // El modelo no guarda la duración: se asume 2 horas por partido (decisión del 01/11/2026).
 const GAME_DURATION_MINUTES = 120
 
-// Citaciones (contexto, sección 6): se generan con al menos 48 horas de anticipación al partido y la jugadora tiene
-// 24 horas desde la citación para responder. Después, el job autoConfirmCitations la confirma sola
-const CITATION_MIN_HOURS_BEFORE_GAME = 48
+// Citaciones (contexto, sección 6): se generan dentro de una ventana, desde 7 días hasta 48 horas antes del partido, y
+// la jugadora tiene 24 horas desde la citación para responder. Después, el job autoConfirmCitations la confirma sola
+const CITATION_WINDOW_OPEN_DAYS = 7
+const CITATION_MIN_HOURS = 48
 const CITATION_RESPONSE_HOURS = 24
 
 // Grupo de edad de una escala por su code (undefined si no es de esa escala)
@@ -248,6 +258,7 @@ module.exports = {
     findAgeGroup,
     NOTIFICATION_TYPES,
     GAME_DURATION_MINUTES,
-    CITATION_MIN_HOURS_BEFORE_GAME,
+    CITATION_WINDOW_OPEN_DAYS,
+    CITATION_MIN_HOURS,
     CITATION_RESPONSE_HOURS
 }

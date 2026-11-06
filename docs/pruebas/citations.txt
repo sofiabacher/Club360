@@ -16,6 +16,9 @@ Precondición general (datos de prueba):
     G1 para Martina), G3 Sub-16 (en 30 horas), G4 Sub-16 Jugado, G5 Sub-16 Cancelado y G6 Sub-16 (en 8 días).
 Las pantallas: Deportivo > Citaciones (Entrenadora), Mi espacio > Mis citaciones (Jugadora) y Familia > Citaciones.
 
+Nota del Prompt 13 (05/11/2026): desde la ventana para citar (de 7 días a 48 horas antes del partido), G6 (en 8 días) ya
+no se puede citar. Para repetir los casos 10 a 13 hay que poner G6 a 7 días o menos. Los casos 21 a 24 son del P13.
+
 
 --------------------------------------------------
 ID: CP-CITATIONS-01
@@ -308,4 +311,66 @@ Pasos:
 Datos de entrada: —
 Resultado esperado: todo correcto (las citaciones se escriben solo por Sequelize, con la transacción en options).
 Resultado obtenido: DVH y DVV correctos en las dos verificaciones.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-21
+Módulo: citations
+Descripción: Citar a 8 días del partido (rechazado, con la fecha de apertura)
+Precondiciones (P13): "Liga P13" de Vóley con Sub-18; en Sub-18, Citada1, Citada2 y Citada3 (sin mora); CoachA y CoachB,
+  Entrenadoras de Sub-18; PF, Preparadora física de Sub-18; ExCoach, asignada a Sub-18 pero sin roles de staff.
+  Partidos de Sub-18: G8 (en 8 días), G7 (en 7 días menos 10 minutos) y G47 (en 47 horas). Sesión de CoachA.
+Pasos:
+  1. En Citaciones, mirar G8. 2. Abrirlo e intentar citar a Citada1 (por la API, porque las casillas están deshabilitadas).
+Datos de entrada: G8; Citada1.
+Resultado esperado: la tarjeta muestra el chip "Se habilita el {día y hora}"; en el detalle, un aviso "Las citaciones para
+  este partido se habilitan el …" y las casillas deshabilitadas. Citar → 400 con la fecha de apertura (partido − 7 días).
+Resultado obtenido: 400 "Las citaciones para este partido se habilitan el viernes 6/11 a las 23:45." citationWindow:
+  NOT_YET_OPEN, con opensAt = partido − 7 días y closesAt = partido − 48 h; canCite false; cada jugadora con reason
+  NOT_YET_OPEN. Falta ver el chip y el aviso en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-22
+Módulo: citations
+Descripción: Citar a 7 días (aceptado) y a 47 horas (rechazado)
+Precondiciones: las del caso 21.
+Pasos:
+  1. Citar a Citada1, Citada2 y Citada3 en G7. 2. Intentar citar a Citada1 en G47.
+Datos de entrada: G7 y G47.
+Resultado esperado: en G7 se crean las tres citaciones (ventana abierta). En G47, "Las citaciones se generan con al menos
+  2 días de anticipación."; la tarjeta dice "Ya no se puede citar".
+Resultado obtenido: G7 → 201 (citationWindow OPEN, canCite true). G47 → 400 con ese mensaje (citationWindow CLOSED,
+  reason TOO_LATE).
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-23
+Módulo: citations
+Descripción: Aviso a las dos entrenadoras al confirmar y al rechazar
+Precondiciones: las citaciones Pendientes del caso 22.
+Pasos:
+  1. Como Citada1, "Confirmo". 2. Como Citada2, "No puedo" con la justificación. 3. Mirar la campana de CoachA y de CoachB.
+Datos de entrada: "Tengo un examen ese día."
+Resultado esperado: a CoachA y a CoachB (no a la PF ni a ExCoach) les llega, in-app: "Citada1 P13 confirmó la citación
+  para Sub-18 vs. Rival Siete (jue. 12/11, 23:35)." y "Citada2 P13 no puede ir a Sub-18 vs. Rival Siete (jue. 12/11):
+  «Tengo un examen ese día.»." El botón "Ir a las citaciones" lleva a Citaciones.
+Resultado obtenido: dos CITATION_RESPONSE para cada entrenadora, con esos textos; ninguno para PF ni para ExCoach. Falta ver
+  la campana en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-24
+Módulo: citations
+Descripción: La confirmación automática no avisa a las entrenadoras
+Precondiciones: Citada3 con su citación Pendiente de G7, con el plazo vencido hace 1 minuto (con el modelo).
+Pasos:
+  1. Correr la confirmación automática (autoConfirmExpired, lo que hace el job).
+Datos de entrada: —
+Resultado esperado: la citación pasa a Confirmada automáticamente y las entrenadoras no reciben ningún aviso nuevo.
+Resultado obtenido: AUTO_CONFIRMED; CoachA y CoachB siguen con dos CITATION_RESPONSE cada una.
 Estado: Aprobado

@@ -305,6 +305,7 @@ module.exports = {
         citationNotFound: 'No encontramos la citación.',
         notScheduled: 'Solo se puede citar para partidos Programados.',
         tooLate: 'Las citaciones se generan con al menos 2 días de anticipación.',
+        notYetOpen: (when) => `Las citaciones para este partido se habilitan el ${when}.`,
         membersNotFound: 'Alguna de las jugadoras elegidas no es socia del club.',
         notInCategory: (name) => `${name} no está en la categoría del partido.`,
         overdue: (name) => `${name} tiene cuotas atrasadas: no se la puede citar hasta que regularice su situación.`,
@@ -325,6 +326,26 @@ module.exports = {
         justificationInvalid: 'Contá por qué no podés ir (entre 10 y 300 caracteres).',
         scopeInvalid: 'El filtro no es válido.',
         dateInvalid: 'Ingresá una fecha válida (AAAA-MM-DD).'
+    },
+
+    inscriptions: {
+        notMember: 'No sos socio del club.',
+        memberSuspended: 'Tenés cuotas atrasadas: regularizá tu situación para inscribirte a un deporte.',
+        memberNotActive: 'Tu condición de socio no está activa: acercate a la secretaría del club.',
+        sportNotFound: 'El deporte no está disponible en el club.',
+        alreadyRequested: 'Ya tenés una inscripción pendiente o aprobada en este deporte.',
+        inscriptionNotFound: 'No encontramos la inscripción.',
+        notPending: 'La inscripción ya no está pendiente.',
+        cannotWithdraw: 'Solo se puede cancelar una solicitud Pendiente o darse de baja de una inscripción Aprobada.',
+        memberNoLongerActive: 'El socio ya no está activo: no se puede aprobar la inscripción.',
+
+        // Validaciones de formato
+        idInvalid: 'El identificador no es válido.',
+        clubSportIdInvalid: 'Elegí un deporte.',
+        stateInvalid: 'El estado no es válido.',
+        reasonInvalid: 'El motivo puede tener hasta 300 caracteres.',
+        searchInvalid: 'La búsqueda puede tener hasta 100 caracteres.',
+        pageInvalid: 'La página no es válida.'
     },
 
     upload: {

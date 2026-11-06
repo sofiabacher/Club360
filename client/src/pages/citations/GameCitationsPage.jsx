@@ -27,8 +27,8 @@ import EmptyState from '../../components/common/EmptyState.jsx'
 import StatusChip from '../../components/common/StatusChip.jsx'
 import { HomeChip } from '../../components/games/GameChips.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
-import { CITATION_STATES, GAME_STATES } from '../../utils/constants.js'
-import { formatGameDate } from '../../utils/format.js'
+import { CITATION_MIN_HOURS, CITATION_STATES, GAME_STATES } from '../../utils/constants.js'
+import { formatDeadline, formatGameDate } from '../../utils/format.js'
 
 // Estados que la entrenadora puede cancelar, antes del partido
 const CANCELLABLE_STATES = [CITATION_STATES.PENDING, CITATION_STATES.CONFIRMED, CITATION_STATES.AUTO_CONFIRMED]
@@ -79,8 +79,17 @@ function PlayerRow({ player, checked, onToggle, canCancel, onCancel }) {
   )
 }
 
+// Aviso de la ventana para citar cuando no está abierta: todavía no abrió (con la fecha) o ya cerró
+function WindowAlert({ game }) {
+  if (game.citationWindow?.status === 'NOT_YET_OPEN') {
+    return <Alert severity="info" sx={{ mb: 2 }}>Las citaciones para este partido se habilitan el {formatDeadline(game.citationWindow.opensAt)}.</Alert>
+  }
+  if (!game.canCite) return <Alert severity="info" sx={{ mb: 2 }}>Ya no se pueden generar citaciones para este partido.</Alert>
+  return null
+}
+
 // Citaciones de un partido (citations.create): la lista de la categoría para citar a varias a la vez y cancelar
-// citaciones. Si faltan menos de 48 horas, solo se consulta
+// citaciones. Fuera de la ventana para citar (desde 7 días hasta 48 horas antes), solo se consulta
 export default function GameCitationsPage() {
   const { gameId } = useParams()
   const [data, setData] = useState(null)   // { game, players }
@@ -166,7 +175,7 @@ export default function GameCitationsPage() {
         </CardContent>
       </Card>
 
-      {!game.canCite && <Alert severity="info" sx={{ mb: 2 }}>Ya no se pueden generar citaciones para este partido.</Alert>}
+      <WindowAlert game={game} />
 
       {problems.length > 0 && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setProblems([])}>
@@ -241,7 +250,7 @@ export default function GameCitationsPage() {
           <>
             <DialogTitle>¿Cancelar la citación de {cancelling.name}?</DialogTitle>
             <DialogContent>
-              <DialogContentText>Le va a llegar un aviso. Después la podés volver a citar mientras falten al menos 2 días para el partido.</DialogContentText>
+              <DialogContentText>Le va a llegar un aviso. Después la podés volver a citar mientras falten al menos {CITATION_MIN_HOURS / 24} días para el partido.</DialogContentText>
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2 }}>
               <Button color="secondary" onClick={() => setCancelling(null)} disabled={running}>Volver</Button>

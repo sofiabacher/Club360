@@ -8,7 +8,7 @@ const { Op, fn, col } = require('sequelize')
 
 const { Notification, User, Member, Club, ClubSport, Sport, Fee, Inscription, Staff, UserRole, Role } = require('../../models')
 const { getEffectivePermissions } = require('../access/access.service')
-const { isActiveStaff, getStaffRolesOfUsers } = require('../staff/staff.service')
+const { getSportScope, getStaffRolesOfUsers } = require('../staff/staff.service')
 const { getActivePlayersOfCategory, getCategoriesOfStaff, isStaffAssignedToCategory } = require('../leagues/leagues.service')
 
 const logger = require('../../utils/logger')
@@ -153,9 +153,7 @@ async function staffUserIds(clubId, roleNames) {
 
 // Deporte del Representante: el de su registro staff si es staff activo; si no, todos los del club (null)
 async function sportScopeOf(user) {
-    if (!await isActiveStaff(user.id)) return null
-    const staff = await Staff.findOne({ where: { userId: user.id, clubId: user.clubId }, attributes: ['clubSportId'] })
-    return staff.clubSportId
+    return (await getSportScope(user)).clubSportId
 }
 
 const AUDIENCE_RESOLVERS = {

@@ -17,7 +17,17 @@ import CitationSummary from '../../components/citations/CitationSummary.jsx'
 import EmptyState from '../../components/common/EmptyState.jsx'
 import { HomeChip } from '../../components/games/GameChips.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
-import { formatGameDate } from '../../utils/format.js'
+import { CITATION_MIN_HOURS, CITATION_WINDOW_OPEN_DAYS } from '../../utils/constants.js'
+import { formatGameDate, formatShortDateTime } from '../../utils/format.js'
+
+// Chip de la ventana para citar: todavía no abrió (con la fecha) o ya cerró. Abierta, sin chip
+function WindowChip({ game }) {
+  if (game.citationWindow?.status === 'NOT_YET_OPEN') {
+    return <Chip label={`Se habilita el ${formatShortDateTime(game.citationWindow.opensAt)}`} size="small" sx={{ fontWeight: 600 }} />
+  }
+  if (!game.canCite) return <Chip label="Ya no se puede citar" size="small" sx={{ fontWeight: 600 }} />
+  return null
+}
 
 // Citaciones de la entrenadora (citations.create): los próximos partidos de sus categorías con el resumen de sus
 // citaciones. Al tocar uno, se abre la lista de la categoría para citar
@@ -42,7 +52,7 @@ export default function CitationsPage() {
       <Box sx={{ mb: 3 }}>
         <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Citaciones</Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Los próximos partidos de tus categorías. Se cita con al menos 2 días de anticipación.
+          Los próximos partidos de tus categorías. Se cita desde {CITATION_WINDOW_OPEN_DAYS} días hasta {CITATION_MIN_HOURS / 24} días antes del partido.
         </Typography>
       </Box>
 
@@ -60,7 +70,7 @@ export default function CitationsPage() {
                     <Typography sx={{ fontWeight: 600, color: 'navy.main', overflowWrap: 'anywhere' }}>vs. {game.rival}</Typography>
                     <Stack direction="row" sx={{ gap: 0.75, flexWrap: 'wrap', my: 1 }}>
                       <HomeChip isHome={game.isHome} />
-                      {!game.canCite && <Chip label="Ya no se puede citar" size="small" sx={{ fontWeight: 600 }} />}
+                      <WindowChip game={game} />
                     </Stack>
                     <CitationSummary summary={game.summary} />
                   </Box>

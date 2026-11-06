@@ -6,7 +6,7 @@ const { Op } = require('sequelize')
 const sequelize = require('../../config/db')
 const { League, Category, CategoryPlayer, CategoryStaff, ClubSport, Sport, Member, Inscription, Staff, User } = require('../../models')
 const { getActiveSports } = require('../clubs/clubs.service')
-const { isActiveStaff, getStaffRolesOfUsers } = require('../staff/staff.service')
+const { getSportScope, getStaffRolesOfUsers } = require('../staff/staff.service')
 
 const logger = require('../../utils/logger')
 const { createError } = require('../../utils/errors')
@@ -45,17 +45,8 @@ const exceedsAge = (birthDate, group, year = currentYear()) => group.maxAge !== 
 
 // ---------- Alcance ----------
 
-// Un staff activo con permisos de leagues trabaja solo con las ligas del deporte de su registro staff (el Representante).
-// Un usuario con esos permisos que no es staff (rol nuevo o permiso directo) ve todas las ligas del club.
-// Es la única regla de alcance: la usan todas las consultas del módulo.
-async function getLeagueScope(user, { transaction } = {}) {
-    if (await isActiveStaff(user.id, { transaction })) {
-        const staff = await Staff.findOne({ where: { userId: user.id, clubId: user.clubId }, attributes: ['clubSportId'], transaction })
-        return { clubId: user.clubId, clubSportId: staff.clubSportId }
-    }
-
-    return { clubId: user.clubId, clubSportId: null }
-}
+// El alcance es el del deporte (getSportScope, en staff.service): un Representante, las ligas de su deporte; quien no es
+// staff, todas las del club.
 
 // Condición de las ligas dentro del alcance (la usan también los partidos)
 const leagueWhere = (scope) => ({ clubId: scope.clubId, ...(scope.clubSportId && { clubSportId: scope.clubSportId }) })
@@ -147,7 +138,7 @@ async function countAssignments(categoryIds) {
 // ---------- Ligas ----------
 
 async function listLeagues(user, { includeInactive = false } = {}) {
-    const scope = await getLeagueScope(user)
+    const scope = await getSportScope(user)
 
     const leagues = await League.findAll({
         where: { ...leagueWhere(scope), ...(!includeInactive && { isActive: true }) },
@@ -196,7 +187,7 @@ async function assertSportAvailable(scope, clubSportId) {
 }
 
 async function createLeague(actor, { name, clubSportId, ageScale }) {
-    const scope = await getLeagueScope(actor)
+    const scope = await getSportScope(actor)
     await assertSportAvailable(scope, clubSportId)
 
     // Con el deporte bloqueado, dos altas simultáneas con el mismo nombre no pasan las dos
@@ -212,7 +203,7 @@ async function createLeague(actor, { name, clubSportId, ageScale }) {
 
 // El deporte no se cambia. La escala, solo mientras la liga no tenga categorías (ni dadas de baja)
 async function updateLeague(actor, leagueId, { name, ageScale }) {
-    const scope = await getLeagueScope(actor)
+    const scope = await getSportScope(actor)
 
     const changes = await sequelize.transaction(async (transaction) => {
         const league = await findScopedLeague(scope, leagueId, { transaction, lock: transaction.LOCK.UPDATE })
@@ -242,7 +233,7 @@ async function updateLeague(actor, leagueId, { name, ageScale }) {
 
 // Da de baja la liga y sus categorías activas
 async function deactivateLeague(actor, leagueId) {
-    const scope = await getLeagueScope(actor)
+    const scope = await getSportScope(actor)
 
     const { league, categories } = await sequelize.transaction(async (transaction) => {
         const league = await findScopedLeague(scope, leagueId, { transaction, lock: transaction.LOCK.UPDATE })
@@ -263,7 +254,7 @@ async function deactivateLeague(actor, leagueId) {
 
 // Reactivar la liga no reactiva sus categorías: se reactivan una por una
 async function reactivateLeague(actor, leagueId) {
-    const scope = await getLeagueScope(actor)
+    const scope = await getSportScope(actor)
 
     const league = await sequelize.transaction(async (transaction) => {
         const league = await findScopedLeague(scope, leagueId, { transaction, lock: transaction.LOCK.UPDATE })
@@ -296,7 +287,7 @@ const categoryLabel = (category, league) => `Categoría "${category.name}" (id $
 
 // name es opcional: sin nombre, se usa la etiqueta del grupo ("Sub-18"). Puede haber dos del mismo grupo con nombres distintos
 async function createCategory(actor, leagueId, { ageGroup, name }) {
-    const scope = await getLeagueScope(actor)
+    const scope = await getSportScope(actor)
 
     const { category, league } = await sequelize.transaction(async (transaction) => {
         const league = await findScopedLeague(scope, leagueId, { transaction, lock: transaction.LOCK.UPDATE })
@@ -318,7 +309,7 @@ async function createCategory(actor, leagueId, { ageGroup, name }) {
 
 // Solo el nombre: el grupo de edad no se cambia
 async function updateCategory(actor, categoryId, { name }) {
-    const scope = await getLeagueScope(actor)
+    const scope = await getSportScope(actor)
 
     const result = await sequelize.transaction(async (transaction) => {
         const category = await findScopedCategory(scope, categoryId, { transaction, lock: transaction.LOCK.UPDATE })
@@ -339,7 +330,7 @@ async function updateCategory(actor, categoryId, { name }) {
 
 // La baja conserva las asignaciones (historial); una categoría dada de baja no acepta asignaciones nuevas
 async function deactivateCategory(actor, categoryId) {
-    const scope = await getLeagueScope(actor)
+    const scope = await getSportScope(actor)
 
     const category = await sequelize.transaction(async (transaction) => {
         const category = await findScopedCategory(scope, categoryId, { transaction, lock: transaction.LOCK.UPDATE })
@@ -354,7 +345,7 @@ async function deactivateCategory(actor, categoryId) {
 
 // Para reactivar una categoría, su liga tiene que estar activa
 async function reactivateCategory(actor, categoryId) {
-    const scope = await getLeagueScope(actor)
+    const scope = await getSportScope(actor)
 
     const category = await sequelize.transaction(async (transaction) => {
         const category = await findScopedCategory(scope, categoryId, { transaction, lock: transaction.LOCK.UPDATE })
@@ -408,7 +399,7 @@ async function getAssignedStaff(clubId, categoryId, { transaction } = {}) {
 
 // options.year: año para calcular la edad de temporada (por defecto, el actual; las pruebas usan otro para simular el cambio de año)
 async function getCategory(user, categoryId, { year = currentYear() } = {}) {
-    const scope = await getLeagueScope(user)
+    const scope = await getSportScope(user)
     const category = await findScopedCategory(scope, categoryId)
     const { league } = category
     const group = ageGroupOf(league, category)
@@ -449,7 +440,7 @@ const activeMemberIdsOf = async (categoryId) => (await CategoryPlayer.findAll({ 
 // Jugadoras que se pueden asignar a la categoría y todavía no están, con su edad de temporada.
 // La edad se filtra en la base: edad de temporada <= maxAge ⇔ nació en el año (actual − maxAge) o después.
 async function getEligiblePlayers(user, categoryId, { search = '' } = {}) {
-    const scope = await getLeagueScope(user)
+    const scope = await getSportScope(user)
     const category = await findScopedCategory(scope, categoryId)
     if (!category.isActive) throw createError(m.categoryInactive, 409)
 
@@ -498,7 +489,7 @@ function playerProblem(member, { group, sportName, year, approvedIds }) {
 // Asigna una o varias jugadoras: o todas o ninguna. Si alguna no cumple, 400 con el nombre y el motivo de cada una.
 // Una asignación quitada antes se reutiliza (vuelve a isActive = true).
 async function assignPlayers(actor, categoryId, { memberIds }) {
-    const scope = await getLeagueScope(actor)
+    const scope = await getSportScope(actor)
     const ids = unique(memberIds)
     const year = currentYear()
 
@@ -547,7 +538,7 @@ async function assignPlayers(actor, categoryId, { memberIds }) {
 }
 
 async function unassignPlayer(actor, categoryId, memberId) {
-    const scope = await getLeagueScope(actor)
+    const scope = await getSportScope(actor)
 
     const { category, member } = await sequelize.transaction(async (transaction) => {
         const category = await findScopedCategory(scope, categoryId, { transaction })
@@ -574,7 +565,7 @@ const isCategoryStaff = (roles) => roles.some(role => CATEGORY_STAFF_ROLES.inclu
 // Staff que se puede asignar (regla 5): staff activo con rol Entrenadora o Preparadora física, del deporte de la liga,
 // que todavía no está en la categoría
 async function getEligibleStaff(user, categoryId) {
-    const scope = await getLeagueScope(user)
+    const scope = await getSportScope(user)
     const category = await findScopedCategory(scope, categoryId)
     if (!category.isActive) throw createError(m.categoryInactive, 409)
 
@@ -596,7 +587,7 @@ async function getEligibleStaff(user, categoryId) {
 }
 
 async function assignStaff(actor, categoryId, { staffIds }) {
-    const scope = await getLeagueScope(actor)
+    const scope = await getSportScope(actor)
     const ids = unique(staffIds)
 
     const { category, assigned } = await sequelize.transaction(async (transaction) => {
@@ -645,7 +636,7 @@ async function assignStaff(actor, categoryId, { staffIds }) {
 }
 
 async function unassignStaff(actor, categoryId, staffId) {
-    const scope = await getLeagueScope(actor)
+    const scope = await getSportScope(actor)
 
     const { category, staff } = await sequelize.transaction(async (transaction) => {
         const category = await findScopedCategory(scope, categoryId, { transaction })
@@ -787,7 +778,6 @@ async function getMyCategories(user, { year = currentYear() } = {}) {
 }
 
 module.exports = {
-    getLeagueScope,
     leagueWhere,
     listLeagues,
     createLeague,

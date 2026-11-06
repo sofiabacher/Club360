@@ -56,6 +56,18 @@ async function isActiveStaff(userId, { transaction } = {}) {
     return count > 0
 }
 
+// Alcance por deporte de quien gestiona ligas, partidos o inscripciones. Un staff activo trabaja solo con el deporte de
+// su registro staff (el Representante); quien no es staff (rol nuevo o permiso directo) ve todos los deportes del club.
+// Es la única regla de alcance por deporte: la usan leagues, games e inscriptions. { clubId, clubSportId | null }
+async function getSportScope(user, { transaction } = {}) {
+    if (await isActiveStaff(user.id, { transaction })) {
+        const staff = await Staff.findOne({ where: { userId: user.id, clubId: user.clubId }, attributes: ['clubSportId'], transaction })
+        return { clubId: user.clubId, clubSportId: staff.clubSportId }
+    }
+
+    return { clubId: user.clubId, clubSportId: null }
+}
+
 // Roles de cada usuario en su club: Map userId → [nombres]
 async function getRoleNamesByUser(clubId, userIds, { transaction } = {}) {
     const rows = await UserRole.findAll({
@@ -563,6 +575,7 @@ async function resendActivation(actor, staffId) {
 
 module.exports = {
     isActiveStaff,
+    getSportScope,
     getStaffRolesOfUsers,
     listStaff,
     getStaff,

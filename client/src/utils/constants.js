@@ -88,3 +88,7 @@ export const AGE_SCALE_LABELS = {
   1: 'Escala 1: Sub-11 a Sub-21 y Mayores',
   2: 'Escala 2: Sub-13 a Sub-23 y Mayores'
 }
+
+// Ventana para citar (copia de api/src/utils/constants.js): desde 7 días hasta 48 horas antes del partido
+export const CITATION_WINDOW_OPEN_DAYS = 7
+export const CITATION_MIN_HOURS = 48

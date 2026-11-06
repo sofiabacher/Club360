@@ -4,11 +4,12 @@ import axiosClient from './axiosClient.js'
 
 // ---------- Entrenadora (citations.create) ----------
 
-// data: { items: [partido + { canCite, summary: { cited, confirmed, pending, rejected, cancelled } }] }
+// data: { items: [partido + { canCite, citationWindow: { opensAt, closesAt, status }, summary: { cited, confirmed, pending,
+//         rejected, cancelled } }] }. status: 'NOT_YET_OPEN', 'OPEN' o 'CLOSED'
 export const getCoachGames = () => axiosClient.get('/citations/games').then((res) => res.data)
 
-// data: { game: partido + { canCite }, players: [{ memberId, name, numMember, memberStateId, citation, citable, reason,
-//         chosenGame? }] }. reason: 'OVERDUE', 'CONFLICT_RESOLVED' o 'TOO_LATE'
+// data: { game: partido + { canCite, citationWindow }, players: [{ memberId, name, numMember, memberStateId, citation,
+//         citable, reason, chosenGame? }] }. reason: 'OVERDUE', 'CONFLICT_RESOLVED', 'NOT_YET_OPEN' o 'TOO_LATE'
 export const getGameRoster = (gameId) => axiosClient.get(`/citations/games/${gameId}`).then((res) => res.data)
 
 // data: la lista del partido actualizada. Si alguna no se puede citar: 400 con data.problems [{ memberId, name, message }]

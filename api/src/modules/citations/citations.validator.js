@@ -1,6 +1,6 @@
 // Validator de citations.
 // Reglas de express-validator: solo el formato de los datos, no reglas de negocio.
-// Que el partido sea Programado y falten 48 horas, la mora y el plazo para responder los controla el service.
+// Que el partido sea Programado y esté dentro de la ventana para citar, la mora y el plazo para responder los controla el service.
 const { body, param, query } = require('express-validator')
 const { citations: m } = require('../../utils/messages')
 

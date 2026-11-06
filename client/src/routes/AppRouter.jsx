@@ -39,6 +39,8 @@ import CitationsPage from '../pages/citations/CitationsPage.jsx'
 import GameCitationsPage from '../pages/citations/GameCitationsPage.jsx'
 import MyCitationsPage from '../pages/citations/MyCitationsPage.jsx'
 import FamilyCitationsPage from '../pages/citations/FamilyCitationsPage.jsx'
+import MySportsPage from '../pages/inscriptions/MySportsPage.jsx'
+import InscriptionsPage from '../pages/inscriptions/InscriptionsPage.jsx'
 import { getMenuRoutes } from '../navigation/menu.js'
 
 // Pantalla de cada path del menú. Mientras una sección no exista, su ruta muestra ComingSoonPage.
@@ -57,6 +59,8 @@ const SCREENS = {
   '/citations': CitationsPage,
   '/my-citations': MyCitationsPage,
   '/family/citations': FamilyCitationsPage,
+  '/my-sports': MySportsPage,
+  '/inscriptions': InscriptionsPage,
   '/club': ClubInfoPage,
   '/club/settings': ClubSettingsPage,
   '/club/sports': ClubSportsPage,

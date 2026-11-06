@@ -2,14 +2,15 @@
 // Lógica de negocio y acceso a modelos. Filtra siempre por el clubId del usuario logueado (nunca el del body),
 // registra las acciones relevantes en la bitácora (utils/logger) y lanza los errores con createError (utils/errors).
 //
-// Reglas (contexto, sección 6): la entrenadora cita en los partidos Programados de sus categorías, con al menos 48 horas
-// de anticipación, a jugadoras sin mora y sin un conflicto resuelto a favor del otro partido. La jugadora responde
-// dentro de las 24 horas; si no, el job autoConfirmCitations la confirma sola.
+// Reglas (contexto, sección 6): la entrenadora cita en los partidos Programados de sus categorías, dentro de la ventana
+// (desde 7 días hasta 48 horas antes del partido), a jugadoras sin mora y sin un conflicto resuelto a favor del otro
+// partido. La jugadora responde dentro de las 24 horas (y se avisa a las entrenadoras de la categoría); si no, el job
+// autoConfirmCitations la confirma sola, sin avisar.
 const { Op } = require('sequelize')
 
 const sequelize = require('../../config/db')
 const { Citation, Game, Category, League, Member, Staff, User, Club } = require('../../models')
-const { getActivePlayersOfCategory, getCategoriesOfStaff, isStaffAssignedToCategory } = require('../leagues/leagues.service')
+const { getActivePlayersOfCategory, getActiveStaffOfCategory, getCategoriesOfStaff, isStaffAssignedToCategory } = require('../leagues/leagues.service')
 const { formatGame, getNotPlayingGames, conflictMarkOf } = require('../games/games.service')
 const { getOverdueDays } = require('../fees/fees.service')
 const { notify } = require('../notifications/notifications.service')
@@ -21,19 +22,25 @@ const {
     CITATION_STATES,
     GAME_STATES,
     MEMBER_STATES,
-    CITATION_MIN_HOURS_BEFORE_GAME,
+    BASE_ROLES,
+    CITATION_WINDOW_OPEN_DAYS,
+    CITATION_MIN_HOURS,
     CITATION_RESPONSE_HOURS,
     LOG_ACTIONS
 } = require('../../utils/constants')
 const { citations: m } = require('../../utils/messages')
 
 const HOUR_MS = 60 * 60 * 1000
+const DAY_MS = 24 * HOUR_MS
 
 // Estados que la entrenadora puede cancelar (antes del partido)
 const CANCELLABLE_STATES = [CITATION_STATES.PENDING, CITATION_STATES.CONFIRMED, CITATION_STATES.AUTO_CONFIRMED]
 
 // Motivos por los que una jugadora de la categoría no se puede citar (para la lista de la entrenadora)
-const NOT_CITABLE = { OVERDUE: 'OVERDUE', CONFLICT_RESOLVED: 'CONFLICT_RESOLVED', TOO_LATE: 'TOO_LATE' }
+const NOT_CITABLE = { OVERDUE: 'OVERDUE', CONFLICT_RESOLVED: 'CONFLICT_RESOLVED', NOT_YET_OPEN: 'NOT_YET_OPEN', TOO_LATE: 'TOO_LATE' }
+
+// Estado de la ventana para citar de un partido
+const WINDOW_STATUS = { NOT_YET_OPEN: 'NOT_YET_OPEN', OPEN: 'OPEN', CLOSED: 'CLOSED' }
 
 const actorOf = ({ id: userId, clubId, activeRoleId }) => ({ clubId, userId, roleId: activeRoleId })
 
@@ -56,9 +63,27 @@ const includeGameCategory = {
     include: [{ model: League, as: 'league', attributes: ['id', 'name'], where: { isActive: true } }]
 }
 
-// Si todavía se puede citar para el partido: Programado y con al menos 48 horas por delante
-const isTooLate = (game) => new Date(game.dateTime).getTime() - Date.now() < CITATION_MIN_HOURS_BEFORE_GAME * HOUR_MS
-const canCiteFor = (game) => game.gameState === GAME_STATES.SCHEDULED && !isTooLate(game)
+// "sáb. 7/11, 18:30" (avisos a las entrenadoras)
+function shortWhenText(dateTime) {
+    const { weekdayShort, dayMonth, time } = dateTimeParts(dateTime)
+    return `${weekdayShort} ${dayMonth}, ${time}`
+}
+
+// Ventana para citar: desde 7 días hasta 48 horas antes del partido. { opensAt, closesAt, status }
+function citationWindowOf(game, now = Date.now()) {
+    const start = new Date(game.dateTime).getTime()
+    const opensAt = new Date(start - CITATION_WINDOW_OPEN_DAYS * DAY_MS)
+    const closesAt = new Date(start - CITATION_MIN_HOURS * HOUR_MS)
+
+    let status = WINDOW_STATUS.OPEN
+    if (now < opensAt.getTime()) status = WINDOW_STATUS.NOT_YET_OPEN
+    else if (now > closesAt.getTime()) status = WINDOW_STATUS.CLOSED
+
+    return { opensAt, closesAt, status }
+}
+
+// Si se puede citar para el partido ahora: Programado y dentro de la ventana
+const canCiteFor = (game) => game.gameState === GAME_STATES.SCHEDULED && citationWindowOf(game).status === WINDOW_STATUS.OPEN
 
 function formatCitation(citation) {
     return {
@@ -154,15 +179,21 @@ async function listCoachGames(user, { from } = {}) {
     const summaries = await summariesOf(games.map(game => game.id))
 
     return {
-        items: games.map(game => ({ ...formatGame(game), canCite: canCiteFor(game), summary: summaries.get(game.id) }))
+        items: games.map(game => ({
+            ...formatGame(game),
+            canCite: canCiteFor(game),
+            citationWindow: citationWindowOf(game),
+            summary: summaries.get(game.id)
+        }))
     }
 }
 
 // El partido y la lista de su categoría: cada jugadora activa con su citación (la última) o, si no tiene una vigente,
-// si se la puede citar y por qué no. reason: OVERDUE, CONFLICT_RESOLVED (con chosenGame) o TOO_LATE
+// si se la puede citar y por qué no. reason: OVERDUE, CONFLICT_RESOLVED (con chosenGame), NOT_YET_OPEN o TOO_LATE
 async function getGameRoster(user, gameId) {
     const { game } = await findCoachGame(user, gameId)
     const canCite = canCiteFor(game)
+    const citationWindow = citationWindowOf(game)
 
     const [players, citations, delayFee] = await Promise.all([
         getActivePlayersOfCategory(user.clubId, game.categoryId),
@@ -191,11 +222,12 @@ async function getGameRoster(user, gameId) {
         const chosenGame = (await getNotPlayingGames(user.clubId, player.memberId)).get(game.id)
         if (chosenGame) return { ...base, citable: false, reason: NOT_CITABLE.CONFLICT_RESOLVED, chosenGame }
 
+        if (citationWindow.status === WINDOW_STATUS.NOT_YET_OPEN) return { ...base, citable: false, reason: NOT_CITABLE.NOT_YET_OPEN }
         if (!canCite) return { ...base, citable: false, reason: NOT_CITABLE.TOO_LATE }
         return { ...base, citable: true, reason: null }
     }))
 
-    return { game: { ...formatGame(game), canCite }, players: items }
+    return { game: { ...formatGame(game), canCite, citationWindow }, players: items }
 }
 
 // Motivo por el que una jugadora no se puede citar, o null si se puede (reglas 1.3 a 1.5)
@@ -221,7 +253,9 @@ async function createCitations(actor, gameId, { memberIds }) {
     const { game, created, deadline } = await sequelize.transaction(async (transaction) => {
         const { staff, game } = await findCoachGame(actor, gameId, { transaction, lock: transaction.LOCK.UPDATE })
         if (game.gameState !== GAME_STATES.SCHEDULED) throw createError(m.notScheduled, 400)
-        if (isTooLate(game)) throw createError(m.tooLate, 400)
+        const { opensAt, status } = citationWindowOf(game)
+        if (status === WINDOW_STATUS.NOT_YET_OPEN) throw createError(m.notYetOpen(whenText(opensAt)), 400)
+        if (status === WINDOW_STATUS.CLOSED) throw createError(m.tooLate, 400)
 
         const [players, members, citations, delayFee] = await Promise.all([
             getActivePlayersOfCategory(actor.clubId, game.categoryId, { transaction }),
@@ -371,10 +405,30 @@ async function listMine(user, { scope = 'upcoming' } = {}) {
     return { items: await citationsOf(user.clubId, member.id, scope) }
 }
 
+// Aviso CITATION_RESPONSE (in-app) a todas las entrenadoras activas asignadas a la categoría del partido
+async function notifyCoaches(clubId, playerName, game, { confirmed, justification }, transaction) {
+    const staff = await getActiveStaffOfCategory(clubId, game.categoryId, { transaction })
+    const coaches = unique(staff.filter(item => item.roles.includes(BASE_ROLES.COACH)).map(item => item.userId))
+    if (coaches.length === 0) return
+
+    const { weekdayShort, dayMonth } = dateTimeParts(game.dateTime)
+    const match = `${game.category.name} vs. ${game.rival}`
+
+    await notify({
+        clubId,
+        type: 'CITATION_RESPONSE',
+        recipientUserIds: coaches,
+        title: confirmed ? `${playerName} confirmó su citación` : `${playerName} no puede ir`,
+        message: confirmed
+            ? `${playerName} confirmó la citación para ${match} (${shortWhenText(game.dateTime)}).`
+            : `${playerName} no puede ir a ${match} (${weekdayShort} ${dayMonth}): «${justification}».`
+    }, { transaction })
+}
+
 // La jugadora responde su citación (regla 1.8): solo una Pendiente y antes del plazo. Rechazar exige la justificación
 // (el validator controla que venga y su largo). La respuesta no se cambia
 async function respond(user, citationId, { response, justification }) {
-    const member = await Member.findOne({ where: { userId: user.id, clubId: user.clubId }, attributes: ['id'] })
+    const member = await Member.findOne({ where: { userId: user.id, clubId: user.clubId }, attributes: ['id'], include: [{ model: User, as: 'user', attributes: ['name', 'lastName'] }] })
     if (!member) throw createError(m.citationNotFound, 404)
 
     const confirmed = response === 'confirm'
@@ -392,6 +446,7 @@ async function respond(user, citationId, { response, justification }) {
         }, { transaction })
 
         const game = await Game.findByPk(citation.gameId, { include: [{ model: Category, as: 'category', attributes: ['name'] }], transaction })
+        await notifyCoaches(user.clubId, fullNameOf(member.user), game, { confirmed, justification }, transaction)
         return { citation, game }
     })
 

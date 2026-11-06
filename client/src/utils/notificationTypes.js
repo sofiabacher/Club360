@@ -6,6 +6,7 @@ import CampaignRounded from '@mui/icons-material/CampaignRounded'
 import EventAvailableRounded from '@mui/icons-material/EventAvailableRounded'
 import EventBusyRounded from '@mui/icons-material/EventBusyRounded'
 import EventRounded from '@mui/icons-material/EventRounded'
+import FactCheckRounded from '@mui/icons-material/FactCheckRounded'
 import FitnessCenterRounded from '@mui/icons-material/FitnessCenterRounded'
 import HowToRegRounded from '@mui/icons-material/HowToRegRounded'
 import PersonRemoveRounded from '@mui/icons-material/PersonRemoveRounded'
@@ -28,6 +29,7 @@ const gamesPath = (permissions) => (permissions.includes('games.viewOwn') ? '/my
 export const NOTIFICATION_TYPES = {
   CITATION_NEW: { icon: AssignmentIndRounded, tone: 'urgent', path: citationsPath },
   CITATION_CANCELLED: { icon: PersonRemoveRounded, tone: 'overdue', path: citationsPath },
+  CITATION_RESPONSE: { icon: FactCheckRounded, tone: null, path: () => '/citations' },
   CONFLICT_RESOLVED: { icon: EventAvailableRounded, tone: null, path: gamesPath },
   GAME_CANCELLED: { icon: EventBusyRounded, tone: 'overdue', path: gamesPath },
   FEE_OVERDUE: { icon: PaymentsRounded, tone: 'overdue', path: feesPath },
@@ -36,6 +38,7 @@ export const NOTIFICATION_TYPES = {
   FIXTURE_PUBLISHED: { icon: EventRounded, tone: null, path: gamesPath },
   SCHEDULE_CONFLICT: { icon: WarningAmberRounded, tone: 'urgent', path: () => '/games/assigned' },
   ROUTINE_PUBLISHED: { icon: FitnessCenterRounded, tone: null, path: () => '/my-routine' },
+  INSCRIPTION_REQUEST: { icon: HowToRegRounded, tone: 'pending', path: () => '/inscriptions' },
   INSCRIPTION_RESULT: { icon: HowToRegRounded, tone: 'ok', path: () => '/my-sports' },
   SPORT_WITHDRAWAL: { icon: SportsRounded, tone: 'pending', path: () => '/inscriptions' },
   GENERAL: { icon: CampaignRounded, tone: null, path: () => null }
@@ -66,6 +69,7 @@ const SECTION_LABELS = {
   '/games/assigned': 'los partidos',
   '/my-routine': 'mi rutina',
   '/my-sports': 'mis deportes',
+  '/citations': 'las citaciones',
   '/inscriptions': 'las inscripciones'
 }
 

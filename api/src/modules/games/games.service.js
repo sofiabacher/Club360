@@ -9,8 +9,8 @@ const { Op } = require('sequelize')
 
 const sequelize = require('../../config/db')
 const { Game, Category, League, Club, Citation, Member, Staff, User, Log } = require('../../models')
+const { getSportScope } = require('../staff/staff.service')
 const {
-    getLeagueScope,
     leagueWhere,
     getActivePlayersOfCategory,
     getCategoriesOfMember,
@@ -394,7 +394,7 @@ const assertFuture = (dateTime) => {
 
 // Categorías activas del alcance (para el formulario y los filtros) y las canchas del club (para los partidos de local)
 async function getOptions(user) {
-    const scope = await getLeagueScope(user)
+    const scope = await getSportScope(user)
     const [categories, club] = await Promise.all([
         Category.findAll({
             where: { clubId: scope.clubId, isActive: true },
@@ -415,7 +415,7 @@ async function getOptions(user) {
 // Partidos del alcance ordenados por fecha, con cuántas jugadoras tienen conflicto y si tienen citaciones
 async function listGames(user, { categoryId, state, from, to, page = 1 }) {
     page = Number(page) || 1   // Con Express 5 req.query es de solo lectura: el toInt del validator no llega hasta acá
-    const scope = await getLeagueScope(user)
+    const scope = await getSportScope(user)
 
     const dateTime = {
         ...(from && { [Op.gte]: startOfDay(from) }),
@@ -471,7 +471,7 @@ async function listGames(user, { categoryId, state, from, to, page = 1 }) {
 
 // Conflictos que generaría un partido, sin guardar nada. Con gameId (al editar), se calcula como ese mismo partido
 async function checkConflicts(user, { categoryId, dateTime, gameId }) {
-    const scope = await getLeagueScope(user)
+    const scope = await getSportScope(user)
 
     if (gameId) {
         const game = await findScopedGame(scope, gameId)
@@ -485,7 +485,7 @@ async function checkConflicts(user, { categoryId, dateTime, gameId }) {
 // Alta: categoría activa del alcance, fecha futura y la temporada sale del año. No se bloquea por conflictos: se
 // avisan en la respuesta y se notifican a las entrenadoras
 async function createGame(actor, { categoryId, rival, dateTime, isHome, address }) {
-    const scope = await getLeagueScope(actor)
+    const scope = await getSportScope(actor)
     const category = await findScopedActiveCategory(scope, categoryId)
     assertFuture(dateTime)
 
@@ -521,7 +521,7 @@ const EDITABLE_FIELDS = { rival: 'rival', dateTime: 'fecha y hora', isHome: 'loc
 // Solo los Programados, y todo salvo la categoría. Si cambia la fecha, tiene que ser futura. Se notifican los
 // conflictos nuevos (los que ya existían antes no se vuelven a avisar) y, si cambió cuándo o dónde, a las jugadoras
 async function updateGame(actor, gameId, { rival, dateTime, isHome, address }) {
-    const scope = await getLeagueScope(actor)
+    const scope = await getSportScope(actor)
     const current = await findScopedGame(scope, gameId)
     if (current.gameState !== GAME_STATES.SCHEDULED) throw createError(m.notScheduled, 409)
 
@@ -558,7 +558,7 @@ async function updateGame(actor, gameId, { rival, dateTime, isHome, address }) {
 
 // Jugado: a mano, solo un Programado cuya fecha y hora ya pasaron
 async function markPlayed(actor, gameId) {
-    const scope = await getLeagueScope(actor)
+    const scope = await getSportScope(actor)
     const game = await findScopedGame(scope, gameId)
 
     if (game.gameState !== GAME_STATES.SCHEDULED) throw createError(m.notScheduled, 409)
@@ -573,7 +573,7 @@ async function markPlayed(actor, gameId) {
 // Cancelado: un Programado. Sus citaciones que no estaban canceladas pasan a Cancelada y se avisa a esas jugadoras
 // (y a sus adultos, si son menores). No se vuelve a programar: si se reprograma, se crea otro partido
 async function cancelGame(actor, gameId, { reason }) {
-    const scope = await getLeagueScope(actor)
+    const scope = await getSportScope(actor)
 
     const { game, cancelled } = await sequelize.transaction(async (transaction) => {
         const game = await findScopedGame(scope, gameId, { transaction, lock: transaction.LOCK.UPDATE })

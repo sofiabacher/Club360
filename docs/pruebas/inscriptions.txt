@@ -1,0 +1,239 @@
+CASOS DE PRUEBA — MÓDULO INSCRIPTIONS (INSCRIPCIONES A DEPORTES)
+================================================================
+
+Club360 · Prompt 13 · 05/11/2026
+Formato según CLAUDE.md ("Pruebas"). Los resultados obtenidos salen del script de verificación del back (corrido contra
+la base local el 05/11/2026, con datos de prueba creados con los modelos y borrados al final; 62 chequeos aprobados,
+contando los de citaciones). Lo que solo se puede comprobar en el navegador queda anotado en cada caso.
+
+Precondición general (datos de prueba):
+  - deportes del club: Vóley (activo, cuota $ 25.000), Futsal (activo, $ 18.000) y Básquet (inactivo);
+  - RepVoley, Representante de Vóley, y RepFutsal, Representante de Futsal;
+  - socios: Activo (ACTIVE, mayor), Suspendido (SUSPENDED), Menor (ACTIVE, 13 años) e Inactivo (ACTIVE al empezar);
+  - Jugadora: socia con inscripción Aprobada en Vóley, en Sub-18 y Mayores de "Liga P13", con citaciones Pendientes en
+    dos partidos futuros (uno de cada categoría), una Confirmada en otro partido futuro y una Pendiente en un partido pasado;
+  - DosDeportes: socia con inscripción Aprobada en Vóley y en Futsal.
+Las pantallas: Mi espacio > Deportes (socio) y Gestión > Inscripciones (Representante).
+
+
+--------------------------------------------------
+ID: CP-INSCRIPTIONS-01
+Módulo: inscriptions
+Descripción: Pedir la inscripción a un deporte
+Precondiciones: sesión de Activo con el rol Socio.
+Pasos:
+  1. En Deportes, ver las tarjetas. 2. En Vóley, "Inscribirme".
+Datos de entrada: Vóley.
+Resultado esperado: se ven Vóley y Futsal con su cuota (Básquet no, está inactivo). La inscripción queda Pendiente y la
+  tarjeta pasa a mostrar el chip "Pendiente" y "Cancelar solicitud".
+Resultado obtenido: 201, Pendiente. GET /inscriptions/mine: dos deportes, Vóley Pendiente con priceFee 25000 y la acción
+  cancel. Falta ver la pantalla en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INSCRIPTIONS-02
+Módulo: inscriptions
+Descripción: El Representante del deporte recibe el aviso
+Precondiciones: la solicitud del caso 01.
+Pasos:
+  1. Mirar la campana de RepVoley y de RepFutsal.
+Datos de entrada: —
+Resultado esperado: a RepVoley le llega, solo in-app, "Nueva solicitud de inscripción a Vóley: Activo P13 (Nº …)." con el
+  botón "Ir a las inscripciones". A RepFutsal no le llega nada.
+Resultado obtenido: un INSCRIPTION_REQUEST para RepVoley con "Nueva solicitud de inscripción a Vóley: Activo P13
+  (Nº 991301)."; ninguno para RepFutsal.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INSCRIPTIONS-03
+Módulo: inscriptions
+Descripción: Pedirla siendo socio suspendido (rechazado)
+Precondiciones: sesión de Suspendido.
+Pasos:
+  1. Entrar a Deportes. 2. Pedir la inscripción a Vóley (por la API).
+Datos de entrada: Vóley.
+Resultado esperado: arriba, el aviso "Tenés cuotas atrasadas: regularizá tu situación para inscribirte a un deporte." y
+  ningún botón "Inscribirme". El pedido se rechaza con ese mensaje.
+Resultado obtenido: 403 con ese mensaje. /inscriptions/mine: memberStateId SUSPENDED y request false en todos. Falta ver el
+  aviso en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INSCRIPTIONS-04
+Módulo: inscriptions
+Descripción: Pedirla dos veces (rechazado)
+Precondiciones: Activo con la solicitud Pendiente de Vóley.
+Pasos:
+  1. Volver a pedir Vóley.
+Datos de entrada: Vóley.
+Resultado esperado: "Ya tenés una inscripción pendiente o aprobada en este deporte."
+Resultado obtenido: 409 con ese mensaje.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INSCRIPTIONS-05
+Módulo: inscriptions
+Descripción: Pedir en un deporte inactivo (rechazado)
+Precondiciones: Básquet inactivo en el club.
+Pasos:
+  1. Como Activo, pedir Básquet por la API (no aparece en la pantalla).
+Datos de entrada: el clubSportId de Básquet.
+Resultado esperado: "El deporte no está disponible en el club."
+Resultado obtenido: 404 con ese mensaje.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INSCRIPTIONS-06
+Módulo: inscriptions
+Descripción: Un menor pide su inscripción
+Precondiciones: sesión de Menor (13 años) con el rol Socio.
+Pasos:
+  1. En Deportes, "Inscribirme" en Futsal.
+Datos de entrada: Futsal.
+Resultado esperado: queda Pendiente y el aviso le llega solo a RepFutsal.
+Resultado obtenido: 201; un INSCRIPTION_REQUEST para RepFutsal, ninguno nuevo para RepVoley.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INSCRIPTIONS-07
+Módulo: inscriptions
+Descripción: Aprobar (rol Jugadora y aviso al socio)
+Precondiciones: sesión de RepVoley; la solicitud de Activo.
+Pasos:
+  1. En Inscripciones > Pendientes, ver la solicitud. 2. "Aprobar". 3. Como Activo, mirar la campana y los roles.
+Datos de entrada: —
+Resultado esperado: la tarjeta muestra el nombre, el número de socio, la edad de temporada, el deporte y la fecha. Al
+  aprobar, un aviso con el link "Asignarla a una categoría" (a Ligas). La inscripción queda Aprobada, Activo suma el rol
+  Jugadora y le llega "¡Se aprobó tu inscripción a Vóley! Ya sos jugadora del club. Desde el menú podés cambiar al rol
+  Jugadora." Aprobarla de nuevo no se puede.
+Resultado obtenido: el listado trae numMember, seasonAge 31, memberStateId y sport. Aprobar → 200, Aprobada, rol Jugadora
+  asignado y INSCRIPTION_RESULT con ese texto. Segunda aprobación → 409. Falta ver la pantalla y el link en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INSCRIPTIONS-08
+Módulo: inscriptions
+Descripción: Aprobar con el socio ya inactivo (rechazado)
+Precondiciones: Inactivo con una solicitud Pendiente de Vóley; después, el Admin le da la baja (INACTIVE).
+Pasos:
+  1. Como RepVoley, aprobarla.
+Datos de entrada: —
+Resultado esperado: "El socio ya no está activo: no se puede aprobar la inscripción." La tarjeta muestra "Socio inactivo".
+Resultado obtenido: 409 con ese mensaje; la inscripción sigue Pendiente.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INSCRIPTIONS-09
+Módulo: inscriptions
+Descripción: Rechazar con motivo
+Precondiciones: sesión de RepFutsal; la solicitud de Menor.
+Pasos:
+  1. "Rechazar", escribir el motivo y confirmar. 2. Como Menor, ver Deportes y la campana.
+Datos de entrada: "No hay cupo en la categoría."
+Resultado esperado: queda Rechazada, el motivo va a la bitácora y le llega "Tu inscripción a Futsal no fue aprobada.
+  Motivo: No hay cupo en la categoría." En Deportes, Futsal muestra "Rechazada" con el motivo y vuelve a ofrecer
+  "Inscribirme". Un motivo de más de 300 caracteres no se acepta.
+Resultado obtenido: 200, Rechazada; bitácora INSCRIPTION_REJECTED con reason "No hay cupo en la categoría";
+  INSCRIPTION_RESULT con ese texto; /mine con reason y request true. Motivo de 301 caracteres → 400.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INSCRIPTIONS-10
+Módulo: inscriptions
+Descripción: Volver a pedir después de un rechazo
+Precondiciones: la inscripción Rechazada del caso 09.
+Pasos:
+  1. Como Menor, "Inscribirme" en Futsal.
+Datos de entrada: Futsal.
+Resultado esperado: se crea una solicitud nueva, Pendiente.
+Resultado obtenido: 201.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INSCRIPTIONS-11
+Módulo: inscriptions
+Descripción: Un Representante de otro deporte no la ve
+Precondiciones: la solicitud de Activo (Vóley) y la de Menor (Futsal).
+Pasos:
+  1. Como RepVoley, ver Inscripciones y filtrar por Futsal (por la API). 2. Como RepFutsal, aprobar la de Activo.
+  3. Como RepVoley, rechazar la de Menor.
+Datos de entrada: —
+Resultado esperado: cada Representante ve solo las de su deporte (y no tiene el filtro por deporte); no puede aprobar ni
+  rechazar las del otro.
+Resultado obtenido: RepVoley ve la de Activo y no la de Menor, con un solo deporte en sports; filtro por Futsal → vacío.
+  Aprobar y rechazar las del otro deporte → 404.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INSCRIPTIONS-12
+Módulo: inscriptions
+Descripción: Cancelar una solicitud Pendiente
+Precondiciones: la solicitud nueva de Menor (caso 10).
+Pasos:
+  1. Como Activo, cancelarla (por la API). 2. Como Menor, "Cancelar solicitud" y confirmar. 3. Volver a cancelarla.
+Datos de entrada: —
+Resultado esperado: la de otro no se encuentra. La propia queda Cancelada, sin otros efectos ni avisos. Una Cancelada no
+  se puede volver a cancelar.
+Resultado obtenido: la ajena → 404; la propia → 200 con withdrawn false y Cancelada, sin SPORT_WITHDRAWAL. Otra vez → 409.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INSCRIPTIONS-13
+Módulo: inscriptions
+Descripción: Baja de un deporte con todos sus efectos
+Precondiciones: sesión de Jugadora trabajando con el rol Jugadora.
+Pasos:
+  1. En Deportes, "Darme de baja" en Vóley; leer el diálogo y confirmar.
+  2. Ver las categorías, las citaciones, los roles y la campana de RepVoley.
+Datos de entrada: —
+Resultado esperado: el diálogo explica las consecuencias. La inscripción queda Cancelada; sale de Sub-18 y de Mayores;
+  las dos citaciones Pendientes de partidos futuros pasan a Cancelada; la Confirmada y la del partido pasado no cambian;
+  pierde el rol Jugadora; a RepVoley le llega "Jugadora P13 (Nº …) se dio de baja de Vóley." Como estaba trabajando con
+  el rol Jugadora, la pantalla la deja con el rol Socio (su único rol) y el menú cambia.
+Resultado obtenido: 200 con removedCategories 2, cancelledCitations 2 y lostPlayerRole true. Las asignaciones quedaron
+  inactivas, las dos Pendientes futuras Canceladas, la Confirmada Confirmada y la del partido pasado Pendiente; sin el rol
+  Jugadora. SPORT_WITHDRAWAL para RepVoley con "Jugadora P13 (Nº 991305) se dio de baja de Vóley.", ninguno para
+  RepFutsal. Bitácora SPORT_WITHDRAWN con las categorías y las citaciones. newSession con el rol Socio activo: el token
+  viejo da 401 en /auth/me y el nuevo funciona. Falta ver el cambio de menú en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INSCRIPTIONS-14
+Módulo: inscriptions
+Descripción: Baja teniendo dos deportes: conserva el rol Jugadora
+Precondiciones: sesión de DosDeportes con el rol Jugadora.
+Pasos:
+  1. "Darme de baja" en Futsal y confirmar.
+Datos de entrada: —
+Resultado esperado: la inscripción de Futsal queda Cancelada; sigue con Vóley Aprobada y conserva el rol Jugadora (sigue
+  en la misma pantalla). Le llega el aviso a RepFutsal.
+Resultado obtenido: 200 con lostPlayerRole false y newSession null; sigue con el rol Jugadora. SPORT_WITHDRAWAL para
+  RepFutsal.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INSCRIPTIONS-15
+Módulo: inscriptions
+Descripción: Integridad de los datos
+Precondiciones: los casos anteriores.
+Pasos:
+  1. Verificar DVH y DVV de todas las tablas con los datos de prueba cargados y después de borrarlos.
+Datos de entrada: —
+Resultado esperado: todo correcto (inscripciones, roles, categorías y citaciones se escriben solo por Sequelize, con la
+  transacción en options).
+Resultado obtenido: DVH y DVV correctos en las dos verificaciones.
+Estado: Aprobado

@@ -234,11 +234,19 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 
 ## Citaciones (módulo `citations`)
 
-- La genera una entrenadora para un partido Programado de sus categorías, con **al menos 48 h** de anticipación. Se cita a varias a la vez: si una no cumple, no se crea ninguna.
+- La genera una entrenadora para un partido Programado de sus categorías, **dentro de la ventana**: desde 7 días hasta 48 h antes del partido (`CITATION_WINDOW_OPEN_DAYS`, `CITATION_MIN_HOURS`). Se cita a varias a la vez: si una no cumple, no se crea ninguna.
 - **No citable:** jugadora con mora (socio SUSPENDED o `getOverdueDays` > `club.delayFee`, en `fees.service.js`) o con un conflicto resuelto en el que se eligió el otro partido (`getResolutionsForMember`).
 - **Respuesta:** la jugadora, dentro de las 24 h (`dateMaxResponse`). Rechazar exige una justificación de 10 a 300 caracteres. El job `autoConfirmCitations` (cada 10 min) pasa las vencidas a Confirmada automáticamente.
 - La entrenadora puede cancelar una citación antes del partido (notifica `CITATION_CANCELLED`, solo in-app).
+- Cuando la jugadora confirma o rechaza, se avisa con `CITATION_RESPONSE` (in-app) a todas las entrenadoras activas de la categoría. La confirmación automática no avisa.
 - **Al resolver un conflicto,** se cancela la citación del partido no elegido y se notifica `CONFLICT_RESOLVED` (solo in-app, con la familia). Las respuestas de `mine`/`linked` (citaciones y partidos) traen `conflict.notPlaying` para que el front muestre "No jugás este partido".
+
+## Inscripciones (módulo `inscriptions`)
+
+- **Pedido:** solo socios ACTIVE, en deportes activos del club, sin otra inscripción Pendiente o Aprobada en ese deporte. Avisa a los Representantes del deporte (`INSCRIPTION_REQUEST`, in-app).
+- **Aprobar** da el rol Jugadora (`assignBaseRole`) y avisa `INSCRIPTION_RESULT`. Rechazar, con un motivo opcional en la bitácora y en el aviso.
+- **Baja de un deporte** (contexto 3.3.1), en una transacción: inscripción Cancelada, `removeMemberFromSportCategories`, citaciones Pendientes de partidos futuros de ese deporte a Cancelada, `removeBaseRole(Jugadora)` si no le queda otra inscripción Aprobada y aviso `SPORT_WITHDRAWAL` a los Representantes.
+- El alcance por deporte de los Representantes es una sola función común (`getSportScope`), usada por inscripciones, ligas y partidos.
 
 ## Lista de tareas (`docs/TODO.md`)
 
