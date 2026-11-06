@@ -1,0 +1,311 @@
+CASOS DE PRUEBA — MÓDULO CITATIONS (CITACIONES)
+===============================================
+
+Club360 · Prompt 12 · 05/11/2026
+Formato según CLAUDE.md ("Pruebas"). Los resultados obtenidos salen del script de verificación del back (corrido contra
+la base local el 05/11/2026, con datos de prueba creados con los modelos y borrados al final; 51 chequeos aprobados).
+Lo que solo se puede comprobar en el navegador queda anotado en cada caso.
+
+Precondición general (datos de prueba):
+  - club con plazo de mora (delayFee) de 180 días y margen de conflicto de 60 minutos;
+  - "Liga P12 A" con Sub-16 y Sub-18, y "Liga P12 B" con Mayores, de Vóley;
+  - en Sub-16: Martina (15 años, menor vinculada a Adulto como Familia), Lucía, Morosa (cuota vencida hace 185 días),
+    Suspendida (socia SUSPENDED) y Libre; Martina también en Mayores. Lucía tiene una cuota vencida hace 5 días;
+  - CoachA, Entrenadora de Sub-16; CoachB, de Mayores; CoachC, de Sub-18;
+  - partidos: G1 Sub-16 vs. Rival Uno (en 5 días, 10:00), G2 Mayores vs. Rival Dos (el mismo día, 11:30: se superpone con
+    G1 para Martina), G3 Sub-16 (en 30 horas), G4 Sub-16 Jugado, G5 Sub-16 Cancelado y G6 Sub-16 (en 8 días).
+Las pantallas: Deportivo > Citaciones (Entrenadora), Mi espacio > Mis citaciones (Jugadora) y Familia > Citaciones.
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-01
+Módulo: citations
+Descripción: Citar a dos jugadoras
+Precondiciones: sesión de CoachA.
+Pasos:
+  1. En Citaciones, abrir G1. 2. Marcar a Lucía y a Martina. 3. "Citar a las seleccionadas" y confirmar.
+Datos de entrada: G1; Lucía y Martina.
+Resultado esperado: se crean dos citaciones Pendientes, con plazo para responder de 24 horas desde la citación. Les llega
+  "Te citaron para…" (in-app y email) a las dos y al adulto de Martina. La lista muestra a cada una "Pendiente · responde
+  hasta …" y el resumen del partido dice "2 citadas · 0 confirmadas · 2 pendientes · 0 rechazadas".
+Resultado obtenido: 201; las dos Pendientes y dateMaxResponse = citación + 24,000 h. CITATION_NEW para Lucía, Martina y
+  Adulto: "Te citaron para Sub-16 vs. Rival Uno, martes 10/11 a las 10:00. Tenés tiempo de responder hasta el viernes 6/11
+  a las 22:20." Email por consola para Lucía y Adulto (Martina no tiene email). GET /citations/games: cited 2, pending 2.
+  Falta ver la pantalla en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-02
+Módulo: citations
+Descripción: Citar a menos de 48 horas del partido (rechazado)
+Precondiciones: G3, a 30 horas.
+Pasos:
+  1. Abrir G3. 2. Intentar citar a Lucía.
+Datos de entrada: G3; Lucía.
+Resultado esperado: "Las citaciones se generan con al menos 2 días de anticipación." En la pantalla, el partido tiene el
+  chip "Ya no se puede citar", el aviso "Ya no se pueden generar citaciones para este partido" y las casillas deshabilitadas.
+Resultado obtenido: 400 con ese mensaje. En GET /citations/games, G3 con canCite false. Falta ver la pantalla.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-03
+Módulo: citations
+Descripción: Citar en un partido Jugado o Cancelado (rechazado)
+Precondiciones: G4 Jugado y G5 Cancelado.
+Pasos:
+  1. Pedir la citación de Lucía en G4. 2. Lo mismo en G5.
+Datos de entrada: —
+Resultado esperado: "Solo se puede citar para partidos Programados." Esos partidos no aparecen en la lista de Citaciones.
+Resultado obtenido: 400 con ese mensaje en los dos; ninguno de los dos aparece en GET /citations/games.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-04
+Módulo: citations
+Descripción: Citar a una jugadora con mora (rechazado, con el motivo)
+Precondiciones: Morosa con una cuota impaga vencida hace 185 días (plazo del club: 180).
+Pasos:
+  1. Abrir G1 y ver la fila de Morosa. 2. Pedir su citación.
+Datos de entrada: —
+Resultado esperado: en la lista aparece con el chip "Mora" y sin casilla. Al pedirla: "Morosa P12 tiene cuotas atrasadas:
+  no se la puede citar hasta que regularice su situación." getOverdueDays devuelve 185; con una cuota vencida hace 5 días,
+  5 (no hay mora); sin cuotas, 0.
+Resultado obtenido: reason OVERDUE en la lista; 400 con ese mensaje. getOverdueDays: 185, 5 y 0.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-05
+Módulo: citations
+Descripción: Citar a una socia Suspendida (rechazado)
+Precondiciones: Suspendida, socia SUSPENDED sin cuotas.
+Pasos:
+  1. Pedir su citación en G1.
+Datos de entrada: —
+Resultado esperado: se rechaza por mora aunque no tenga cuotas cargadas; en la lista, chip "Mora".
+Resultado obtenido: 400 "Suspendida P12 tiene cuotas atrasadas: …"; reason OVERDUE en la lista.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-06
+Módulo: citations
+Descripción: Citar con una lista donde una no cumple (no se crea ninguna)
+Precondiciones: G1 sin citaciones.
+Pasos:
+  1. Citar a Lucía y a Morosa juntas.
+Datos de entrada: Lucía (citable) y Morosa (con mora).
+Resultado esperado: no se crea ninguna citación y el error trae la lista de nombres con su motivo. En la pantalla, "No se
+  citó a nadie" con el motivo de Morosa.
+Resultado obtenido: 400 con code PLAYERS_NOT_CITABLE y data.problems = [Morosa: "tiene cuotas atrasadas…"]; G1 siguió con
+  0 citaciones. Falta ver el aviso en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-07
+Módulo: citations
+Descripción: Citar dos veces a la misma jugadora (rechazado)
+Precondiciones: Lucía con una citación Pendiente en G1.
+Pasos:
+  1. Volver a pedir la citación de Lucía en G1.
+Datos de entrada: —
+Resultado esperado: "Lucia P12 ya está citada para este partido." En la pantalla no tiene casilla.
+Resultado obtenido: 400 con ese mensaje.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-08
+Módulo: citations
+Descripción: Volver a citar después de una citación cancelada (aceptado)
+Precondiciones: la citación de Lucía en G1, cancelada por CoachA (CP-CITATIONS-15).
+Pasos:
+  1. Volver a citar a Lucía en G1.
+Datos de entrada: —
+Resultado esperado: se crea una citación nueva Pendiente. En la lista, mientras está cancelada, aparece "Cancelada" con la
+  casilla habilitada.
+Resultado obtenido: 201; la última citación de Lucía en G1 quedó Pendiente.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-09
+Módulo: citations
+Descripción: Confirmar una citación
+Precondiciones: sesión de Lucía (rol Jugadora) con la citación Pendiente de G1.
+Pasos:
+  1. En Mis citaciones, tocar "Confirmo".
+  2. Intentar cambiar la respuesta.
+Datos de entrada: —
+Resultado esperado: queda Confirmada, con la fecha de respuesta; pasa de "Para responder" a "Próximas". La respuesta no se
+  puede cambiar: "Esta citación ya no está pendiente: la respuesta no se puede cambiar."
+Resultado obtenido: 200, citationState Confirmada y dateResponse cargada; el segundo intento → 409 con ese mensaje. Falta
+  ver la tarjeta en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-10
+Módulo: citations
+Descripción: Rechazar sin justificación o con una muy corta (rechazado)
+Precondiciones: sesión de Martina con su citación Pendiente de G6.
+Pasos:
+  1. Mandar el rechazo sin justificación. 2. Mandarlo con "corto".
+Datos de entrada: justificación vacía; "corto" (5 caracteres).
+Resultado esperado: se rechazan los dos ("Contá por qué no podés ir (entre 10 y 300 caracteres)."). En el diálogo
+  "No puedo", el botón Enviar queda deshabilitado hasta llegar a 10 caracteres, con el contador.
+Resultado obtenido: 400 en los dos (error de validación del campo justification). Falta ver el diálogo.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-11
+Módulo: citations
+Descripción: Rechazar con justificación
+Precondiciones: la misma citación.
+Pasos:
+  1. "No puedo", escribir la justificación y enviar.
+  2. Como CoachA, intentar volver a citarla en G6 y ver su fila.
+Datos de entrada: "Tengo un examen ese día".
+Resultado esperado: queda Rechazada con la justificación. No se la puede volver a citar en ese partido. En la lista de la
+  entrenadora aparece "Rechazada" y, al tocar el chip, la justificación.
+Resultado obtenido: 200, Rechazada con esa justificación. Volver a citarla → 400 "Martina P12 rechazó la citación de este
+  partido: no se la puede volver a citar." Falta ver el chip en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-12
+Módulo: citations
+Descripción: Responder después de las 24 horas (rechazado) y responder una ajena
+Precondiciones: Lucía con una citación Pendiente en G6 cuyo dateMaxResponse se pasó a hace 1 minuto (con el modelo).
+Pasos:
+  1. Como Lucía, confirmarla. 2. Como Lucía, responder la citación de Martina.
+Datos de entrada: —
+Resultado esperado: "Se venció el plazo para responder esta citación." La de otra jugadora no se encuentra. En la pantalla
+  una vencida ya no muestra los botones.
+Resultado obtenido: 400 con ese mensaje; la ajena → 404.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-13
+Módulo: citations
+Descripción: Confirmación automática por el job
+Precondiciones: la citación del caso anterior, Pendiente y vencida.
+Pasos:
+  1. Ejecutar la función del job (autoConfirmExpired). En el servidor corre cada 10 minutos.
+Datos de entrada: —
+Resultado esperado: pasa a "Confirmada automáticamente" y queda en la bitácora CITATION_AUTO_CONFIRMED, criticidad baja,
+  sin usuario ni rol.
+Resultado obtenido: citationState Confirmada automáticamente; bitácora: "Lucia P12 en Sub-16 vs. Rival Seis (partido 31,
+  citación 10): sin respuesta dentro del plazo", userId y roleId null, criticidad LOW.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-14
+Módulo: citations
+Descripción: La Familia intenta responder (sin permiso)
+Precondiciones: sesión de Adulto con el rol Familia.
+Pasos:
+  1. Pedir la confirmación de la citación de Martina. 2. Ver Familia > Citaciones.
+Datos de entrada: —
+Resultado esperado: no tiene permiso (citations.respond). En su pantalla ve las citaciones de Martina sin botones y con la
+  nota "La citación la responde la jugadora."; una jugadora que no es suya no se encuentra.
+Resultado obtenido: 403. GET /citations/linked → solo Martina; con el memberId de Lucía → 404. Falta ver la pantalla.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-15
+Módulo: citations
+Descripción: La entrenadora cancela una citación (aviso in-app)
+Precondiciones: la citación Confirmada de Lucía en G1; sesión de CoachA.
+Pasos:
+  1. En la fila de Lucía, "Cancelar citación" y confirmar.
+  2. Como CoachB (de otra categoría), intentar cancelar la misma.
+Datos de entrada: —
+Resultado esperado: queda Cancelada y Lucía recibe "Se canceló tu citación para Sub-16 vs. Rival Uno del martes 10/11.",
+  solo in-app (sin email). Una entrenadora de otra categoría no la encuentra.
+Resultado obtenido: 200, Cancelada; CITATION_CANCELLED con ese texto y sin email por consola. CoachB → 404.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-16
+Módulo: citations
+Descripción: Conflicto resuelto con la jugadora citada en los dos partidos
+Precondiciones: Martina citada (Pendiente) en G1 (Sub-16) y en G2 (Mayores), que se superponen; sesión de CoachA.
+Pasos:
+  1. En Partidos > Conflictos, resolver el conflicto de Martina eligiendo el partido de Mayores.
+  2. Como Martina, ver Mis citaciones y Mis partidos. 3. Como Adulto, ver Familia > Citaciones y Familia > Partidos.
+Datos de entrada: nota "Juega en Mayores".
+Resultado esperado: la citación de G1 pasa a Cancelada y la de G2 sigue Pendiente. Martina y su adulto reciben "Tenías dos
+  partidos superpuestos el martes 10/11. Se decidió que juegues Mayores vs. Rival Dos (11:30). No jugás Sub-16 vs. Rival
+  Uno (10:00)." (in-app), y no les llega además CITATION_CANCELLED. En Mis citaciones, la de G1 dice "No jugás este
+  partido. Por superposición de horario se decidió que juegues Mayores vs. Rival Dos (…)." en lugar de "Cancelada".
+Resultado obtenido: 200; G1 Cancelada y G2 Pendiente; CONFLICT_RESOLVED para Martina y Adulto con ese texto; ninguna
+  CITATION_CANCELLED nueva. Bitácora con conflictKey "{memberId}:{G1}-{G2}". /citations/mine y /citations/linked traen en
+  G1 conflict.notPlaying true con el partido elegido (G2), y en G2 conflict null. Falta ver las tarjetas en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-17
+Módulo: citations
+Descripción: Citar en el partido no elegido (rechazado con el motivo)
+Precondiciones: el conflicto del caso anterior, resuelto a favor de Mayores.
+Pasos:
+  1. Como CoachA, abrir G1 y ver la fila de Martina. 2. Pedir su citación.
+Datos de entrada: —
+Resultado esperado: en la lista aparece "Juega en Mayores: conflicto resuelto", sin casilla. Al pedirla: "Martina P12 no
+  se puede citar: por un conflicto de horario ya resuelto, juega Mayores vs. Rival Dos."
+Resultado obtenido: reason CONFLICT_RESOLVED con chosenGame G2; 400 con ese mensaje.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-18
+Módulo: citations
+Descripción: "Mis partidos" muestra "No lo jugás"
+Precondiciones: el conflicto resuelto.
+Pasos:
+  1. Como Martina, ir a Mis partidos. 2. Como Adulto, a Familia > Partidos.
+Datos de entrada: —
+Resultado esperado: el partido de Sub-16 se ve atenuado, con el chip "No lo jugás" y "Por superposición de horario, jugás
+  Mayores vs. Rival Dos (…)."; el de Mayores, normal.
+Resultado obtenido: /games/mine y /games/linked traen en G1 conflict.notPlaying true y en G2 conflict null. Falta ver la
+  pantalla en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-19
+Módulo: citations
+Descripción: Alcance de la entrenadora y permisos
+Precondiciones: CoachC, Entrenadora de Sub-18; Martina con el rol Jugadora.
+Pasos:
+  1. Como CoachC, ver Citaciones y abrir G1 por su id. 2. Como Martina, pedir GET /citations/games.
+Datos de entrada: —
+Resultado esperado: CoachC no ve ni puede citar en los partidos de Sub-16; la Jugadora no tiene acceso a las citaciones
+  de la entrenadora.
+Resultado obtenido: G1 no está en la lista de CoachC; ver y citar → 404. Jugadora → 403.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-CITATIONS-20
+Módulo: citations
+Descripción: Integridad de los datos
+Precondiciones: los casos anteriores.
+Pasos:
+  1. Verificar DVH y DVV de todas las tablas con los datos de prueba cargados y después de borrarlos.
+Datos de entrada: —
+Resultado esperado: todo correcto (las citaciones se escriben solo por Sequelize, con la transacción en options).
+Resultado obtenido: DVH y DVV correctos en las dos verificaciones.
+Estado: Aprobado

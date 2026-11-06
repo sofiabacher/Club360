@@ -10,13 +10,16 @@ import PlaceRounded from '@mui/icons-material/PlaceRounded'
 
 import { GameStateChip, HomeChip } from './GameChips.jsx'
 import { GAME_STATES } from '../../utils/constants.js'
-import { formatGameDate, getMapsUrl } from '../../utils/format.js'
+import { formatGameDate, formatShortDateTime, getMapsUrl } from '../../utils/format.js'
 
+// Un partido de la jugadora. Si no lo juega por un conflicto de horario resuelto (conflict.notPlaying), se muestra
+// atenuado, con el chip "No lo jugás" y el partido que sí juega
 function PlayerGame({ game }) {
   const cancelled = game.gameState === GAME_STATES.CANCELLED
+  const notPlaying = Boolean(game.conflict?.notPlaying)
 
   return (
-    <Box sx={{ py: 1.5, opacity: cancelled ? 0.7 : 1 }}>
+    <Box sx={{ py: 1.5, opacity: cancelled || notPlaying ? 0.7 : 1 }}>
       <Typography variant="numeric" component="p" sx={{ fontSize: '1.5rem', color: 'navy.main', textDecoration: cancelled ? 'line-through' : 'none' }}>
         {formatGameDate(game.dateTime)}
       </Typography>
@@ -35,7 +38,13 @@ function PlayerGame({ game }) {
       <Stack direction="row" sx={{ gap: 0.75, mt: 1, flexWrap: 'wrap' }}>
         <HomeChip isHome={game.isHome} />
         {game.gameState !== GAME_STATES.SCHEDULED && <GameStateChip gameState={game.gameState} />}
+        {notPlaying && <Chip label="No lo jugás" size="small" sx={{ fontWeight: 600 }} />}
       </Stack>
+      {notPlaying && (
+        <Typography variant="body2" sx={{ mt: 1, color: 'navy.main' }}>
+          Por superposición de horario, jugás {game.conflict.chosenGame.categoryName} vs. {game.conflict.chosenGame.rival} ({formatShortDateTime(game.conflict.chosenGame.dateTime)}).
+        </Typography>
+      )}
     </Box>
   )
 }

@@ -129,7 +129,14 @@ const LOG_ACTIONS = {
     GAME_UPDATED: { message: 'Modificación de partido', criticity: CRITICITY.MEDIUM },
     GAME_PLAYED: { message: 'Partido marcado como jugado', criticity: CRITICITY.MEDIUM },
     GAME_CANCELLED: { message: 'Cancelación de partido', criticity: CRITICITY.HIGH },
-    CONFLICT_RESOLVED: { message: 'Resolución de conflicto de horario', criticity: CRITICITY.MEDIUM }
+    CONFLICT_RESOLVED: { message: 'Resolución de conflicto de horario', criticity: CRITICITY.MEDIUM },
+
+    // Citaciones. La confirmación automática la hace el job (sin usuario ni rol)
+    CITATION_CREATED: { message: 'Generación de citaciones', criticity: CRITICITY.MEDIUM },
+    CITATION_CANCELLED: { message: 'Cancelación de citación', criticity: CRITICITY.MEDIUM },
+    CITATION_CONFIRMED: { message: 'Citación confirmada', criticity: CRITICITY.MEDIUM },
+    CITATION_REJECTED: { message: 'Citación rechazada', criticity: CRITICITY.MEDIUM },
+    CITATION_AUTO_CONFIRMED: { message: 'Citación confirmada automáticamente', criticity: CRITICITY.LOW }
 }
 
 // Intentos fallidos de login antes de bloquear al usuario
@@ -204,12 +211,19 @@ const NOTIFICATION_TYPES = {
     FEE_DUE_SOON: { email: false },         // Cuota por vencer
     INSCRIPTION_RESULT: { email: false },   // Inscripción aprobada o rechazada
     SPORT_WITHDRAWAL: { email: false },     // Baja de un deporte (Representante)
+    CITATION_CANCELLED: { email: false },   // Citación cancelada por la entrenadora (jugadora y Familia)
+    CONFLICT_RESOLVED: { email: false },    // Conflicto de horario resuelto: qué partido juega (jugadora y Familia)
     GENERAL: { email: 'optional' }          // Avisos generales del Admin, el Representante y la Entrenadora
 }
 
 // Duración de un partido para calcular las superposiciones de horario (games.service).
 // El modelo no guarda la duración: se asume 2 horas por partido (decisión del 01/11/2026).
 const GAME_DURATION_MINUTES = 120
+
+// Citaciones (contexto, sección 6): se generan con al menos 48 horas de anticipación al partido y la jugadora tiene
+// 24 horas desde la citación para responder. Después, el job autoConfirmCitations la confirma sola
+const CITATION_MIN_HOURS_BEFORE_GAME = 48
+const CITATION_RESPONSE_HOURS = 24
 
 // Grupo de edad de una escala por su code (undefined si no es de esa escala)
 const findAgeGroup = (ageScale, code) => AGE_SCALES[ageScale]?.find(group => group.code === code)
@@ -233,5 +247,7 @@ module.exports = {
     AGE_SCALE_LABELS,
     findAgeGroup,
     NOTIFICATION_TYPES,
-    GAME_DURATION_MINUTES
+    GAME_DURATION_MINUTES,
+    CITATION_MIN_HOURS_BEFORE_GAME,
+    CITATION_RESPONSE_HOURS
 }

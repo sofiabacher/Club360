@@ -300,6 +300,33 @@ module.exports = {
         noteInvalid: 'La nota puede tener hasta 300 caracteres.'
     },
 
+    citations: {
+        gameNotFound: 'No encontramos el partido entre los de tus categorías.',
+        citationNotFound: 'No encontramos la citación.',
+        notScheduled: 'Solo se puede citar para partidos Programados.',
+        tooLate: 'Las citaciones se generan con al menos 2 días de anticipación.',
+        membersNotFound: 'Alguna de las jugadoras elegidas no es socia del club.',
+        notInCategory: (name) => `${name} no está en la categoría del partido.`,
+        overdue: (name) => `${name} tiene cuotas atrasadas: no se la puede citar hasta que regularice su situación.`,
+        conflictResolved: (name, category, rival) => `${name} no se puede citar: por un conflicto de horario ya resuelto, juega ${category} vs. ${rival}.`,
+        alreadyCited: (name) => `${name} ya está citada para este partido.`,
+        alreadyRejected: (name) => `${name} rechazó la citación de este partido: no se la puede volver a citar.`,
+        cannotCancel: 'Solo se pueden cancelar las citaciones Pendientes o Confirmadas, antes del partido.',
+        notMember: 'No sos socia del club.',
+        alreadyAnswered: 'Esta citación ya no está pendiente: la respuesta no se puede cambiar.',
+        responseExpired: 'Se venció el plazo para responder esta citación.',
+        linkedMemberNotFound: 'No encontramos a esa jugadora entre tus vinculadas.',
+
+        // Validaciones de formato
+        idInvalid: 'El identificador no es válido.',
+        memberIdsInvalid: 'Elegí al menos una jugadora.',
+        memberIdInvalid: 'La jugadora no es válida.',
+        responseInvalid: 'La respuesta tiene que ser confirmar o rechazar.',
+        justificationInvalid: 'Contá por qué no podés ir (entre 10 y 300 caracteres).',
+        scopeInvalid: 'El filtro no es válido.',
+        dateInvalid: 'Ingresá una fecha válida (AAAA-MM-DD).'
+    },
+
     upload: {
         invalidType: 'El archivo tiene que ser una imagen JPG, PNG o WEBP.',
         tooLarge: 'La imagen no puede pesar más de 5 MB.',

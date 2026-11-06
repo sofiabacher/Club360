@@ -13,6 +13,7 @@
 const cron = require('node-cron')
 
 const jobs = [
+    require('./autoConfirmCitations.job')
     // require('./generateFees.job')
 ]
 

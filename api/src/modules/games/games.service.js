@@ -136,6 +136,73 @@ async function getConflictResolutions(clubId, conflictKeys, { transaction } = {}
     return resolutions
 }
 
+// Resoluciones de una jugadora, de la bitácora (CONFLICT_RESOLVED): [{ gameIds, chosenGameId, note, resolvedBy, resolvedAt }].
+// Si un mismo conflicto se registró dos veces, vale la primera
+async function getResolutionsForMember(clubId, memberId, { transaction } = {}) {
+    const logs = await Log.findAll({
+        where: { clubId, action: LOG_ACTIONS.CONFLICT_RESOLVED.message },
+        include: [{ model: User, as: 'user', attributes: ['name', 'lastName'] }],
+        order: [['id', 'ASC']],
+        transaction
+    })
+
+    const seen = new Set()
+    const resolutions = []
+
+    for (const log of logs) {
+        let details
+        try {
+            details = JSON.parse(log.details)
+        } catch {
+            continue
+        }
+
+        if (details.memberId !== memberId || seen.has(details.conflictKey)) continue
+        seen.add(details.conflictKey)
+
+        resolutions.push({
+            gameIds: details.gameIds,
+            chosenGameId: details.chosenGameId,
+            note: details.note ?? null,
+            resolvedBy: log.user ? `${log.user.name} ${log.user.lastName}` : null,
+            resolvedAt: log.createdAt
+        })
+    }
+
+    return resolutions
+}
+
+// Partidos que una jugadora NO juega por un conflicto resuelto: Map gameId (el no elegido) → el partido elegido
+// { id, categoryName, rival, dateTime }. Una resolución vale mientras el conflicto exista: ninguno de los dos partidos
+// está Cancelado y siguen superponiéndose con el margen actual del club. Si dejan de chocar, la jugadora puede jugar
+// (y ser citada en) los dos
+async function getNotPlayingGames(clubId, memberId, { transaction } = {}) {
+    const notPlaying = new Map()
+    const resolutions = await getResolutionsForMember(clubId, memberId, { transaction })
+    if (resolutions.length === 0) return notPlaying
+
+    const games = await Game.findAll({
+        where: { id: unique(resolutions.flatMap(resolution => resolution.gameIds)), clubId, gameState: { [Op.ne]: GAME_STATES.CANCELLED } },
+        include: [{ model: Category, as: 'category', attributes: ['id', 'name'] }],
+        transaction
+    })
+    const byId = new Map(games.map(game => [game.id, game]))
+    const margin = await getConflictMargin(clubId, transaction)
+
+    for (const { gameIds, chosenGameId } of resolutions) {
+        const chosen = byId.get(chosenGameId)
+        const other = byId.get(gameIds.find(id => id !== chosenGameId))
+        if (!chosen || !other || !overlapBetween(chosen, other, margin)) continue
+
+        notPlaying.set(other.id, { id: chosen.id, categoryName: chosen.category.name, rival: chosen.rival, dateTime: chosen.dateTime })
+    }
+
+    return notPlaying
+}
+
+// Marca de "no lo jugás" para las respuestas de la jugadora y la familia: { notPlaying: true, chosenGame } o null
+const conflictMarkOf = (notPlaying, gameId) => (notPlaying.has(gameId) ? { notPlaying: true, chosenGame: notPlaying.get(gameId) } : null)
+
 // Arma la respuesta de cada conflicto, con si está resuelto
 async function withResolutions(clubId, conflicts, transaction) {
     const resolutions = await getConflictResolutions(clubId, conflicts.map(conflict => conflict.conflictKey), { transaction })
@@ -616,7 +683,29 @@ async function resolveConflict(actor, { memberId, gameIds, chosenGameId, note })
     if (existing.has(conflictKey)) throw createError(m.conflictAlreadyResolved, 409)
 
     const details = { conflictKey, memberId: member.id, gameIds: [...ids].sort((a, b) => a - b), chosenGameId, note: note || null }
-    await logger(actorOf(actor), LOG_ACTIONS.CONFLICT_RESOLVED, JSON.stringify(details))
+    const chosen = games.find(game => game.id === chosenGameId)
+    const other = games.find(game => game.id !== chosenGameId)
+
+    // Se requiere acá adentro: citations.service usa este service (dependencia circular)
+    const { cancelCitationsForResolvedConflict } = require('../citations/citations.service')
+
+    // En una sola transacción: el registro en la bitácora, la cancelación de la citación del partido no elegido y el
+    // aviso a la jugadora (y a su familia, si es menor). No se manda además CITATION_CANCELLED, para no duplicar avisos
+    await sequelize.transaction(async (transaction) => {
+        await logger(actorOf(actor), LOG_ACTIONS.CONFLICT_RESOLVED, JSON.stringify(details), { transaction })
+        await cancelCitationsForResolvedConflict(clubId, member.id, other.id, { transaction })
+
+        const { weekday, dayMonth, time } = dateTimeParts(chosen.dateTime)
+        await notify({
+            clubId,
+            type: 'CONFLICT_RESOLVED',
+            recipientUserIds: [member.userId],
+            title: 'Se resolvió un conflicto de horario',
+            message: `Tenías dos partidos superpuestos el ${weekday} ${dayMonth}. Se decidió que juegues ${chosen.category.name} vs. ${chosen.rival} (${time}). `
+                + `No jugás ${other.category.name} vs. ${other.rival} (${dateTimeParts(other.dateTime).time}).`,
+            includeFamily: true
+        }, { transaction })
+    })
 
     const player = { memberId: member.id, name: `${member.user.name} ${member.user.lastName}` }
     const [conflict] = await withResolutions(clubId, [conflictOf(player, overlap)])
@@ -630,12 +719,17 @@ async function gamesByCategoryOf(clubId, member, { from, to }) {
     if (member.memberStateId === MEMBER_STATES.INACTIVE) return []
 
     const categories = await getCategoriesOfMember(clubId, member.id)
-    const games = await gamesOfCategories(clubId, categories.map(category => category.id), { from, to })
+    const [games, notPlaying] = await Promise.all([
+        gamesOfCategories(clubId, categories.map(category => category.id), { from, to }),
+        getNotPlayingGames(clubId, member.id)
+    ])
 
     return categories.map(category => ({
         category: { id: category.id, name: category.name, ageGroup: category.ageGroup.label },
         league: { id: category.league.id, name: category.league.name, sport: category.league.sport },
-        games: games.filter(game => game.categoryId === category.id)
+        games: games
+            .filter(game => game.categoryId === category.id)
+            .map(game => ({ ...game, conflict: conflictMarkOf(notPlaying, game.id) }))
     }))
 }
 
@@ -666,9 +760,13 @@ async function listLinked(user, { memberId, from, to }) {
 }
 
 module.exports = {
+    formatGame,
     findConflictsForGame,
     listConflicts,
     getConflictResolutions,
+    getResolutionsForMember,
+    getNotPlayingGames,
+    conflictMarkOf,
     getOptions,
     listGames,
     checkConflicts,

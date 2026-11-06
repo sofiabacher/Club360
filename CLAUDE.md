@@ -232,6 +232,14 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 - **Al guardar un partido no se bloquea:** se avisa (`check-conflicts` antes de guardar y `conflicts` en la respuesta) y se notifica `SCHEDULE_CONFLICT` a las entrenadoras.
 - **Resolución:** solo en la bitácora (`CONFLICT_RESOLVED`, con `conflictKey = "{memberId}:{idMenor}-{idMayor}"` y el partido elegido en `details`). Se consulta con `getConflictResolutions`.
 
+## Citaciones (módulo `citations`)
+
+- La genera una entrenadora para un partido Programado de sus categorías, con **al menos 48 h** de anticipación. Se cita a varias a la vez: si una no cumple, no se crea ninguna.
+- **No citable:** jugadora con mora (socio SUSPENDED o `getOverdueDays` > `club.delayFee`, en `fees.service.js`) o con un conflicto resuelto en el que se eligió el otro partido (`getResolutionsForMember`).
+- **Respuesta:** la jugadora, dentro de las 24 h (`dateMaxResponse`). Rechazar exige una justificación de 10 a 300 caracteres. El job `autoConfirmCitations` (cada 10 min) pasa las vencidas a Confirmada automáticamente.
+- La entrenadora puede cancelar una citación antes del partido (notifica `CITATION_CANCELLED`, solo in-app).
+- **Al resolver un conflicto,** se cancela la citación del partido no elegido y se notifica `CONFLICT_RESOLVED` (solo in-app, con la familia). Las respuestas de `mine`/`linked` (citaciones y partidos) traen `conflict.notPlaying` para que el front muestre "No jugás este partido".
+
 ## Lista de tareas (`docs/TODO.md`)
 
 `docs/TODO.md` es la lista de todo lo que falta del proyecto. Mantenerla al día es parte de cada tarea:

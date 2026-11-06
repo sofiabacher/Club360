@@ -49,8 +49,18 @@ function dateTimeParts(value) {
     }
 }
 
+// Días entre dos fechas 'AAAA-MM-DD' (to − from). Se calculan en UTC para que no influya la hora ni la zona
+function daysBetween(from, to) {
+    const toUtc = (date) => {
+        const { year, month, day } = dateParts(date)
+        return Date.UTC(year, month - 1, day)
+    }
+    return Math.round((toUtc(to) - toUtc(from)) / (24 * 60 * 60 * 1000))
+}
+
 module.exports = {
     today,
+    daysBetween,
     dateTimeParts,
     getAge,
     isAdult,

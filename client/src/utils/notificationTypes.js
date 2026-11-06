@@ -3,10 +3,12 @@
 // tone: un estado de StatusChip ('ok', 'pending', 'overdue', 'urgent') para el color del ícono, o null (neutro).
 import AssignmentIndRounded from '@mui/icons-material/AssignmentIndRounded'
 import CampaignRounded from '@mui/icons-material/CampaignRounded'
+import EventAvailableRounded from '@mui/icons-material/EventAvailableRounded'
 import EventBusyRounded from '@mui/icons-material/EventBusyRounded'
 import EventRounded from '@mui/icons-material/EventRounded'
 import FitnessCenterRounded from '@mui/icons-material/FitnessCenterRounded'
 import HowToRegRounded from '@mui/icons-material/HowToRegRounded'
+import PersonRemoveRounded from '@mui/icons-material/PersonRemoveRounded'
 import PaymentsRounded from '@mui/icons-material/PaymentsRounded'
 import PersonOffRounded from '@mui/icons-material/PersonOffRounded'
 import ScheduleRounded from '@mui/icons-material/ScheduleRounded'
@@ -18,13 +20,20 @@ import { getMenuRoutes } from '../navigation/menu.js'
 // Cuotas: la Familia va a su estado de cuenta; el resto, a sus cuotas
 const feesPath = (permissions) => (permissions.includes('fees.manageLinked') ? '/family/fees' : '/my-fees')
 
+// Citaciones y partidos: la jugadora va a los suyos; la Familia (que recibe los avisos de sus jugadoras menores), a los
+// de sus jugadoras
+const citationsPath = (permissions) => (permissions.includes('citations.respond') ? '/my-citations' : '/family/citations')
+const gamesPath = (permissions) => (permissions.includes('games.viewOwn') ? '/my-games' : '/family/games')
+
 export const NOTIFICATION_TYPES = {
-  CITATION_NEW: { icon: AssignmentIndRounded, tone: 'urgent', path: () => '/my-citations' },
-  GAME_CANCELLED: { icon: EventBusyRounded, tone: 'overdue', path: () => '/my-games' },
+  CITATION_NEW: { icon: AssignmentIndRounded, tone: 'urgent', path: citationsPath },
+  CITATION_CANCELLED: { icon: PersonRemoveRounded, tone: 'overdue', path: citationsPath },
+  CONFLICT_RESOLVED: { icon: EventAvailableRounded, tone: null, path: gamesPath },
+  GAME_CANCELLED: { icon: EventBusyRounded, tone: 'overdue', path: gamesPath },
   FEE_OVERDUE: { icon: PaymentsRounded, tone: 'overdue', path: feesPath },
   MEMBER_SUSPENDED: { icon: PersonOffRounded, tone: 'overdue', path: feesPath },
   FEE_DUE_SOON: { icon: ScheduleRounded, tone: 'pending', path: feesPath },
-  FIXTURE_PUBLISHED: { icon: EventRounded, tone: null, path: () => '/my-games' },
+  FIXTURE_PUBLISHED: { icon: EventRounded, tone: null, path: gamesPath },
   SCHEDULE_CONFLICT: { icon: WarningAmberRounded, tone: 'urgent', path: () => '/games/assigned' },
   ROUTINE_PUBLISHED: { icon: FitnessCenterRounded, tone: null, path: () => '/my-routine' },
   INSCRIPTION_RESULT: { icon: HowToRegRounded, tone: 'ok', path: () => '/my-sports' },
@@ -50,6 +59,8 @@ export function getNotificationPath(type, permissions) {
 const SECTION_LABELS = {
   '/my-citations': 'mis citaciones',
   '/my-games': 'mis partidos',
+  '/family/citations': 'las citaciones',
+  '/family/games': 'los partidos',
   '/my-fees': 'mis cuotas',
   '/family/fees': 'el estado de cuenta',
   '/games/assigned': 'los partidos',

@@ -60,6 +60,20 @@ export function formatShortDateTime(value) {
   return `${format(date, 'EEE', { locale: es })} ${format(date, 'd/M HH:mm')}`
 }
 
+// Fecha límite de una citación: 'jueves 5/11, 21:35'
+export function formatDeadline(value) {
+  return format(toDate(value), "EEEE d/M, HH:mm", { locale: es })
+}
+
+// Tiempo que queda hasta una fecha: 'faltan 6 h', 'faltan 40 min' o 'faltan 2 días'. Si ya pasó, 'venció'
+export function formatTimeLeft(value) {
+  const minutes = Math.floor((toDate(value).getTime() - Date.now()) / 60000)
+  if (minutes <= 0) return 'venció'
+  if (minutes < 60) return `faltan ${minutes} min`
+  if (minutes < 48 * 60) return `faltan ${Math.floor(minutes / 60)} h`
+  return `faltan ${Math.floor(minutes / (24 * 60))} días`
+}
+
 // Link de Google Maps para una dirección
 export function getMapsUrl(address) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`

@@ -78,13 +78,14 @@ Seguimiento de todo lo que falta para entregar el proyecto: desarrollo, entregab
 - [x] Cancelar un partido: pasa sus citaciones a Cancelada y notifica a las jugadoras citadas (P11; con motivo en la bitácora)
 - [x] Detección de superposición de horarios según el margen del club (P11: duración asumida de 2 horas, aviso antes de guardar y notificación a las entrenadoras)
 - [x] Resolución de conflictos entre entrenadoras, registrada en bitácora (P11: `CONFLICT_RESOLVED` con la `conflictKey`)
-- [ ] Citaciones: mínimo 2 días antes, sin jugadoras con mora vencida, solo para partidos Programados
-- [ ] Respuesta a la citación: confirmar o rechazar con justificación dentro de las 24 hs
-- [ ] Job: confirmación automática de las citaciones sin respuesta
+- [x] Citaciones: mínimo 2 días antes, sin jugadoras con mora vencida, solo para partidos Programados (P12: varias a la vez, todas o ninguna; mora con `getOverdueDays` de `fees.service.js`; cancelación por la entrenadora)
+- [x] Respuesta a la citación: confirmar o rechazar con justificación dentro de las 24 hs (P12: justificación de 10 a 300 caracteres; la respuesta no se cambia)
+- [x] Job: confirmación automática de las citaciones sin respuesta (P12: `autoConfirmCitations`, cada 10 minutos)
+- [x] Aviso a la jugadora y cancelación de la citación del partido no elegido al resolver un conflicto (P12)
 - [ ] Rutinas semanales por categoría (texto, imagen, link de video) con historial
-- [~] Front: pantallas del Representante, la Entrenadora y la Preparadora física — ligas y Mis categorías hechas (P09); partidos y conflictos (P11)
-- [ ] Front: dashboard de la Jugadora (fixtures y citaciones, separados si juega en 2 ligas, y rutina)
-- [~] Front: vista de solo lectura para la Familia — partidos de las jugadoras vinculadas hechos (P11)
+- [~] Front: pantallas del Representante, la Entrenadora y la Preparadora física — ligas y Mis categorías hechas (P09); partidos y conflictos (P11); citaciones de la Entrenadora (P12)
+- [ ] Front: dashboard de la Jugadora (fixtures y citaciones, separados si juega en 2 ligas, y rutina) — por ahora, "Mis partidos" (P11) y "Mis citaciones" (P12) por separado
+- [~] Front: vista de solo lectura para la Familia — partidos (P11) y citaciones (P12) de las jugadoras vinculadas hechos
 
 ## Fase 5 — Cuotas y pagos
 
@@ -135,7 +136,7 @@ Formato de referencia: el PDF de HotelDesk.
 - [ ] Especificación de funcionalidad (casos de uso)
 - [ ] Diseño de seguridad técnica: encriptación, dígitos verificadores, patentes y familias
 - [ ] Estrategias de base de datos: backup/restore e integridad (sin particiones)
-- [~] Casos de prueba en `.txt`, uno por módulo, en `docs/pruebas/` (D9; formato en `CLAUDE.md`, "Pruebas"). Hecho: `docs/pruebas/access.txt` (P06), `docs/pruebas/clubs.txt` y `docs/pruebas/members.txt` (P07), `docs/pruebas/staff.txt` y los casos de vínculo familiar en `members.txt` (P08), `docs/pruebas/leagues.txt` (P09), `docs/pruebas/notifications.txt` (P10 y P10b), `docs/pruebas/games.txt` (P11)
+- [~] Casos de prueba en `.txt`, uno por módulo, en `docs/pruebas/` (D9; formato en `CLAUDE.md`, "Pruebas"). Hecho: `docs/pruebas/access.txt` (P06), `docs/pruebas/clubs.txt` y `docs/pruebas/members.txt` (P07), `docs/pruebas/staff.txt` y los casos de vínculo familiar en `members.txt` (P08), `docs/pruebas/leagues.txt` (P09), `docs/pruebas/notifications.txt` (P10 y P10b), `docs/pruebas/games.txt` (P11), `docs/pruebas/citations.txt` (P12)
 - [ ] Manuales de usuario
 - [ ] Armado del documento final con todo lo anterior
 
@@ -172,6 +173,7 @@ Cada una se resuelve en el chat de Claude y se registra en el documento de conte
 
 Lo terminado, con la fecha. Lo más reciente arriba.
 
+- 05/11/2026 — Citaciones (P12): módulo `citations` con la lista de la categoría por partido, citación de varias jugadoras a la vez (todas o ninguna, con el motivo de cada una), al menos 48 horas antes y solo en partidos Programados, sin jugadoras con mora (`getOverdueDays` en `fees.service.js`: Suspendida o atraso mayor al plazo del club), una sola citación por jugadora y partido salvo las Canceladas, y cancelación por la entrenadora (`CITATION_CANCELLED`, in-app). Respuesta de la jugadora dentro de las 24 horas (rechazo con justificación) y job `autoConfirmCitations` cada 10 minutos. Al resolver un conflicto de horario se cancela la citación del partido no elegido y se avisa `CONFLICT_RESOLVED` (`getResolutionsForMember`, `conflict.notPlaying` en las vistas de la jugadora y la familia). Front: Citaciones de la Entrenadora, Mis citaciones, Citaciones de la Familia y "No lo jugás" en Mis partidos. Casos en `docs/pruebas/citations.txt`. Verificado con un script contra la base local (51 chequeos) y con el build del front
 - 01/11/2026 — Partidos y superposiciones (P11): `game.isHome` (base recreada con db:snapshot y db:restore). Módulo `games`: fixture con alta, edición, jugado y cancelación (cancela las citaciones y avisa a las citadas); detección de superposiciones de horario calculada siempre (`findConflictsForGame`, `listConflicts`, duración asumida de 2 horas y el margen del club), aviso antes de guardar y notificación a las entrenadoras; resolución entre entrenadoras en la bitácora (`CONFLICT_RESOLVED`, `getConflictResolutions`). Front: Partidos del Representante con el aviso en vivo, Partidos del staff con la pestaña de conflictos, Mis partidos y los partidos de la Familia. Casos en `docs/pruebas/games.txt`. Verificado con un script contra la base local y con el build del front
 - 01/11/2026 — Detalle e historial de notificaciones (P10b): `notification.batchId` (un valor por aviso general) y los comandos `npm run db:snapshot` y `npm run db:restore` para recrear la base conservando los datos (pasos en el README, "Cambios en el modelo"); base local recreada así. Detalle de una notificación en una ventana flotante (campana y listado) con el botón "Ir a…", `GET /notifications/:id`, e historial de avisos enviados con lectura (el Admin ve todos, con filtro por remitente; el resto, los suyos). Casos en `docs/pruebas/notifications.txt`. Verificado con scripts contra la base local y con el build del front
 - 31/10/2026 — Emails con Gmail y notificaciones (P10): nodemailer con Gmail SMTP en lugar de Resend (por consola en desarrollo sin credenciales, verificación al arrancar). `notify()` con `NOTIFICATION_TYPES` como única fuente del canal, familias de los menores, emails después del commit y en segundo plano, y errores de email en la bitácora. Módulo `notifications`: listado, contador y lectura; avisos generales del Admin (todo el club o por grupos), el Representante (su deporte) y la Entrenadora (sus categorías), con resumen previo. Front: campana con contador, Notificaciones y Enviar avisos. Casos documentados en `docs/pruebas/notifications.txt`. Verificado con un script contra la base local y con el build del front
