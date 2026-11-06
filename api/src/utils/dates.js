@@ -33,8 +33,25 @@ function getSeasonAge(birthDate, year = currentYear()) {
     return year - dateParts(birthDate).year
 }
 
+// Partes de una fecha y hora en Argentina, para los textos de los partidos:
+// { weekday: 'sábado', weekdayShort: 'sáb.', dayMonth: '7/11', time: '18:30', year: 2026 }
+function dateTimeParts(value) {
+    const date = new Date(value)
+    const part = (options) => new Intl.DateTimeFormat('es-AR', { timeZone: TIME_ZONE, ...options }).format(date)
+    const weekday = part({ weekday: 'long' })
+
+    return {
+        weekday,
+        weekdayShort: `${weekday.slice(0, 3)}.`,
+        dayMonth: `${part({ day: 'numeric' })}/${part({ month: 'numeric' })}`,
+        time: part({ hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }),
+        year: Number(part({ year: 'numeric' }))
+    }
+}
+
 module.exports = {
     today,
+    dateTimeParts,
     getAge,
     isAdult,
     currentYear,

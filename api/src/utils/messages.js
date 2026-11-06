@@ -270,6 +270,36 @@ module.exports = {
         includeFamiliesInvalid: 'Indicá si se incluye a las familias.'
     },
 
+    games: {
+        gameNotFound: 'No encontramos el partido.',
+        categoryNotFound: 'No encontramos la categoría.',
+        categoryInactive: 'La categoría está dada de baja: no se le pueden cargar partidos.',
+        mustBeFuture: 'La fecha y hora del partido tienen que ser en el futuro.',
+        notScheduled: 'Solo se pueden modificar los partidos Programados.',
+        notPlayedYet: 'El partido todavía no se jugó: se puede marcar como jugado después de la fecha y hora.',
+        notMember: 'No sos socia del club.',
+        linkedMemberNotFound: 'No encontramos a esa jugadora entre tus vinculadas.',
+        conflictNotFound: 'Ese conflicto ya no existe: los partidos no se superponen o cambiaron.',
+        conflictAlreadyResolved: 'Ese conflicto ya está resuelto.',
+        conflictNotYours: 'Solo lo puede resolver una entrenadora de alguna de las dos categorías.',
+        chosenGameInvalid: 'Elegí uno de los dos partidos del conflicto.',
+
+        // Validaciones de formato
+        idInvalid: 'El identificador no es válido.',
+        categoryIdInvalid: 'Elegí la categoría.',
+        rivalInvalid: 'Ingresá el rival (hasta 100 caracteres).',
+        dateTimeInvalid: 'Ingresá una fecha y hora válidas.',
+        isHomeInvalid: 'Indicá si el partido es de local o de visitante.',
+        addressInvalid: 'Ingresá la dirección (hasta 200 caracteres).',
+        reasonInvalid: 'El motivo puede tener hasta 300 caracteres.',
+        stateInvalid: 'El estado no es válido.',
+        dateInvalid: 'Ingresá una fecha válida (AAAA-MM-DD).',
+        pageInvalid: 'La página no es válida.',
+        memberIdInvalid: 'La jugadora no es válida.',
+        gameIdsInvalid: 'Indicá los dos partidos del conflicto.',
+        noteInvalid: 'La nota puede tener hasta 300 caracteres.'
+    },
+
     upload: {
         invalidType: 'El archivo tiene que ser una imagen JPG, PNG o WEBP.',
         tooLarge: 'La imagen no puede pesar más de 5 MB.',

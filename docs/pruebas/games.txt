@@ -1,0 +1,314 @@
+CASOS DE PRUEBA — MÓDULO GAMES (PARTIDOS Y SUPERPOSICIONES DE HORARIO)
+======================================================================
+
+Club360 · Prompt 11 · 01/11/2026
+Formato según CLAUDE.md ("Pruebas"). Los resultados obtenidos salen del script de verificación del back (corrido contra
+la base local el 01/11/2026, después de agregar game.isHome con db:snapshot y db:restore; con datos de prueba creados
+con los modelos y borrados al final). Lo que solo se puede comprobar en el navegador queda anotado en cada caso.
+
+Precondición general (datos de prueba):
+  - margen de conflicto del club: 60 minutos; las canchas del club, las del seed;
+  - "Liga Metropolitana P11" con Sub-16 y Sub-18, y "Liga Federal P11" con Mayores, todas de Vóley;
+  - Martina (15 años) en Sub-16 y en Mayores; Lucía (17, menor sin email) en Sub-18, vinculada a Familia; Otra en Sub-16;
+  - Rep, Representante de Vóley (games.manage); Coach16, CoachMay y Coach18, Entrenadoras de Sub-16, Mayores y Sub-18.
+Los horarios son en Argentina. Duración asumida de un partido: 2 horas (GAME_DURATION_MINUTES).
+Las pantallas: Gestión > Partidos (Representante), Deportivo > Partidos (staff), Mi espacio > Mis partidos y
+Familia > Partidos.
+
+
+--------------------------------------------------
+ID: CP-GAMES-01
+Módulo: games
+Descripción: Crear un partido de local con una cancha del club
+Precondiciones: sesión de Rep.
+Pasos:
+  1. "Nuevo partido": Sub-16, rival, fecha y hora futuras, "Local", elegir la cancha y guardar.
+Datos de entrada: Atlético Ribera, a 10 días, 10:00, "Cancha 1 · Av. Ejemplo 1234, Ciudad de Buenos Aires".
+Resultado esperado: se crea Programado, con la temporada del año de la fecha y la dirección "{cancha} · {dirección}". Las
+  jugadoras de Sub-16 reciben "Nuevo partido: …".
+Resultado obtenido: 201 con gameState Programado, season "2026", isHome true y esa dirección. Martina recibió
+  FIXTURE_PUBLISHED: "Nuevo partido: Sub-16 vs. Atlético Ribera, miércoles 11/11 a las 10:00 (Local). Dirección: …".
+  Falta ver el formulario en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-02
+Módulo: games
+Descripción: Crear un partido de visitante con la dirección escrita
+Precondiciones: sesión de Rep.
+Pasos:
+  1. "Nuevo partido" en Sub-18, "Visitante", escribir la dirección.
+Datos de entrada: Club Ribera, "Club Ribera, Av. Siempreviva 742".
+Resultado esperado: se crea con isHome false y esa dirección. La jugadora menor y su adulto reciben el aviso.
+Resultado obtenido: 201 con isHome false. Lucía y Familia recibieron FIXTURE_PUBLISHED (includeFamily).
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-03
+Módulo: games
+Descripción: Crear un partido en el pasado (rechazado)
+Precondiciones: sesión de Rep.
+Pasos:
+  1. Crear un partido con la fecha de ayer.
+Datos de entrada: ayer, 10:00.
+Resultado esperado: "La fecha y hora del partido tienen que ser en el futuro." (el selector de fecha tampoco deja elegir
+  el pasado).
+Resultado obtenido: 400 con ese mensaje. Una fecha con formato inválido también → 400.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-04
+Módulo: games
+Descripción: Editar un partido Programado
+Precondiciones: el partido del CP-GAMES-01.
+Pasos:
+  1. Editar el rival y guardar. 2. Editar la hora y guardar.
+Datos de entrada: rival "Atlético Ribera B"; hora 10:30.
+Resultado esperado: se guardan los cambios. Cambiar solo el rival no avisa a las jugadoras; cambiar la hora, sí
+  ("Cambió el partido…"). La categoría no se puede cambiar.
+Resultado obtenido: 200 en los dos. Con el rival no hubo notificación nueva; con la hora: "Cambió el partido de Sub-16
+  vs. Atlético Ribera B: ahora es el miércoles 11/11 a las 10:30 (Local), en …".
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-05
+Módulo: games
+Descripción: Editar un partido Jugado o Cancelado (rechazado)
+Precondiciones: un partido Jugado y otro Cancelado.
+Pasos:
+  1. Intentar editarlos (en la pantalla, el menú solo aparece en los Programados).
+Datos de entrada: —
+Resultado esperado: "Solo se pueden modificar los partidos Programados."
+Resultado obtenido: 409 con ese mensaje en los dos. Cancelar uno Jugado → 409.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-06
+Módulo: games
+Descripción: Marcar como jugado antes y después de la fecha
+Precondiciones: un partido futuro y uno de hace 3 horas, Programados.
+Pasos:
+  1. Marcar como jugado el futuro. 2. Marcar como jugado el que ya pasó.
+Datos de entrada: —
+Resultado esperado: el futuro se rechaza ("…se puede marcar como jugado después de la fecha y hora."); el pasado queda
+  Jugado. En la pantalla, "Marcar como jugado" solo aparece si ya pasó la fecha.
+Resultado obtenido: 400 y 200 (gameState Jugado).
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-07
+Módulo: games
+Descripción: Cancelar un partido con citaciones
+Precondiciones: el partido de Sub-18 con una citación Pendiente de Lucía (creada con el modelo).
+Pasos:
+  1. En el menú del partido, "Cancelar partido", escribir un motivo y confirmar.
+Datos de entrada: motivo "Cancha inundada".
+Resultado esperado: el partido queda Cancelado, la citación pasa a Cancelada y la jugadora (y su adulto, si es menor)
+  recibe GAME_CANCELLED, que también va por email. La bitácora lo registra con criticidad alta y el motivo.
+Resultado obtenido: 200 con cancelledCitations 1; la citación quedó Cancelada. Lucía y Familia recibieron "Se canceló el
+  partido de Sub-18 vs. Club Ribera del viernes 13/11. Tu citación quedó cancelada."; el email salió por consola al
+  adulto (la menor no tiene email). Bitácora (HIGH): "… Motivo: Cancha inundada. Citaciones canceladas: 1".
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-08
+Módulo: games
+Descripción: Conflicto en el borde del margen
+Precondiciones: margen 60; Martina en Sub-16 y en Mayores; Sub-16 a las 10:00.
+Pasos:
+  1. Cargar Mayores el mismo día a las 12:59. 2. Otro día: Sub-16 a las 10:00 y Mayores a las 13:00.
+Datos de entrada: —
+Resultado esperado: 10:00 y 12:59 chocan (59 min entre el fin del primero y el inicio del segundo, menos que 60); 10:00 y
+  13:00 no.
+Resultado obtenido: 1 conflicto con gapMinutes 59; sin conflicto con las 13:00.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-09
+Módulo: games
+Descripción: Conflicto entre dos ligas distintas
+Precondiciones: el caso anterior (Sub-16 de Liga Metropolitana y Mayores de Liga Federal).
+Pasos:
+  1. Ver el conflicto que generó el partido de Mayores.
+Datos de entrada: —
+Resultado esperado: el conflicto une los dos partidos de ligas distintas, con la clave "{memberId}:{idMenor}-{idMayor}".
+Resultado obtenido: el conflicto trae los dos partidos (Sub-16 y Mayores, cada uno con su liga) y conflictKey "24:1-4",
+  pendiente.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-10
+Módulo: games
+Descripción: Un partido Cancelado no genera conflicto (y una jugadora sacada de la categoría tampoco)
+Precondiciones: un partido de Mayores a las 11:00 que se superpone con los del día.
+Pasos:
+  1. Cancelarlo. 2. Sacar a Martina de Mayores y volver a asignarla.
+Datos de entrada: —
+Resultado esperado: el cancelado deja de aparecer en los conflictos; sin la jugadora en la categoría no hay conflicto, y
+  vuelve al reasignarla.
+Resultado obtenido: antes de cancelarlo tenía 2 conflictos (con Sub-16 a las 10:00 y con Mayores a las 13:00, misma
+  categoría con 0 min entre uno y otro); después, ninguno. Sin Martina en Mayores, 0 conflictos; reasignada, vuelve.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-11
+Módulo: games
+Descripción: Aviso previo con check-conflicts
+Precondiciones: Sub-16 a las 10:00.
+Pasos:
+  1. En "Nuevo partido", elegir Mayores y la hora 12:59, sin guardar.
+  2. Guardar igual.
+Datos de entrada: —
+Resultado esperado: mientras se completa el formulario aparece "Ojo: 1 jugadora tendría partidos superpuestos", con el
+  detalle (jugadora, el otro partido y cuántos minutos los separan); el botón dice "Guardar igual". La respuesta del alta
+  trae el mismo conflicto.
+Resultado obtenido: check-conflicts → 1 conflicto (Martina, 59 min) sin guardar nada; POST /games devolvió el mismo
+  conflicto (misma jugadora, mismos minutos y el otro partido). Falta ver el aviso en vivo en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-12
+Módulo: games
+Descripción: Notificación SCHEDULE_CONFLICT a las entrenadoras de las dos categorías
+Precondiciones: el conflicto del CP-GAMES-08.
+Pasos:
+  1. Ver las notificaciones de Coach16, CoachMay y Coach18.
+  2. Editar la hora del partido de Mayores sin que deje de superponerse.
+Datos de entrada: —
+Resultado esperado: Coach16 y CoachMay reciben el aviso; Coach18 no. Editar sin cambiar el conflicto no lo vuelve a
+  avisar.
+Resultado obtenido: 1 notificación para cada una de las dos: "Martina Partidos tiene dos partidos superpuestos: Sub-16
+  (mié. 10:00) y Mayores (mié. 12:59)."; Coach18, 0. Al editar a las 12:30, la misma clave y sin notificación nueva.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-13
+Módulo: games
+Descripción: Resolver un conflicto
+Precondiciones: el conflicto pendiente; sesión de Coach16.
+Pasos:
+  1. En Partidos > Conflictos, "Resolver", elegir el partido de Sub-16, escribir una nota y confirmar.
+  2. Como CoachMay, ver los conflictos.
+Datos de entrada: nota "Acordado con la entrenadora de Mayores".
+Resultado esperado: queda en la bitácora (CONFLICT_RESOLVED, con la clave, la jugadora, los partidos, el elegido y la
+  nota) y las dos lo ven "Resuelto: juega en Sub-16", con quién lo resolvió y la nota. Si después cambia la hora y sigue
+  la superposición, sigue resuelto.
+Resultado obtenido: 200; bitácora: {"conflictKey":"24:1-4","memberId":24,"gameIds":[1,4],"chosenGameId":1,"note":"…"}.
+  CoachMay lo ve resuelto, "Coach16 Partidos" y la nota. getConflictResolutions devolvió la elección. Con la hora de
+  Mayores cambiada a las 12:00, sigue resuelto. Falta ver la tarjeta y el diálogo en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-14
+Módulo: games
+Descripción: Resolver dos veces o un conflicto que no existe (rechazado)
+Precondiciones: el conflicto ya resuelto.
+Pasos:
+  1. Como CoachMay, resolverlo otra vez. 2. Resolver dos partidos que no se superponen. 3. Elegir un partido que no es
+  de los dos.
+Datos de entrada: —
+Resultado esperado: "Ese conflicto ya está resuelto."; "Ese conflicto ya no existe…"; error de partido elegido.
+Resultado obtenido: 409, 404 y 400.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-15
+Módulo: games
+Descripción: Una entrenadora ajena intenta resolver (rechazado)
+Precondiciones: Coach18, que no está en Sub-16 ni en Mayores.
+Pasos:
+  1. Pedir la resolución del conflicto de Martina.
+Datos de entrada: —
+Resultado esperado: "Solo lo puede resolver una entrenadora de alguna de las dos categorías." Además, el Representante
+  (sin games.resolveConflicts) no entra a los conflictos.
+Resultado obtenido: 403 con ese mensaje; el Representante en GET /games/conflicts → 403.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-16
+Módulo: games
+Descripción: Mis partidos con dos categorías
+Precondiciones: Martina en Sub-16 y Mayores, con su rol Jugadora.
+Pasos:
+  1. Ir a Mis partidos.
+Datos de entrada: —
+Resultado esperado: un módulo por liga y, adentro, una sección por categoría, con la fecha en grande, el rival, local o
+  visitante, la dirección con "Cómo llegar" y los cancelados tachados.
+Resultado obtenido: GET /games/mine → 2 categorías: "Liga Federal P11 / Mayores" (3 partidos) y "Liga Metropolitana P11 /
+  Sub-16" (4). Una Jugadora en GET /games → 403. Falta ver la pantalla en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-17
+Módulo: games
+Descripción: Familia con sus jugadoras vinculadas
+Precondiciones: Familia vinculada a Lucía (y no a Martina).
+Pasos:
+  1. Como Familia, ir a Familia > Partidos.
+  2. Pedir los partidos de una jugadora que no es suya.
+Datos de entrada: —
+Resultado esperado: ve solo a sus jugadoras, con el partido cancelado marcado; con más de una, un selector arriba. Una
+  jugadora ajena → "No encontramos a esa jugadora entre tus vinculadas."
+Resultado obtenido: GET /games/linked → solo Lucía, con el partido de Sub-18 Cancelado; con el memberId de Martina → 404.
+  La prueba con dos jugadoras vinculadas y el selector queda para el navegador.
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-GAMES-18
+Módulo: games
+Descripción: Cambiar el margen del club y que los conflictos se recalculen
+Precondiciones: el conflicto de 10:00 y 12:59 (59 min).
+Pasos:
+  1. Cambiar el margen a 30 en la configuración del club y ver los conflictos.
+  2. Con el margen en 30, probar 10:00 y 12:31, y 10:00 y 12:29. 3. Volver a 60.
+Datos de entrada: —
+Resultado esperado: con 30, el conflicto de 59 min desaparece; 12:31 no choca y 12:29 sí. Con 60, vuelve.
+Resultado obtenido: con 30: conflictMargin 30 y 0 conflictos; 12:31 → 0 y 12:29 → 1. Con 60 volvió el conflicto. Las
+  superposiciones no se guardan: se calculan cada vez con el margen actual.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-19
+Módulo: games
+Descripción: Fixture del Representante y vista del staff
+Precondiciones: los partidos de los casos anteriores.
+Pasos:
+  1. Como Rep, ver Partidos con los filtros. 2. Como Coach16, ver Partidos (Próximos partidos).
+Datos de entrada: filtro de estado Cancelados.
+Resultado esperado: el fixture agrupado por día, con el chip "{n} con conflicto" en los partidos con superposición; el
+  filtro devuelve solo los cancelados. La entrenadora ve los partidos de sus categorías desde hoy.
+Resultado obtenido: GET /games → el partido de Sub-16 con conflictCount 1; con state=Cancelado, los 2 cancelados.
+  GET /games/assigned de Coach16 → los 4 de Sub-16 desde hoy. Falta ver las pantallas en el navegador y en el celular.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-20
+Módulo: games
+Descripción: Columna game.isHome con la base recreada sin perder datos
+Precondiciones: base con datos.
+Pasos:
+  1. npm run db:snapshot. 2. DB_FORCE_SYNC=true, npm run dev, volver a false. 3. npm run db:restore.
+Datos de entrada: —
+Resultado esperado: la columna existe (TINYINT(1) NOT NULL DEFAULT 1), las filas son las mismas y la integridad da bien.
+Resultado obtenido: snapshot de 259 filas; después del restore, las mismas cantidades en las 24 tablas, isHome
+  tinyint(1) NOT NULL DEFAULT 1 y DVH/DVV correctos.
+Estado: Aprobado

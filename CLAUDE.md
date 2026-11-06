@@ -15,6 +15,7 @@ Plataforma web de gestión para clubes deportivos (proyecto integrador escolar).
   - `user.email` admite NULL (sigue siendo único): es obligatorio para mayores de 18 y opcional para menores. La regla va en los services.
   - `user.phone` es `VARCHAR(255)` y se guarda cifrado con AES (getter y setter en el modelo).
   - `league` suma `ageScale` (1 o 2) y `category` suma `ageGroup` (código de la escala, ver `AGE_SCALES`).
+  - `game` suma `isHome` (`BOOLEAN NOT NULL DEFAULT true`): partido de local o de visitante.
   - `notification` suma `batchId` (`CHAR(36)` NULL): identifica las notificaciones de un mismo aviso general; las del sistema lo tienen en NULL.
   - `club` suma `accentColor` (`VARCHAR(7)`, color propio del club) y `extraInfo` (JSON: WhatsApp, horarios de secretaría, canchas y horarios de entrenamiento).
 - `docs/pruebas/`: casos de prueba documentados en `.txt`, uno por módulo (ver "Pruebas").
@@ -223,6 +224,13 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 - **Jugadora asignable:** socia ACTIVE o SUSPENDED con inscripción Aprobada en el deporte de la liga y que cumple la edad de la categoría. Puede estar en varias categorías. **Staff asignable:** staff activo con rol Entrenadora o Preparadora física, del mismo deporte.
 - **Socias o staff dados de baja** no se quitan solos de las categorías: los demás módulos los excluyen al consultar.
 - Los demás módulos usan las funciones de `leagues.service.js` (`getActivePlayersOfCategory`, `getCategoriesOfMember`, `getCategoriesOfStaff`, `isStaffAssignedToCategory`, `removeMemberFromSportCategories`) en lugar de consultar `categoryPlayer` y `categoryStaff` por su cuenta.
+
+## Partidos y conflictos (módulo `games`)
+
+- Cada partido es de una categoría y lo gestiona `games.manage` con el alcance por deporte de `getLeagueScope`. `season` se completa con el año de la fecha. Solo se editan los Programados; Jugado se marca después de la fecha; Cancelado cancela sus citaciones y avisa a las citadas.
+- **Superposición:** dos partidos Programados de una misma jugadora chocan si entre el fin del primero (inicio + `GAME_DURATION_MINUTES`, 120) y el inicio del segundo hay menos minutos que `club.conflictMargin`. Se calcula siempre con `findConflictsForGame` / `listConflicts` de `games.service.js`: **no se guarda**.
+- **Al guardar un partido no se bloquea:** se avisa (`check-conflicts` antes de guardar y `conflicts` en la respuesta) y se notifica `SCHEDULE_CONFLICT` a las entrenadoras.
+- **Resolución:** solo en la bitácora (`CONFLICT_RESOLVED`, con `conflictKey = "{memberId}:{idMenor}-{idMayor}"` y el partido elegido en `details`). Se consulta con `getConflictResolutions`.
 
 ## Lista de tareas (`docs/TODO.md`)
 

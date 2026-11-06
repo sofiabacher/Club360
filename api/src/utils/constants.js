@@ -122,7 +122,14 @@ const LOG_ACTIONS = {
     STAFF_UNASSIGNED: { message: 'Quita de staff de una categoría', criticity: CRITICITY.MEDIUM },
 
     // Notificaciones
-    NOTIFICATION_SENT: { message: 'Envío de aviso general', criticity: CRITICITY.MEDIUM }
+    NOTIFICATION_SENT: { message: 'Envío de aviso general', criticity: CRITICITY.MEDIUM },
+
+    // Partidos y conflictos de horario. La cancelación es HIGH: cancela citaciones y avisa a las jugadoras
+    GAME_CREATED: { message: 'Alta de partido', criticity: CRITICITY.MEDIUM },
+    GAME_UPDATED: { message: 'Modificación de partido', criticity: CRITICITY.MEDIUM },
+    GAME_PLAYED: { message: 'Partido marcado como jugado', criticity: CRITICITY.MEDIUM },
+    GAME_CANCELLED: { message: 'Cancelación de partido', criticity: CRITICITY.HIGH },
+    CONFLICT_RESOLVED: { message: 'Resolución de conflicto de horario', criticity: CRITICITY.MEDIUM }
 }
 
 // Intentos fallidos de login antes de bloquear al usuario
@@ -200,6 +207,10 @@ const NOTIFICATION_TYPES = {
     GENERAL: { email: 'optional' }          // Avisos generales del Admin, el Representante y la Entrenadora
 }
 
+// Duración de un partido para calcular las superposiciones de horario (games.service).
+// El modelo no guarda la duración: se asume 2 horas por partido (decisión del 01/11/2026).
+const GAME_DURATION_MINUTES = 120
+
 // Grupo de edad de una escala por su code (undefined si no es de esa escala)
 const findAgeGroup = (ageScale, code) => AGE_SCALES[ageScale]?.find(group => group.code === code)
 
@@ -221,5 +232,6 @@ module.exports = {
     AGE_SCALES,
     AGE_SCALE_LABELS,
     findAgeGroup,
-    NOTIFICATION_TYPES
+    NOTIFICATION_TYPES,
+    GAME_DURATION_MINUTES
 }

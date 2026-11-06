@@ -9,6 +9,7 @@ const Game = sequelize.define('Game', {
     rival: { type: DataTypes.STRING(100), allowNull: false },
     dateTime: { type: DataTypes.DATE, allowNull: false },
     address: { type: DataTypes.STRING(200), allowNull: false },
+    isHome: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },   // true: de local (la dirección es una cancha del club); false: de visitante
     gameState: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },   // Estado: GAME_STATES en utils/constants.js
     dvh: { type: DataTypes.INTEGER, allowNull: true }
 }, {

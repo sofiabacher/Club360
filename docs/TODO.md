@@ -73,18 +73,18 @@ Seguimiento de todo lo que falta para entregar el proyecto: desarrollo, entregab
 - [ ] Baja inmediata de un deporte desde el perfil del Socio: cancela la inscripción, lo saca de sus categorías, cancela sus citaciones pendientes de ese deporte, quita el rol Jugadora si no le queda otro deporte y notifica al Representante (D4, contexto 3.3.1)
 - [x] Ligas y categorías: crear, modificar, eliminar (P09: baja lógica con cascada a las categorías, escalas de edad del vóley con `league.ageScale` y `category.ageGroup`, alcance del Representante por deporte)
 - [x] Asignación de jugadoras y staff a las categorías (P09: jugadoras con inscripción Aprobada y la edad de la categoría; Entrenadoras y Preparadoras físicas del deporte; funciones para los módulos que vienen en `leagues.service.js`)
-- [ ] Partidos (fixture) con dirección de la cancha
-- [ ] Marcar un partido como Jugado (Representante)
-- [ ] Cancelar un partido: pasa sus citaciones a Cancelada y notifica a las jugadoras citadas
-- [ ] Detección de superposición de horarios según el margen del club
-- [ ] Resolución de conflictos entre entrenadoras, registrada en bitácora
+- [x] Partidos (fixture) con dirección de la cancha (P11: local con las canchas del club o visitante con la dirección escrita, `game.isHome`, temporada automática)
+- [x] Marcar un partido como Jugado (Representante) (P11: solo después de la fecha y hora)
+- [x] Cancelar un partido: pasa sus citaciones a Cancelada y notifica a las jugadoras citadas (P11; con motivo en la bitácora)
+- [x] Detección de superposición de horarios según el margen del club (P11: duración asumida de 2 horas, aviso antes de guardar y notificación a las entrenadoras)
+- [x] Resolución de conflictos entre entrenadoras, registrada en bitácora (P11: `CONFLICT_RESOLVED` con la `conflictKey`)
 - [ ] Citaciones: mínimo 2 días antes, sin jugadoras con mora vencida, solo para partidos Programados
 - [ ] Respuesta a la citación: confirmar o rechazar con justificación dentro de las 24 hs
 - [ ] Job: confirmación automática de las citaciones sin respuesta
 - [ ] Rutinas semanales por categoría (texto, imagen, link de video) con historial
-- [~] Front: pantallas del Representante, la Entrenadora y la Preparadora física — ligas y Mis categorías hechas (P09)
+- [~] Front: pantallas del Representante, la Entrenadora y la Preparadora física — ligas y Mis categorías hechas (P09); partidos y conflictos (P11)
 - [ ] Front: dashboard de la Jugadora (fixtures y citaciones, separados si juega en 2 ligas, y rutina)
-- [ ] Front: vista de solo lectura para la Familia
+- [~] Front: vista de solo lectura para la Familia — partidos de las jugadoras vinculadas hechos (P11)
 
 ## Fase 5 — Cuotas y pagos
 
@@ -135,7 +135,7 @@ Formato de referencia: el PDF de HotelDesk.
 - [ ] Especificación de funcionalidad (casos de uso)
 - [ ] Diseño de seguridad técnica: encriptación, dígitos verificadores, patentes y familias
 - [ ] Estrategias de base de datos: backup/restore e integridad (sin particiones)
-- [~] Casos de prueba en `.txt`, uno por módulo, en `docs/pruebas/` (D9; formato en `CLAUDE.md`, "Pruebas"). Hecho: `docs/pruebas/access.txt` (P06), `docs/pruebas/clubs.txt` y `docs/pruebas/members.txt` (P07), `docs/pruebas/staff.txt` y los casos de vínculo familiar en `members.txt` (P08), `docs/pruebas/leagues.txt` (P09), `docs/pruebas/notifications.txt` (P10 y P10b)
+- [~] Casos de prueba en `.txt`, uno por módulo, en `docs/pruebas/` (D9; formato en `CLAUDE.md`, "Pruebas"). Hecho: `docs/pruebas/access.txt` (P06), `docs/pruebas/clubs.txt` y `docs/pruebas/members.txt` (P07), `docs/pruebas/staff.txt` y los casos de vínculo familiar en `members.txt` (P08), `docs/pruebas/leagues.txt` (P09), `docs/pruebas/notifications.txt` (P10 y P10b), `docs/pruebas/games.txt` (P11)
 - [ ] Manuales de usuario
 - [ ] Armado del documento final con todo lo anterior
 
@@ -172,6 +172,7 @@ Cada una se resuelve en el chat de Claude y se registra en el documento de conte
 
 Lo terminado, con la fecha. Lo más reciente arriba.
 
+- 01/11/2026 — Partidos y superposiciones (P11): `game.isHome` (base recreada con db:snapshot y db:restore). Módulo `games`: fixture con alta, edición, jugado y cancelación (cancela las citaciones y avisa a las citadas); detección de superposiciones de horario calculada siempre (`findConflictsForGame`, `listConflicts`, duración asumida de 2 horas y el margen del club), aviso antes de guardar y notificación a las entrenadoras; resolución entre entrenadoras en la bitácora (`CONFLICT_RESOLVED`, `getConflictResolutions`). Front: Partidos del Representante con el aviso en vivo, Partidos del staff con la pestaña de conflictos, Mis partidos y los partidos de la Familia. Casos en `docs/pruebas/games.txt`. Verificado con un script contra la base local y con el build del front
 - 01/11/2026 — Detalle e historial de notificaciones (P10b): `notification.batchId` (un valor por aviso general) y los comandos `npm run db:snapshot` y `npm run db:restore` para recrear la base conservando los datos (pasos en el README, "Cambios en el modelo"); base local recreada así. Detalle de una notificación en una ventana flotante (campana y listado) con el botón "Ir a…", `GET /notifications/:id`, e historial de avisos enviados con lectura (el Admin ve todos, con filtro por remitente; el resto, los suyos). Casos en `docs/pruebas/notifications.txt`. Verificado con scripts contra la base local y con el build del front
 - 31/10/2026 — Emails con Gmail y notificaciones (P10): nodemailer con Gmail SMTP en lugar de Resend (por consola en desarrollo sin credenciales, verificación al arrancar). `notify()` con `NOTIFICATION_TYPES` como única fuente del canal, familias de los menores, emails después del commit y en segundo plano, y errores de email en la bitácora. Módulo `notifications`: listado, contador y lectura; avisos generales del Admin (todo el club o por grupos), el Representante (su deporte) y la Entrenadora (sus categorías), con resumen previo. Front: campana con contador, Notificaciones y Enviar avisos. Casos documentados en `docs/pruebas/notifications.txt`. Verificado con un script contra la base local y con el build del front
 - 28/10/2026 — Ligas y categorías (P09): `league.ageScale` y `category.ageGroup` con las escalas de edad del vóley (`AGE_SCALES`) y la edad de temporada (`getSeasonAge`); base local recreada. Módulo `leagues`: ligas y categorías (alta, modificación, baja lógica con cascada y reactivación), asignación de jugadoras (inscripción Aprobada, Activa o Suspendida, edad máxima de la categoría) y de staff (Entrenadora o Preparadora física del deporte), alcance del Representante por su deporte (`getLeagueScope`), Mis categorías y las funciones para los módulos que vienen. Front: Ligas y categorías, detalle de la categoría con sus jugadoras y su staff, y Mis categorías. Casos documentados en `docs/pruebas/leagues.txt`. Verificado con un script contra la base local y con el build del front

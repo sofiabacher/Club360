@@ -35,6 +35,36 @@ export function formatDateTimeLong(value) {
   return format(typeof value === 'string' ? parseISO(value) : value, "EEEE d 'de' MMMM, HH:mm", { locale: es })
 }
 
+const toDate = (value) => (typeof value === 'string' ? parseISO(value) : value)
+const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1)
+
+// Encabezado de un día del fixture: 'Sábado 7 de noviembre'
+export function formatDayHeader(value) {
+  return capitalize(format(toDate(value), "EEEE d 'de' MMMM", { locale: es }))
+}
+
+// Hora: '18:30'
+export function formatTime(value) {
+  return format(toDate(value), 'HH:mm')
+}
+
+// Fecha de un partido en grande: 'SÁB 7/11 · 18:30'
+export function formatGameDate(value) {
+  const date = toDate(value)
+  return `${format(date, 'EEE', { locale: es }).replace('.', '').toUpperCase()} ${format(date, 'd/M')} · ${format(date, 'HH:mm')}`
+}
+
+// Día y hora cortos: 'sáb. 7/11 18:30'
+export function formatShortDateTime(value) {
+  const date = toDate(value)
+  return `${format(date, 'EEE', { locale: es })} ${format(date, 'd/M HH:mm')}`
+}
+
+// Link de Google Maps para una dirección
+export function getMapsUrl(address) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+}
+
 // Fecha relativa: 'hace 2 horas', 'hace 3 días'
 export function formatRelative(value) {
   if (!value) return ''

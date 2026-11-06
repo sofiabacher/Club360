@@ -57,6 +57,7 @@ async function getLeagueScope(user, { transaction } = {}) {
     return { clubId: user.clubId, clubSportId: null }
 }
 
+// Condición de las ligas dentro del alcance (la usan también los partidos)
 const leagueWhere = (scope) => ({ clubId: scope.clubId, ...(scope.clubSportId && { clubSportId: scope.clubSportId }) })
 
 async function findScopedLeague(scope, leagueId, options = {}) {
@@ -400,7 +401,7 @@ async function getAssignedStaff(clubId, categoryId, { transaction } = {}) {
     return rows
         .map(row => {
             const roles = rolesByUser.get(row.staff.userId)
-            return { staffId: row.staff.id, name: fullNameOf(row.staff.user), roles, isActiveStaff: roles.length > 0 }
+            return { staffId: row.staff.id, userId: row.staff.userId, name: fullNameOf(row.staff.user), roles, isActiveStaff: roles.length > 0 }
         })
         .sort(byName)
 }
@@ -710,6 +711,12 @@ const formatAssignedCategory = ({ category }) => {
 
 const byLeagueAndName = (a, b) => a.league.name.localeCompare(b.league.name, 'es') || a.name.localeCompare(b.name, 'es')
 
+// Staff asignado a la categoría que sigue siendo staff activo: [{ staffId, userId, name, roles }]
+async function getActiveStaffOfCategory(clubId, categoryId, { transaction } = {}) {
+    const staff = await getAssignedStaff(clubId, categoryId, { transaction })
+    return staff.filter(item => item.isActiveStaff).map(({ staffId, userId, name, roles }) => ({ staffId, userId, name, roles }))
+}
+
 // Categorías activas en las que está una socia, con su liga
 async function getCategoriesOfMember(clubId, memberId, { transaction } = {}) {
     const rows = await CategoryPlayer.findAll({ where: { memberId, isActive: true }, include: [includeActiveCategory(clubId)], transaction })
@@ -781,6 +788,7 @@ async function getMyCategories(user, { year = currentYear() } = {}) {
 
 module.exports = {
     getLeagueScope,
+    leagueWhere,
     listLeagues,
     createLeague,
     updateLeague,
@@ -801,6 +809,7 @@ module.exports = {
     getActivePlayersOfCategory,
     getCategoriesOfMember,
     getCategoriesOfStaff,
+    getActiveStaffOfCategory,
     isStaffAssignedToCategory,
     removeMemberFromSportCategories
 }

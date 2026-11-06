@@ -31,6 +31,10 @@ import MyCategoriesPage from '../pages/leagues/MyCategoriesPage.jsx'
 import NotificationsPage from '../pages/notifications/NotificationsPage.jsx'
 import SendNoticePage from '../pages/notifications/SendNoticePage.jsx'
 import SentNoticesPage from '../pages/notifications/SentNoticesPage.jsx'
+import GamesPage from '../pages/games/GamesPage.jsx'
+import AssignedGamesPage from '../pages/games/AssignedGamesPage.jsx'
+import MyGamesPage from '../pages/games/MyGamesPage.jsx'
+import FamilyGamesPage from '../pages/games/FamilyGamesPage.jsx'
 import { getMenuRoutes } from '../navigation/menu.js'
 
 // Pantalla de cada path del menú. Mientras una sección no exista, su ruta muestra ComingSoonPage.
@@ -42,6 +46,10 @@ const SCREENS = {
   '/my-categories': MyCategoriesPage,
   '/notifications/send': SendNoticePage,
   '/notifications/sent': SentNoticesPage,
+  '/games': GamesPage,
+  '/games/assigned': AssignedGamesPage,
+  '/my-games': MyGamesPage,
+  '/family/games': FamilyGamesPage,
   '/club': ClubInfoPage,
   '/club/settings': ClubSettingsPage,
   '/club/sports': ClubSportsPage,
