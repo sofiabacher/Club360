@@ -54,6 +54,11 @@ export function formatGameDate(value) {
   return `${format(date, 'EEE', { locale: es }).replace('.', '').toUpperCase()} ${format(date, 'd/M')} · ${format(date, 'HH:mm')}`
 }
 
+// Día de la semana y fecha: 'sábado 14/11'
+export function formatWeekdayDay(value) {
+  return format(toDate(value), 'EEEE d/M', { locale: es })
+}
+
 // Día y hora cortos: 'sáb. 7/11 18:30'
 export function formatShortDateTime(value) {
   const date = toDate(value)

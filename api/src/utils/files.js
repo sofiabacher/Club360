@@ -10,6 +10,7 @@ const PUBLIC_PREFIX = '/uploads/'
 // Carpetas dentro de uploads/. Uso: upload(UPLOAD_FOLDERS.AVATARS).single('photo')
 const UPLOAD_FOLDERS = {
     AVATARS: 'avatars',
+    ROUTINES: 'routines',
     RECEIPTS: 'receipts'   // Comprobantes de transferencias: NO son públicos (ver PRIVATE_UPLOAD_FOLDERS)
 }
 
@@ -57,8 +58,22 @@ async function deleteUpload(publicPath) {
     }
 }
 
+// Borra el archivo que acaba de subir multer (req.file) cuando la request no sigue (por ejemplo, datos inválidos)
+async function discardUploadedFile(file) {
+    if (!file?.path) return
+    const filePath = path.resolve(file.path)
+    if (!filePath.startsWith(UPLOADS_DIR + path.sep)) return
+
+    try {
+        await fs.unlink(filePath)
+    } catch (error) {
+        if (error.code !== 'ENOENT') console.error('No se pudo borrar el archivo subido:', error.message)
+    }
+}
+
 module.exports = {
     UPLOADS_DIR,
+    discardUploadedFile,
     UPLOAD_FOLDERS,
     toPublicPath,
     isPrivateUploadPath,

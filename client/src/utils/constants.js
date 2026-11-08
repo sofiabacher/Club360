@@ -57,6 +57,20 @@ export const CITATION_STATES = {
 }
 
 // game.gameState — PLAYED lo marca a mano el Representante
+// Días de la semana con la numeración ISO (routine.dayOfWeek): 1 lunes … 7 domingo. short: la letra de las pastillas
+export const DAYS_OF_WEEK = [
+    { value: 1, short: 'L', name: 'lunes' },
+    { value: 2, short: 'M', name: 'martes' },
+    { value: 3, short: 'X', name: 'miércoles' },
+    { value: 4, short: 'J', name: 'jueves' },
+    { value: 5, short: 'V', name: 'viernes' },
+    { value: 6, short: 'S', name: 'sábado' },
+    { value: 7, short: 'D', name: 'domingo' }
+]
+
+// Días con rutina: de lunes a viernes (los mismos que ROUTINE_DAYS del back)
+export const ROUTINE_DAYS = DAYS_OF_WEEK.filter((day) => day.value <= 5)
+
 export const GAME_STATES = { 
     SCHEDULED: 1, 
     PLAYED: 2, 

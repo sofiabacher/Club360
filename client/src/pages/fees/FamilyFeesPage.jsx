@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
@@ -15,10 +16,11 @@ import PayFeeDialog from '../../components/fees/PayFeeDialog.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 
 // Estado de cuenta de la Familia (fees.manageLinked): las cuotas de cada jugadora vinculada, con el pago simulado.
-// Con más de una jugadora, un selector
+// Con más de una jugadora, un selector. ?memberId= elige una al entrar (el botón "Pagar" del inicio)
 export default function FamilyFeesPage() {
+  const [searchParams] = useSearchParams()
   const [accounts, setAccounts] = useState(null)
-  const [selectedId, setSelectedId] = useState('')
+  const [selectedId, setSelectedId] = useState(() => Number(searchParams.get('memberId')) || '')
   const [error, setError] = useState('')
   const [paying, setPaying] = useState(null)   // cuota que se está pagando
 

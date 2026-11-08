@@ -1,0 +1,245 @@
+CASOS DE PRUEBA — MÓDULO ROUTINES (RUTINAS SEMANALES)
+=====================================================
+
+Club360 · Prompt 15 · 08/11/2026
+Formato según CLAUDE.md ("Pruebas"). Los resultados obtenidos salen del script de verificación del back (corrido contra
+la base local el 08/11/2026, después de recrear la base con el snapshot y el restore; 60 chequeos aprobados). El script
+usa un club de prueba aparte y borra al final los datos y las imágenes de prueba. Lo que solo se puede comprobar en el
+navegador queda anotado en cada caso.
+
+Precondición general (datos de prueba):
+  - "Liga Metro" con Mayores A y "Liga Federal" con Mayores B, de Vóley (y una categoría dada de baja);
+  - Prepa (Preparadora física de Mayores A), PrepaB (de Mayores B), Coach (Entrenadora de Mayores A) y Gestor (un rol
+    nuevo, no de staff, con routines.manage);
+  - jugadoras: Ana (en Mayores A y Mayores B), Bea (Mayores B), Caro (asignación inactiva en Mayores A), Meni (menor de
+    Mayores A, vinculada a Familia) e Inés (socia Inactiva, en Mayores A);
+  - el 08/11/2026 es domingo: la semana actual es la del 02/11, la siguiente la del 09/11 y la pasada la del 26/10.
+Las pantallas: Deportivo > Rutinas (preparadora y entrenadora) y Mi espacio > Mi rutina (jugadora).
+
+Cambio del 08/11/2026: las rutinas son solo de lunes a viernes (ROUTINE_DAYS, dayOfWeek de 1 a 5). Sábado y domingo no
+tienen pastilla ni se pueden cargar (CP-ROUTINES-15). Script vuelto a correr: 62 chequeos aprobados.
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-01
+Módulo: routines
+Descripción: Cargar la rutina de un día con imagen y video
+Precondiciones: sesión de Prepa.
+Pasos:
+  1. En Rutinas, elegir Mayores A, ir a la semana del 09/11 y tocar la pastilla M (martes).
+  2. Completar título, descripción (varias líneas), imagen y link del video. Tocar "Publicar".
+Datos de entrada: "Fuerza y saltos"; descripción en tres líneas; rutina.png; https://www.youtube.com/watch?v=abc123.
+Resultado esperado: se crea la rutina del martes 10/11 (weekStart lunes 09/11, dayOfWeek 2), con la imagen en
+  uploads/routines y el video. La pastilla M queda verde. Queda en la bitácora "Rutina publicada" con la categoría, la
+  semana y el día. El botón dice "Guardar cambios" desde ahí.
+Resultado obtenido: 201, date 2026-11-10, imageUrl /uploads/routines/....png, videoUrl guardado; bitácora
+  ROUTINE_CREATED "Mayores A (Liga Metro), semana del 09/11, martes: Fuerza y saltos". Falta verlo en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-02
+Módulo: routines
+Descripción: Datos inválidos al cargar
+Precondiciones: sesión de Prepa.
+Pasos:
+  1. Intentar publicar sin título, con un título de 2 caracteres, sin descripción, con más de 3000 caracteres, con un video
+     ftp:// y con un PDF como imagen.
+Datos de entrada: los indicados.
+Resultado esperado: se rechaza cada uno (400) con el mensaje del campo, y la imagen subida no queda suelta. En la
+  pantalla, el error aparece debajo del campo y "Publicar" no envía hasta que esté todo bien.
+Resultado obtenido: 400 en los seis casos; uploads/routines quedó igual que antes.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-03
+Módulo: routines
+Descripción: Un día que ya tiene rutina
+Precondiciones: CP-ROUTINES-01.
+Pasos:
+  1. Pedir la carga de otra rutina para el martes 10/11 de Mayores A.
+Datos de entrada: —
+Resultado esperado: 409 "Ese día ya tiene una rutina cargada. Editala en lugar de crear otra." La base tampoco acepta el
+  duplicado (índice único categoryId, weekStart, dayOfWeek). En la pantalla no pasa, porque ese día se abre en edición.
+Resultado obtenido: 409 con ese mensaje; un Routine.create directo da UniqueConstraintError.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-04
+Módulo: routines
+Descripción: Una semana que no empieza el lunes
+Precondiciones: sesión de Prepa.
+Pasos:
+  1. Pedir la carga (o la consulta) con weekStart 2026-11-11 (miércoles).
+Datos de entrada: weekStart 2026-11-11.
+Resultado esperado: 400 "La semana tiene que empezar un lunes (AAAA-MM-DD)." Un día 8 también se rechaza.
+Resultado obtenido: 400 en la carga y en la consulta; dayOfWeek 8 → 400.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-05
+Módulo: routines
+Descripción: Alcance de la carga
+Precondiciones: sesión de Prepa, de Coach y de Ana.
+Pasos:
+  1. Como Prepa, cargar en Mayores B. 2. Como Prepa, cargar en la semana pasada (26/10). 3. Como Coach, cargar en
+     Mayores A. 4. Como Ana (Jugadora), cargar.
+Datos de entrada: —
+Resultado esperado: 1 → 404 (no es su categoría). 2 → 400 "Las rutinas de semanas pasadas no se pueden modificar."
+  3 y 4 → 403. Gestor (rol nuevo con routines.manage, no es staff) trabaja con todas las categorías activas del club.
+Resultado obtenido: 404, 400 con ese mensaje, 403 y 403. getRoutineScope de Prepa: [Mayores A]; de Gestor: Mayores A y
+  Mayores B (sin la dada de baja); Gestor pudo editar la rutina de Mayores A.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-06
+Módulo: routines
+Descripción: Editar una rutina
+Precondiciones: CP-ROUTINES-01.
+Pasos:
+  1. Como Prepa, abrir el martes, cambiar el título, borrar el link del video, elegir otra imagen y "Guardar cambios".
+Datos de entrada: "Fuerza, saltos y core"; rutina2.jpg.
+Resultado esperado: se guardan los cambios, la imagen anterior se borra del disco y a las jugadoras de Mayores A les
+  llega "Se actualizó la rutina del martes 10/11 de Mayores A."
+Resultado obtenido: 200; videoUrl null, imagen .jpg nueva y la .png anterior borrada; aviso con ese texto. PrepaB
+  (otra categoría) → 404.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-07
+Módulo: routines
+Descripción: Quitar la imagen
+Precondiciones: CP-ROUTINES-06.
+Pasos:
+  1. Tocar "Quitar imagen" y "Guardar cambios".
+Datos de entrada: removeImage = true.
+Resultado esperado: la rutina queda sin imagen y el archivo se borra del disco.
+Resultado obtenido: imageUrl null y el archivo .jpg borrado.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-08
+Módulo: routines
+Descripción: Borrar una rutina
+Precondiciones: una rutina del jueves 12/11 con imagen.
+Pasos:
+  1. Como Prepa, abrir el jueves, "Borrar rutina" y confirmar. 2. Como Coach, intentar borrar.
+Datos de entrada: —
+Resultado esperado: se borra (físicamente) con su imagen, sin aviso a las jugadoras, y queda en la bitácora con la
+  categoría, la semana y el día. El DVV de routine se recalcula. La entrenadora no puede borrar (403). Las rutinas de
+  semanas pasadas no se editan ni se borran (400).
+Resultado obtenido: 200; la rutina y la imagen ya no están; ninguna notificación nueva; DVV guardado = DVV calculado;
+  bitácora ROUTINE_DELETED "Mayores A (Liga Metro), semana del 09/11, jueves: Técnica". Coach → 403. Editar y borrar la
+  de la semana pasada → 400.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-09
+Módulo: routines
+Descripción: A quién le llega el aviso
+Precondiciones: CP-ROUTINES-01.
+Pasos:
+  1. Revisar la campana de Ana, Meni, Bea, Caro, Inés y Familia.
+Datos de entrada: —
+Resultado esperado: les llega "Se publicó la rutina del martes 10/11 de Mayores A." (solo in-app) a las jugadoras activas
+  de Mayores A (Ana y Meni). No a Bea (otra categoría), a Caro (asignación inactiva), a Inés (Inactiva) ni a la familia.
+  Tocar el aviso lleva a Mi rutina.
+Resultado obtenido: Ana y Meni lo recibieron con ese texto; Bea, Caro, Inés y Familia no; no salió por email.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-10
+Módulo: routines
+Descripción: La jugadora en dos categorías
+Precondiciones: rutinas de la semana del 09/11 en Mayores A (martes) y Mayores B (lunes).
+Pasos:
+  1. Como Ana, en Mi rutina, ir a la semana siguiente y pasar de una pestaña a la otra.
+  2. Ir a la semana pasada.
+Datos de entrada: —
+Resultado esperado: una pestaña por categoría con el nombre de la liga, cada una con sus días de lunes a viernes. La semana actual se abre
+  con hoy elegido (un punto debajo de la pastilla). Puede ver semanas pasadas y futuras. Bea ve solo Mayores B.
+Resultado obtenido: /routines/mine trae Mayores A (Liga Metro) y Mayores B (Liga Federal), con 5 días cada una y las
+  rutinas en el día correcto; sin weekStart, la semana actual; la semana pasada también se ve. Bea: una categoría. Un
+  usuario sin routines.viewOwn → 403. Falta verlo en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-11
+Módulo: routines
+Descripción: La entrenadora consulta sus categorías
+Precondiciones: CP-ROUTINES-06.
+Pasos:
+  1. Como Coach, en Rutinas, ver Mayores A en la semana del 09/11. 2. Pedir Mayores B.
+Datos de entrada: —
+Resultado esperado: ve la semana y los partidos en solo lectura (sin editor ni botones). Mayores B → 404.
+Resultado obtenido: 200 con editable false y la rutina del martes; Mayores B → 404.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-12
+Módulo: routines
+Descripción: Partidos de la semana e historial de semanas
+Precondiciones: un partido de Mayores A el sábado 14/11 y otro el lunes 16/11; rutinas en las semanas del 26/10 y del 09/11.
+Pasos:
+  1. Como Prepa, abrir la semana del 09/11 de Mayores A. 2. Mirar "Semanas cargadas" y saltar a la del 26/10.
+Datos de entrada: —
+Resultado esperado: la tarjeta de partidos muestra solo el del 14/11 (fecha, rival y Local). El historial lista las dos
+  semanas, de la más reciente a la más vieja, con cuántos días tiene cada una. La semana del 26/10 se abre con el aviso
+  "Las semanas pasadas son solo de consulta."
+Resultado obtenido: games con un partido (Atlético Ribera, Local); weeks: [09/11, 1 día], [26/10, 1 día]; la semana del
+  26/10 trae editable false.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-13
+Módulo: routines
+Descripción: El lunes de la semana en la hora de Argentina
+Precondiciones: —
+Pasos:
+  1. Calcular getWeekStart del domingo 15/11 a las 23:30 (Argentina) y del lunes 16/11 a las 00:10.
+Datos de entrada: —
+Resultado esperado: el domingo es de la semana del lunes 09/11 (no del 16/11, aunque en UTC ya sea lunes); el lunes
+  00:10 es de la semana del 16/11.
+Resultado obtenido: 2026-11-09 y 2026-11-16.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-14
+Módulo: routines
+Descripción: Integridad
+Precondiciones: base recreada con el campo dayOfWeek (snapshot, DB_FORCE_SYNC y restore).
+Pasos:
+  1. Verificar DVH y DVV de todas las tablas después del restore, con los datos de prueba y después de borrarlos.
+Datos de entrada: —
+Resultado esperado: todo correcto, también después de borrar rutinas (afterDestroy recalcula el DVV).
+Resultado obtenido: DVH y DVV correctos en las tres verificaciones.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-15
+Módulo: routines
+Descripción: Solo de lunes a viernes
+Precondiciones: sesión de Prepa.
+Pasos:
+  1. En Rutinas, abrir una semana editable y mirar las pastillas. 2. Pedir la carga de una rutina para el sábado (6) y
+     el domingo (7). 3. Como Ana, abrir Mi rutina.
+Datos de entrada: dayOfWeek 6 y 7.
+Resultado esperado: solo hay pastillas L, M, X, J y V (también al editar). La carga del sábado o del domingo se rechaza
+  (400): "Las rutinas se cargan de lunes a viernes: el día tiene que ser un número del 1 (lunes) al 5 (viernes)." La
+  semana y Mi rutina traen 5 días. Los partidos del fin de semana igual aparecen en "Partidos de la semana".
+Resultado obtenido: dayOfWeek 6 y 7 → 400 con ese mensaje; GET /routines y /routines/mine traen 5 días (el último, el
+  viernes); el partido del sábado 14/11 aparece en los partidos de la semana. Falta ver las pastillas en el navegador.
+Estado: Aprobado

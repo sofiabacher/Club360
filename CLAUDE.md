@@ -17,6 +17,7 @@ Plataforma web de gestión para clubes deportivos (proyecto integrador escolar).
   - `league` suma `ageScale` (1 o 2) y `category` suma `ageGroup` (código de la escala, ver `AGE_SCALES`).
   - `game` suma `isHome` (`BOOLEAN NOT NULL DEFAULT true`): partido de local o de visitante.
   - `notification` suma `batchId` (`CHAR(36)` NULL): identifica las notificaciones de un mismo aviso general; las del sistema lo tienen en NULL.
+  - `routine` suma `dayOfWeek` (`TINYINT NOT NULL DEFAULT 1`, `DAYS_OF_WEEK`, 1 lunes … 7 domingo), con índice único `(categoryId, weekStart, dayOfWeek)`. `weekStart` es siempre lunes.
   - `payment` suma `method` (`TINYINT NOT NULL DEFAULT 1`, `PAYMENT_METHODS`: 1 tarjeta, 2 transferencia, 3 secretaría), `receiptUrl` (`VARCHAR(255)` NULL) y `note` (`VARCHAR(300)` NULL).
   - `club` suma `accentColor` (`VARCHAR(7)`, color propio del club) y `extraInfo` (JSON: WhatsApp, horarios de secretaría, canchas y horarios de entrenamiento).
 - `docs/pruebas/`: casos de prueba documentados en `.txt`, uno por módulo (ver "Pruebas").
@@ -260,6 +261,18 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 - **Comprobantes adjuntos:** nunca por `/uploads` público. Se descargan con `GET /fees/payments/:id/receipt-file` (con sesión: `fees.manage`, quien pagó, el socio o su adulto; si no, 404). En Cloudinary van como recurso `raw` privado.
 - **Comprobante de pago:** todo pago Aprobado (cualquier medio) tiene uno (`GET /fees/payments/:id/voucher` y la página `/fees/payments/:id/voucher`). De la tarjeta solo se guardan los últimos 4 dígitos, en `note` ("Tarjeta ****1234").
 - **Formulario de tarjeta:** el número se muestra en grupos de 4 con guiones mientras se escribe, pero se envían solo los dígitos.
+
+## Rutinas (módulo `routines`)
+
+- Una rutina por **categoría y día** (`weekStart` lunes + `dayOfWeek`). Las fechas de semana salen de `getWeekStart` / `getCurrentWeekStart` de `utils/dates.js` (zona horaria de Argentina).
+- **Alcance** (`getRoutineScope`): la preparadora, sus categorías (`getCategoriesOfStaff`); un usuario con `routines.manage` que no es staff, todas las del club. La entrenadora consulta las suyas y la jugadora las de `getCategoriesOfMember`.
+- Se cargan, editan y borran solo rutinas de la **semana actual o futuras**; las pasadas son de solo lectura. El borrado es físico (nada depende de `routine`) y se registra en la bitácora.
+- Crear o editar avisa `ROUTINE_PUBLISHED` (in-app) a las jugadoras activas de la categoría; borrar no avisa.
+
+## Panel de inicio (`HomePage`)
+
+- Se elige **por permisos**: `citations.respond` + `games.viewOwn` → `PlayerHome`; si no, `games.viewLinked` + `fees.manageLinked` → `FamilyHome`; si no, los accesos rápidos.
+- Los paneles usan los endpoints existentes de cada módulo (`/games/mine`, `/citations/mine`, `/fees/mine`, `/routines/mine` y sus `linked`). No hay módulo ni endpoint de "dashboard". Cada bloque carga y falla por separado.
 
 ## Lista de tareas (`docs/TODO.md`)
 

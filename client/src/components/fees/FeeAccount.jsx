@@ -1,5 +1,4 @@
 import { Link as RouterLink } from 'react-router-dom'
-import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
@@ -15,6 +14,7 @@ import ReceiptRounded from '@mui/icons-material/ReceiptRounded'
 import EmptyState from '../common/EmptyState.jsx'
 import StatusChip from '../common/StatusChip.jsx'
 import FeeStateChip from './FeeStateChip.jsx'
+import SuspensionAlert from './SuspensionAlert.jsx'
 import { PAYMENT_CHIPS, PAYMENT_METHOD_LABELS } from './paymentLabels.js'
 import { FEE_STATES, MEMBER_STATES } from '../../utils/constants.js'
 import { formatDate, formatDayMonth, formatMoney, formatPeriod } from '../../utils/format.js'
@@ -105,10 +105,7 @@ export default function FeeAccount({ account, onPay, renderAction, payButtonColo
       </Card>
 
       {suspended && (
-        <Alert severity="error">
-          Por tener cuotas impagas hace más de {account.delayFee} días, se perdió la condición de socio. Mientras tanto no se
-          puede ser citada ni inscribirse a deportes. Se recupera sola al regularizar las cuotas.
-        </Alert>
+        <SuspensionAlert delayFee={account.delayFee} />
       )}
 
       {fees.length === 0 ? (

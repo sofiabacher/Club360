@@ -48,6 +48,9 @@ import MemberFeesPage from '../pages/fees/MemberFeesPage.jsx'
 import PlayersFeesPage from '../pages/fees/PlayersFeesPage.jsx'
 import PaymentsHistoryPage from '../pages/fees/PaymentsHistoryPage.jsx'
 import PaymentVoucherPage from '../pages/fees/PaymentVoucherPage.jsx'
+import RoutinesManagePage from '../pages/routines/RoutinesManagePage.jsx'
+import RoutinesAssignedPage from '../pages/routines/RoutinesAssignedPage.jsx'
+import MyRoutinePage from '../pages/routines/MyRoutinePage.jsx'
 import { getMenuRoutes } from '../navigation/menu.js'
 
 // Pantalla de cada path del menú. Mientras una sección no exista, su ruta muestra ComingSoonPage.
@@ -73,6 +76,9 @@ const SCREENS = {
   '/fees': FeesPage,
   '/fees/players': PlayersFeesPage,
   '/fees/payments': PaymentsHistoryPage,
+  '/routines': RoutinesManagePage,
+  '/routines/assigned': RoutinesAssignedPage,
+  '/my-routine': MyRoutinePage,
   '/club': ClubInfoPage,
   '/club/settings': ClubSettingsPage,
   '/club/sports': ClubSportsPage,

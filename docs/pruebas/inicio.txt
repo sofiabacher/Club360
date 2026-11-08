@@ -1,0 +1,149 @@
+CASOS DE PRUEBA — PANEL DE INICIO (HomePage)
+=============================================
+
+Club360 · Prompt 15 · 08/11/2026
+Formato según CLAUDE.md ("Pruebas"). Los paneles se arman en el front con los endpoints existentes de cada módulo
+(/games/mine, /citations/mine, /fees/mine, /routines/mine y sus versiones linked), que ya tienen sus casos en
+games.txt, citations.txt, fees.txt y routines.txt. Estos casos son de pantalla: quedan Pendientes hasta probarlos en el
+navegador (en la compu y en el celular, a unos 375 px).
+
+Precondición general:
+  - una Jugadora citada a un partido de su categoría, con la citación Pendiente y en plazo;
+  - una Jugadora en dos ligas (dos categorías con partidos programados);
+  - un adulto Familia con dos jugadoras vinculadas, una con la cuota de octubre impaga y otra con la de noviembre impaga;
+  - un usuario Familia sin jugadoras vinculadas.
+
+
+--------------------------------------------------
+ID: CP-INICIO-01
+Módulo: inicio
+Descripción: Panel de la Jugadora con una citación pendiente: confirmar desde el inicio
+Precondiciones: sesión de la Jugadora con el rol Jugadora activo.
+Pasos:
+  1. Entrar al inicio. 2. En el próximo partido, tocar "Confirmo".
+Datos de entrada: —
+Resultado esperado: el encabezado dice "Hola, {nombre}" y "Tenés una citación pendiente para el {día}." La tarjeta del
+  partido muestra "PRÓXIMO PARTIDO", la fecha y hora grandes, "vs. {rival}", Local o Visitante, la dirección, el chip
+  "Citación pendiente", la fecha límite y los botones "Confirmo" (el único naranja de la pantalla) y "No puedo ir". Al
+  confirmar: "¡Listo! Confirmaste la citación.", el chip pasa a "Citación confirmada" (verde) y la frase cambia.
+  "No puedo ir" abre el diálogo de justificación de Mis citaciones.
+Resultado obtenido: —
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-INICIO-02
+Módulo: inicio
+Descripción: Panel de la Jugadora con un conflicto resuelto
+Precondiciones: la Jugadora tiene dos partidos superpuestos y la entrenadora eligió el otro.
+Pasos:
+  1. Entrar al inicio.
+Datos de entrada: —
+Resultado esperado: en el partido no elegido aparece "No jugás este partido" y cuál juega, sin los botones.
+Resultado obtenido: —
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-INICIO-03
+Módulo: inicio
+Descripción: Panel de la Jugadora con una cuota vencida
+Precondiciones: la Jugadora (sin citaciones pendientes) tiene una cuota Vencida.
+Pasos:
+  1. Entrar al inicio.
+Datos de entrada: —
+Resultado esperado: la frase dice "Tenés una cuota vencida."; la tarjeta Cuota muestra "Vencida" (rojo), el total
+  adeudado y "Ver mis cuotas". Si está Suspendida, el aviso de la suspensión; con una transferencia en revisión,
+  "Transferencia en revisión". Sin citación pendiente no hay ningún botón naranja.
+Resultado obtenido: —
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-INICIO-04
+Módulo: inicio
+Descripción: Panel de la Jugadora en dos ligas
+Precondiciones: la Jugadora está en dos categorías de ligas distintas.
+Pasos:
+  1. Entrar al inicio.
+Datos de entrada: —
+Resultado esperado: una tarjeta de próximo partido por categoría, con el nombre de la liga como título, cada una con los
+  2 partidos siguientes y "Ver fixture". El carnet muestra "{deporte} · {categoría}" de las dos. La rutina de la semana
+  muestra las pastillas de cada categoría y la rutina de hoy si tiene. En la compu, partido a la izquierda y carnet,
+  cuota y rutina a la derecha; en el celular, una columna con el partido primero.
+Resultado obtenido: —
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-INICIO-05
+Módulo: inicio
+Descripción: Panel de la Jugadora sin partidos
+Precondiciones: la Jugadora no tiene partidos programados (o no está en ninguna categoría).
+Pasos:
+  1. Entrar al inicio.
+Datos de entrada: —
+Resultado esperado: "No hay partidos programados."; si no hay nada urgente, la frase "Estás al día. ¡A entrenar!".
+  Abajo, "Accesos rápidos".
+Resultado obtenido: —
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-INICIO-06
+Módulo: inicio
+Descripción: Panel de la Familia con dos jugadoras
+Precondiciones: sesión del adulto con el rol Familia activo.
+Pasos:
+  1. Entrar al inicio. 2. Tocar "Pagar".
+Datos de entrada: —
+Resultado esperado: la frase dice "La cuota de {jugadora} está vencida." (o la citación pendiente de una, o "Todo al
+  día."). Una tarjeta por jugadora con el número de socio y la categoría, el próximo partido, el estado de su citación con
+  "La responde {jugadora}." si está pendiente, y la cuota con el total adeudado. "Pagar" (naranja) está solo en la
+  jugadora con la cuota impaga más vieja (octubre); la otra muestra "Ver cuotas". "Pagar" lleva a Estado de cuenta con
+  esa jugadora elegida.
+Resultado obtenido: —
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-INICIO-07
+Módulo: inicio
+Descripción: Panel de la Familia sin jugadoras vinculadas
+Precondiciones: un usuario Familia sin jugadoras vinculadas.
+Pasos:
+  1. Entrar al inicio.
+Datos de entrada: —
+Resultado esperado: "Todavía no tenés jugadoras vinculadas." con el botón a Mi cuenta para vincular una, y los accesos
+  rápidos.
+Resultado obtenido: —
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-INICIO-08
+Módulo: inicio
+Descripción: Los demás roles siguen con los accesos rápidos
+Precondiciones: sesión del Admin y de una Entrenadora.
+Pasos:
+  1. Entrar al inicio con cada uno.
+Datos de entrada: —
+Resultado esperado: "Hola, {nombre}", el club y el rol activo, y la grilla de accesos rápidos. El panel se elige por
+  permisos: si la Jugadora cambia al rol Socio (sin citations.respond), también ve los accesos rápidos.
+Resultado obtenido: —
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-INICIO-09
+Módulo: inicio
+Descripción: Un bloque que falla no rompe el panel
+Precondiciones: la API de uno de los módulos responde con error (por ejemplo, la jugadora no es socia y /fees/mine da
+  404).
+Pasos:
+  1. Entrar al inicio.
+Datos de entrada: —
+Resultado esperado: ese bloque muestra su propio error y el resto del panel carga normalmente. Mientras cargan, cada
+  bloque muestra su Skeleton.
+Resultado obtenido: —
+Estado: Pendiente

@@ -388,6 +388,24 @@ module.exports = {
         reasonInvalid: 'Escribí el motivo del rechazo (entre 10 y 300 caracteres).'
     },
 
+    routines: {
+        categoryNotFound: 'No encontramos la categoría.',
+        routineNotFound: 'No encontramos la rutina.',
+        notMember: 'No sos socio del club.',
+        pastWeek: 'Las rutinas de semanas pasadas no se pueden modificar.',
+        dayTaken: 'Ese día ya tiene una rutina cargada. Editala en lugar de crear otra.',
+
+        // Validaciones de formato
+        idInvalid: 'El identificador no es válido.',
+        categoryInvalid: 'Elegí una categoría.',
+        weekStartInvalid: 'La semana tiene que empezar un lunes (AAAA-MM-DD).',
+        dayOfWeekInvalid: 'Las rutinas se cargan de lunes a viernes: el día tiene que ser un número del 1 (lunes) al 5 (viernes).',
+        titleInvalid: 'El título tiene que tener entre 3 y 150 caracteres.',
+        descriptionInvalid: 'Escribí la descripción de la rutina (hasta 3000 caracteres).',
+        videoUrlInvalid: 'El video tiene que ser un link http o https de hasta 255 caracteres.',
+        removeImageInvalid: 'Indicá si se quita la imagen.'
+    },
+
     upload: {
         invalidType: 'El archivo tiene que ser una imagen JPG, PNG o WEBP.',
         invalidReceiptType: 'El comprobante tiene que ser una imagen JPG o PNG, o un PDF.',

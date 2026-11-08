@@ -49,6 +49,34 @@ function dateTimeParts(value) {
     }
 }
 
+// Fecha en Argentina de un momento (Date o ISO), como 'AAAA-MM-DD'
+function dateInArgentina(value) {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE }).format(new Date(value))
+}
+
+// 'AAAA-MM-DD' + días → 'AAAA-MM-DD' (en UTC, para que no influya la zona)
+function addDays(date, days) {
+    const { year, month, day } = dateParts(date)
+    return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
+}
+
+// Día de la semana ISO de una fecha 'AAAA-MM-DD': 1 lunes … 7 domingo
+function isoDayOfWeek(date) {
+    const { year, month, day } = dateParts(date)
+    return new Date(Date.UTC(year, month - 1, day)).getUTCDay() || 7
+}
+
+// Lunes de la semana de una fecha, como DATEONLY ('AAAA-MM-DD'). date: 'AAAA-MM-DD' (se toma tal cual) o un momento
+// (Date o ISO con hora), que se pasa primero a la fecha de Argentina: el domingo 23:30 en Argentina (lunes 02:30 UTC)
+// sigue siendo de esa semana
+function getWeekStart(date = new Date()) {
+    const day = typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : dateInArgentina(date)
+    return addDays(day, 1 - isoDayOfWeek(day))
+}
+
+// Lunes de la semana actual en Argentina
+const getCurrentWeekStart = () => getWeekStart(today())
+
 // Días entre dos fechas 'AAAA-MM-DD' (to − from). Se calculan en UTC para que no influya la hora ni la zona
 function daysBetween(from, to) {
     const toUtc = (date) => {
@@ -60,6 +88,10 @@ function daysBetween(from, to) {
 
 module.exports = {
     today,
+    addDays,
+    isoDayOfWeek,
+    getWeekStart,
+    getCurrentWeekStart,
     daysBetween,
     dateTimeParts,
     getAge,
