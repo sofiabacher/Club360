@@ -84,3 +84,13 @@ export function formatRelative(value) {
   if (!value) return ''
   return formatDistanceToNow(typeof value === 'string' ? parseISO(value) : value, { addSuffix: true, locale: es })
 }
+
+// Período de una cuota: '2026-11' → 'Noviembre 2026'
+export function formatPeriod(period) {
+  return capitalize(format(parseISO(`${period}-01`), 'MMMM yyyy', { locale: es }))
+}
+
+// Día y mes de una fecha: '2026-11-10' → '10/11'
+export function formatDayMonth(value) {
+  return format(toDate(value), 'd/M')
+}

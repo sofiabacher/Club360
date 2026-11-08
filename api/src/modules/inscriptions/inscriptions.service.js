@@ -12,13 +12,13 @@ const { Inscription, Member, User, ClubSport, Sport, Staff, Citation, Game, Cate
 const { getActiveSports } = require('../clubs/clubs.service')
 const { getSportScope, getStaffRolesOfUsers } = require('../staff/staff.service')
 const { getAvailableRoles, assignBaseRole, removeBaseRole } = require('../access/access.service')
-const { removeMemberFromSportCategories } = require('../leagues/leagues.service')
+const { removeMemberFromSportCategories, getActiveStaffOfCategory } = require('../leagues/leagues.service')
 const { notify } = require('../notifications/notifications.service')
 
 const logger = require('../../utils/logger')
 const { createError } = require('../../utils/errors')
 const { generateLoginToken } = require('../../utils/token')
-const { getSeasonAge } = require('../../utils/dates')
+const { getSeasonAge, dateTimeParts } = require('../../utils/dates')
 const { INSCRIPTION_STATES, MEMBER_STATES, CITATION_STATES, BASE_ROLES, LOG_ACTIONS } = require('../../utils/constants')
 const { inscriptions: m } = require('../../utils/messages')
 
@@ -176,19 +176,39 @@ async function requestInscription(actor, { clubSportId }) {
     return { inscription: formatInscription(inscription) }
 }
 
-// Citaciones Pendientes de la socia en partidos futuros del deporte (contexto 3.3.1)
-async function pendingFutureCitations(clubId, memberId, clubSportId, transaction) {
+// Citaciones de la baja: las Pendientes, Confirmadas y Confirmadas automáticamente de la socia en partidos futuros del
+// deporte (contexto 3.3.1). Las Rechazadas y las de partidos que ya pasaron no se tocan
+const WITHDRAW_CANCELLED_STATES = [CITATION_STATES.PENDING, CITATION_STATES.CONFIRMED, CITATION_STATES.AUTO_CONFIRMED]
+const CONFIRMED_STATES = [CITATION_STATES.CONFIRMED, CITATION_STATES.AUTO_CONFIRMED]
+
+async function futureCitationsOfSport(clubId, memberId, clubSportId, transaction) {
     return Citation.findAll({
-        where: { clubId, memberId, citationState: CITATION_STATES.PENDING },
+        where: { clubId, memberId, citationState: WITHDRAW_CANCELLED_STATES },
         include: [{
             model: Game,
             as: 'game',
-            attributes: ['id'],
+            attributes: ['id', 'rival', 'dateTime', 'categoryId'],
             where: { dateTime: { [Op.gt]: new Date() } },
-            include: [{ model: Category, as: 'category', attributes: ['id'], include: [{ model: League, as: 'league', attributes: ['id'], where: { clubSportId } }] }]
+            include: [{ model: Category, as: 'category', attributes: ['id', 'name'], include: [{ model: League, as: 'league', attributes: ['id'], where: { clubSportId } }] }]
         }],
         transaction
     })
+}
+
+// Por cada citación Confirmada que se cancela, aviso CITATION_RESPONSE (in-app) a las entrenadoras activas de la categoría
+async function notifyCoachesOfCancelledConfirmation(clubId, playerName, sportName, game, transaction) {
+    const staff = await getActiveStaffOfCategory(clubId, game.categoryId, { transaction })
+    const coaches = [...new Set(staff.filter(item => item.roles.includes(BASE_ROLES.COACH)).map(item => item.userId))]
+    if (coaches.length === 0) return
+
+    const { weekdayShort, dayMonth } = dateTimeParts(game.dateTime)
+    await notify({
+        clubId,
+        type: 'CITATION_RESPONSE',
+        recipientUserIds: coaches,
+        title: `${playerName} se dio de baja de ${sportName}`,
+        message: `${playerName} se dio de baja de ${sportName}: se canceló su citación confirmada para ${game.category.name} vs. ${game.rival} (${weekdayShort} ${dayMonth}).`
+    }, { transaction })
 }
 
 // Si el socio perdió el rol con el que estaba trabajando, la sesión vieja deja de valer (isAuth): se arma una nueva,
@@ -225,7 +245,7 @@ async function withdraw(actor, inscriptionId) {
 
         if (inscription.inscriptionState === INSCRIPTION_STATES.PENDING) {
             await inscription.update({ inscriptionState: INSCRIPTION_STATES.CANCELLED }, { transaction })
-            return { ...base, withdrawn: false, categories: [], citations: 0, lostPlayerRole: false }
+            return { ...base, withdrawn: false, categories: [], citations: 0, confirmed: 0, lostPlayerRole: false }
         }
 
         if (inscription.inscriptionState !== INSCRIPTION_STATES.APPROVED) throw createError(m.cannotWithdraw, 409)
@@ -234,8 +254,17 @@ async function withdraw(actor, inscriptionId) {
 
         const categories = await removeMemberFromSportCategories(actor.clubId, member.id, inscription.clubSportId, { transaction })
 
-        const citations = await pendingFutureCitations(actor.clubId, member.id, inscription.clubSportId, transaction)
-        for (const citation of citations) await citation.update({ citationState: CITATION_STATES.CANCELLED }, { transaction })
+        const citations = await futureCitationsOfSport(actor.clubId, member.id, inscription.clubSportId, transaction)
+        let confirmed = 0
+        for (const citation of citations) {
+            const wasConfirmed = CONFIRMED_STATES.includes(citation.citationState)
+            await citation.update({ citationState: CITATION_STATES.CANCELLED }, { transaction })
+
+            if (wasConfirmed) {
+                confirmed++
+                await notifyCoachesOfCancelledConfirmation(actor.clubId, fullNameOf(member.user), sportName, citation.game, transaction)
+            }
+        }
 
         const stillApproved = await Inscription.count({ where: { memberId: member.id, inscriptionState: INSCRIPTION_STATES.APPROVED }, transaction })
         const lostPlayerRole = stillApproved === 0 && await removeBaseRole(member.userId, BASE_ROLES.PLAYER, { transaction })
@@ -251,15 +280,15 @@ async function withdraw(actor, inscriptionId) {
             }, { transaction })
         }
 
-        return { ...base, withdrawn: true, categories, citations: citations.length, lostPlayerRole }
+        return { ...base, withdrawn: true, categories, citations: citations.length, confirmed, lostPlayerRole }
     })
 
-    const { inscription, member, sportName, withdrawn, categories, citations, lostPlayerRole } = result
+    const { inscription, member, sportName, withdrawn, categories, citations, confirmed, lostPlayerRole } = result
 
     if (withdrawn) {
         await logger(actorOf(actor), LOG_ACTIONS.SPORT_WITHDRAWN,
             `${memberLabel(member)} en ${sportName} (inscripción ${inscription.id}). Categorías: ${categories.length > 0 ? categories.map(category => `${category.name} (${category.league})`).join(', ') : 'ninguna'}. `
-            + `Citaciones pendientes canceladas: ${citations}. ${lostPlayerRole ? 'Pierde el rol Jugadora.' : 'Conserva el rol Jugadora.'}`)
+            + `Citaciones de partidos futuros canceladas: ${citations} (${confirmed} confirmadas). ${lostPlayerRole ? 'Pierde el rol Jugadora.' : 'Conserva el rol Jugadora.'}`)
     } else {
         await logger(actorOf(actor), LOG_ACTIONS.INSCRIPTION_CANCELLED, `${memberLabel(member)} en ${sportName} (inscripción ${inscription.id})`)
     }
@@ -269,6 +298,7 @@ async function withdraw(actor, inscriptionId) {
         withdrawn,
         removedCategories: categories.length,
         cancelledCitations: citations,
+        cancelledConfirmedCitations: confirmed,
         lostPlayerRole,
         newSession: lostPlayerRole ? await sessionAfterRoleLoss(actor) : null
     }

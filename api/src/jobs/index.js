@@ -1,10 +1,10 @@
 // Tareas programadas (node-cron). Una por archivo, se registran en el array de abajo.
 //
-// Jobs previstos:
-//   generateFees.job.js           Genera la cuota mensual (social + deportiva)
-//   overdueFees.job.js            Marca las cuotas vencidas y envía los avisos de mora desde el primer mes
+// Jobs:
+//   generateFees.job.js           Genera la cuota mensual (social + deportiva) el día 1
+//   feeStatus.job.js              Avisos de cuota por vencer, cuotas vencidas, recordatorios de mora y suspensiones
 //   autoConfirmCitations.job.js   Confirma las citaciones sin respuesta pasadas las 24 hs
-//   backup.job.js                 (opcional) Backup automático de la base
+//   backup.job.js                 (previsto, opcional) Backup automático de la base
 //
 // Cada job exporta { name, schedule, run }:
 //   name       nombre para los mensajes de consola
@@ -13,8 +13,9 @@
 const cron = require('node-cron')
 
 const jobs = [
-    require('./autoConfirmCitations.job')
-    // require('./generateFees.job')
+    require('./autoConfirmCitations.job'),
+    require('./generateFees.job'),
+    require('./feeStatus.job')
 ]
 
 function start() {

@@ -89,7 +89,8 @@ const EXTRA_TITLES = [
   [/^\/staff\/\d+$/, 'Staff'],
   [/^\/staff\/\d+\/edit$/, 'Editar staff'],
   [/^\/leagues\/categories\/\d+$/, 'Categoría'],
-  [/^\/citations\/games\/\d+$/, 'Citaciones del partido']
+  [/^\/citations\/games\/\d+$/, 'Citaciones del partido'],
+  [/^\/fees\/members\/\d+$/, 'Estado de cuenta']
 ]
 
 // Entradas que puede ver el usuario con sus permisos, sin repetir label dentro de un grupo

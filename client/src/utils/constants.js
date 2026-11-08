@@ -92,3 +92,6 @@ export const AGE_SCALE_LABELS = {
 // Ventana para citar (copia de api/src/utils/constants.js): desde 7 días hasta 48 horas antes del partido
 export const CITATION_WINDOW_OPEN_DAYS = 7
 export const CITATION_MIN_HOURS = 48
+
+// Cuotas (copia de api/src/utils/constants.js): se generan el día 1 y vencen el día 10
+export const FEE_DUE_DAY = 10

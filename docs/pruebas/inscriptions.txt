@@ -15,6 +15,10 @@ Precondición general (datos de prueba):
   - DosDeportes: socia con inscripción Aprobada en Vóley y en Futsal.
 Las pantallas: Mi espacio > Deportes (socio) y Gestión > Inscripciones (Representante).
 
+Nota del Prompt 14 (08/11/2026): desde el P14, la baja de un deporte cancela también las citaciones Confirmadas (y
+Confirmadas automáticamente) de partidos futuros, y avisa a las entrenadoras por cada una. El caso 13 está corregido y el
+caso 16 lo verifica.
+
 
 --------------------------------------------------
 ID: CP-INSCRIPTIONS-01
@@ -199,14 +203,15 @@ Pasos:
   2. Ver las categorías, las citaciones, los roles y la campana de RepVoley.
 Datos de entrada: —
 Resultado esperado: el diálogo explica las consecuencias. La inscripción queda Cancelada; sale de Sub-18 y de Mayores;
-  las dos citaciones Pendientes de partidos futuros pasan a Cancelada; la Confirmada y la del partido pasado no cambian;
-  pierde el rol Jugadora; a RepVoley le llega "Jugadora P13 (Nº …) se dio de baja de Vóley." Como estaba trabajando con
+  las citaciones Pendientes y Confirmadas de partidos futuros pasan a Cancelada (desde el P14); la del partido pasado no
+  cambia; pierde el rol Jugadora; a RepVoley le llega "Jugadora P13 (Nº …) se dio de baja de Vóley." Como estaba trabajando con
   el rol Jugadora, la pantalla la deja con el rol Socio (su único rol) y el menú cambia.
-Resultado obtenido: 200 con removedCategories 2, cancelledCitations 2 y lostPlayerRole true. Las asignaciones quedaron
-  inactivas, las dos Pendientes futuras Canceladas, la Confirmada Confirmada y la del partido pasado Pendiente; sin el rol
+Resultado obtenido (P13): 200 con removedCategories 2, cancelledCitations 2 y lostPlayerRole true. Las asignaciones quedaron
+  inactivas, las dos Pendientes futuras Canceladas y la del partido pasado Pendiente; sin el rol
   Jugadora. SPORT_WITHDRAWAL para RepVoley con "Jugadora P13 (Nº 991305) se dio de baja de Vóley.", ninguno para
   RepFutsal. Bitácora SPORT_WITHDRAWN con las categorías y las citaciones. newSession con el rol Socio activo: el token
   viejo da 401 en /auth/me y el nuevo funciona. Falta ver el cambio de menú en el navegador.
+  Corrección del P14: en ese momento la Confirmada quedaba igual; ahora también se cancela (ver el caso 16).
 Estado: Aprobado
 
 
@@ -236,4 +241,23 @@ Datos de entrada: —
 Resultado esperado: todo correcto (inscripciones, roles, categorías y citaciones se escriben solo por Sequelize, con la
   transacción en options).
 Resultado obtenido: DVH y DVV correctos en las dos verificaciones.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INSCRIPTIONS-16
+Módulo: inscriptions
+Descripción: La baja cancela también las citaciones Confirmadas de partidos futuros (P14)
+Precondiciones: Ana, con Vóley y Futsal aprobados, en Mayores de Vóley; CoachUno y CoachDos, Entrenadoras de Mayores.
+  Citaciones de Ana en partidos futuros de Mayores: Confirmada vs. Atlético Ribera, Confirmada automáticamente vs. Rival
+  Dos y Pendiente vs. Rival Tres. Sesión de Ana con el rol Jugadora.
+Pasos:
+  1. En Deportes, "Darme de baja" en Vóley y confirmar (el diálogo dice "se cancelan tus citaciones de partidos que
+     todavía no se jugaron"). 2. Ver las citaciones y la campana de las dos entrenadoras.
+Datos de entrada: —
+Resultado esperado: las tres citaciones pasan a Cancelada. A cada entrenadora le llega un aviso por cada citación
+  Confirmada: "Ana P14 se dio de baja de Vóley: se canceló su citación confirmada para Mayores vs. Atlético Ribera
+  (vie. 13/11)." Conserva el rol Jugadora (le queda Futsal).
+Resultado obtenido: 200 con cancelledCitations 3 y cancelledConfirmedCitations 2; las tres Canceladas; dos
+  CITATION_RESPONSE para cada entrenadora, con ese texto; lostPlayerRole false.
 Estado: Aprobado

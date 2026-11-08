@@ -85,6 +85,7 @@ Seguimiento de todo lo que falta para entregar el proyecto: desarrollo, entregab
 - [x] Ventana de citación de 7 días a 48 horas antes del partido (P13)
 - [x] Aviso a las entrenadoras cuando una jugadora confirma o rechaza (P13)
 - [x] Alcance por deporte común (`getSportScope` en `staff.service.js`), usado por ligas, partidos, inscripciones y avisos generales (P13)
+- [x] La baja de un deporte cancela también las citaciones Confirmadas de partidos futuros (P14)
 - [ ] Rutinas semanales por categoría (texto, imagen, link de video) con historial
 - [~] Front: pantallas del Representante, la Entrenadora y la Preparadora física — ligas y Mis categorías hechas (P09); partidos y conflictos (P11); citaciones de la Entrenadora (P12); inscripciones del Representante (P13)
 - [ ] Front: dashboard de la Jugadora (fixtures y citaciones, separados si juega en 2 ligas, y rutina) — por ahora, "Mis partidos" (P11) y "Mis citaciones" (P12) por separado
@@ -92,13 +93,14 @@ Seguimiento de todo lo que falta para entregar el proyecto: desarrollo, entregab
 
 ## Fase 5 — Cuotas y pagos
 
-- [ ] Cálculo de la cuota deportiva: una por cada deporte con inscripción Aprobada; `sportAmount` es la suma (D6, contexto sección 6)
-- [!] Job: generación de la cuota mensual (social + deportiva, con el desglose) — bloqueado: falta definir el día de generación y de vencimiento (decisión D12)
-- [ ] Pago simulado (pendiente / aprobado / rechazado); el Socio menor ve sus cuotas pero no paga
-- [ ] Job: cuotas vencidas, avisos de mora desde el primer mes y pérdida de la condición de socia al superar el plazo (Socio a Suspendido)
-- [ ] Recuperación automática del Socio suspendido: al aprobarse un pago, vuelve a Activo si ya no le queda ninguna cuota que supere el plazo de mora
-- [ ] Estado de cuotas de las jugadoras para el Representante
-- [ ] Front: estado de cuenta y pago (Socio, Jugadora y Familia) y gestión de cuotas (Admin)
+- [x] Cálculo de la cuota deportiva: una por cada deporte con inscripción Aprobada; `sportAmount` es la suma (D6, contexto sección 6) (P14: se fija al generar la cuota)
+- [x] Job: generación de la cuota mensual (social + deportiva, con el desglose) (P14: `generateFees`, día 1 a las 00:05; vence el 10; idempotente; generación a mano del Admin)
+- [x] Pago simulado (pendiente / aprobado / rechazado); el Socio menor ve sus cuotas pero no paga (P14: tarjeta terminada en 0000 → Rechazado; la tarjeta no se guarda)
+- [x] Job: cuotas vencidas, avisos de mora desde el primer mes y pérdida de la condición de socia al superar el plazo (Socio a Suspendido) (P14: `feeStatus`, todos los días a las 00:15, con el aviso de cuota por vencer y el recordatorio cada 30 días)
+- [x] Recuperación automática del Socio suspendido: al aprobarse un pago, vuelve a Activo si ya no le queda ninguna cuota que supere el plazo de mora (P14)
+- [x] Estado de cuotas de las jugadoras para el Representante (P14)
+- [x] Front: estado de cuenta y pago (Socio, Jugadora y Familia) y gestión de cuotas (Admin) (P14)
+- [x] Pago en secretaría registrado por el Admin (P14)
 
 ## Fase 6 — Funciones transversales
 
@@ -139,7 +141,7 @@ Formato de referencia: el PDF de HotelDesk.
 - [ ] Especificación de funcionalidad (casos de uso)
 - [ ] Diseño de seguridad técnica: encriptación, dígitos verificadores, patentes y familias
 - [ ] Estrategias de base de datos: backup/restore e integridad (sin particiones)
-- [~] Casos de prueba en `.txt`, uno por módulo, en `docs/pruebas/` (D9; formato en `CLAUDE.md`, "Pruebas"). Hecho: `docs/pruebas/access.txt` (P06), `docs/pruebas/clubs.txt` y `docs/pruebas/members.txt` (P07), `docs/pruebas/staff.txt` y los casos de vínculo familiar en `members.txt` (P08), `docs/pruebas/leagues.txt` (P09), `docs/pruebas/notifications.txt` (P10 y P10b), `docs/pruebas/games.txt` (P11), `docs/pruebas/citations.txt` (P12 y P13), `docs/pruebas/inscriptions.txt` (P13)
+- [~] Casos de prueba en `.txt`, uno por módulo, en `docs/pruebas/` (D9; formato en `CLAUDE.md`, "Pruebas"). Hecho: `docs/pruebas/access.txt` (P06), `docs/pruebas/clubs.txt` y `docs/pruebas/members.txt` (P07), `docs/pruebas/staff.txt` y los casos de vínculo familiar en `members.txt` (P08), `docs/pruebas/leagues.txt` (P09), `docs/pruebas/notifications.txt` (P10 y P10b), `docs/pruebas/games.txt` (P11), `docs/pruebas/citations.txt` (P12 y P13), `docs/pruebas/inscriptions.txt` (P13 y P14), `docs/pruebas/fees.txt` (P14)
 - [ ] Manuales de usuario
 - [ ] Armado del documento final con todo lo anterior
 
@@ -158,7 +160,7 @@ Cada una se resuelve en el chat de Claude y se registra en el documento de conte
 - [x] **D9** — Pruebas (resuelto el 21/10/2026: casos de prueba documentados en `.txt`, sin tests automatizados)
 - [x] **D10** — Paleta de colores y estilo visual de Club360 (resuelto el 18/10/2026, moodboard en `docs/moodboard.png`; color de Valencia provisorio `#2E9BD6` desde el 21/10/2026)
 - [x] **D11** — Si sobra tiempo para uno solo: resultados de partidos o bot (resuelto el 21/10/2026: primero los resultados)
-- [ ] **D12** — Día de generación y día de vencimiento de la cuota mensual (contexto sección 6)
+- [x] **D12** — Día de generación y día de vencimiento de la cuota mensual (resuelto el 08/11/2026: se genera el día 1 y vence el 10, contexto sección 6; implementado en el P14)
 - [x] **D13** — Dónde se guarda el color de acento de cada club (resuelto el 21/10/2026: campo `club.accentColor`, contexto sección 8; implementado en el P07)
 
 ## Si queda tiempo (prioridad 1 de Futuro)
@@ -176,6 +178,7 @@ Cada una se resuelve en el chat de Claude y se registra en el documento de conte
 
 Lo terminado, con la fecha. Lo más reciente arriba.
 
+- 08/11/2026 — Cuotas, pagos y mora (P14): módulo `fees` con la generación mensual (D12: día 1, vence el 10; socios ACTIVE o SUSPENDED dados de alta antes del día 1; social + suma de las cuotas deportivas de las inscripciones Aprobadas; idempotente), los jobs `generateFees` y `feeStatus` (cuota por vencer, paso a Vencida con email, recordatorio cada 30 días de atraso y suspensión al superar `delayFee`), el pago simulado (0000 → Rechazado, sin guardar la tarjeta), el pago en secretaría (`SEC-`), la recuperación automática del suspendido y la vista de cuotas de jugadoras del Representante. `getOverdueDays` acepta una fecha de referencia. La baja de un deporte cancela también las citaciones Confirmadas de partidos futuros y avisa a las entrenadoras. Front: Mis cuotas, Estado de cuenta de la Familia, Cuotas del Admin con el estado de cuenta de cada socio y Cuotas de jugadoras. Casos en `docs/pruebas/fees.txt` e `inscriptions.txt`. Verificado con un script contra la base local (66 chequeos, en un club de prueba aparte) y con el build del front
 - 05/11/2026 — Inscripciones y ajustes a citaciones (P13): módulo `inscriptions` con el pedido (solo socios ACTIVE, deporte activo, sin otra Pendiente o Aprobada; aviso `INSCRIPTION_REQUEST` a los Representantes del deporte), aprobación (rol Jugadora y aviso `INSCRIPTION_RESULT`; 409 si el socio ya no está activo), rechazo con motivo opcional (bitácora y aviso), cancelación de la solicitud y baja inmediata de un deporte en una transacción (inscripción Cancelada, `removeMemberFromSportCategories`, citaciones Pendientes futuras de ese deporte Canceladas, `removeBaseRole(Jugadora)` si no le queda otro deporte, aviso `SPORT_WITHDRAWAL` y sesión nueva si perdió el rol activo). `getLeagueScope` pasó a `getSportScope` en `staff.service.js`. Citaciones: ventana de 7 días a 48 horas antes del partido (`CITATION_WINDOW_OPEN_DAYS`, `CITATION_MIN_HOURS`, `citationWindow` en la API) y aviso `CITATION_RESPONSE` a las entrenadoras de la categoría al confirmar o rechazar. Front: Deportes del socio, Inscripciones del Representante y la ventana en las pantallas de citaciones. Casos en `docs/pruebas/inscriptions.txt` y `citations.txt`. Verificado con un script contra la base local (62 chequeos) y con el build del front
 - 05/11/2026 — Citaciones (P12): módulo `citations` con la lista de la categoría por partido, citación de varias jugadoras a la vez (todas o ninguna, con el motivo de cada una), al menos 48 horas antes y solo en partidos Programados, sin jugadoras con mora (`getOverdueDays` en `fees.service.js`: Suspendida o atraso mayor al plazo del club), una sola citación por jugadora y partido salvo las Canceladas, y cancelación por la entrenadora (`CITATION_CANCELLED`, in-app). Respuesta de la jugadora dentro de las 24 horas (rechazo con justificación) y job `autoConfirmCitations` cada 10 minutos. Al resolver un conflicto de horario se cancela la citación del partido no elegido y se avisa `CONFLICT_RESOLVED` (`getResolutionsForMember`, `conflict.notPlaying` en las vistas de la jugadora y la familia). Front: Citaciones de la Entrenadora, Mis citaciones, Citaciones de la Familia y "No lo jugás" en Mis partidos. Casos en `docs/pruebas/citations.txt`. Verificado con un script contra la base local (51 chequeos) y con el build del front
 - 01/11/2026 — Partidos y superposiciones (P11): `game.isHome` (base recreada con db:snapshot y db:restore). Módulo `games`: fixture con alta, edición, jugado y cancelación (cancela las citaciones y avisa a las citadas); detección de superposiciones de horario calculada siempre (`findConflictsForGame`, `listConflicts`, duración asumida de 2 horas y el margen del club), aviso antes de guardar y notificación a las entrenadoras; resolución entre entrenadoras en la bitácora (`CONFLICT_RESOLVED`, `getConflictResolutions`). Front: Partidos del Representante con el aviso en vivo, Partidos del staff con la pestaña de conflictos, Mis partidos y los partidos de la Familia. Casos en `docs/pruebas/games.txt`. Verificado con un script contra la base local y con el build del front

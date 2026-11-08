@@ -143,7 +143,15 @@ const LOG_ACTIONS = {
     INSCRIPTION_APPROVED: { message: 'Aprobación de inscripción', criticity: CRITICITY.MEDIUM },
     INSCRIPTION_REJECTED: { message: 'Rechazo de inscripción', criticity: CRITICITY.MEDIUM },
     INSCRIPTION_CANCELLED: { message: 'Cancelación de solicitud de inscripción', criticity: CRITICITY.MEDIUM },
-    SPORT_WITHDRAWN: { message: 'Baja de un deporte', criticity: CRITICITY.MEDIUM }
+    SPORT_WITHDRAWN: { message: 'Baja de un deporte', criticity: CRITICITY.MEDIUM },
+
+    // Cuotas, pagos y mora. La generación automática, la suspensión y sus avisos los hace el sistema (sin usuario ni rol)
+    FEES_GENERATED: { message: 'Generación de cuotas', criticity: CRITICITY.LOW },
+    PAYMENT_APPROVED: { message: 'Pago aprobado', criticity: CRITICITY.MEDIUM },
+    PAYMENT_REJECTED: { message: 'Pago rechazado', criticity: CRITICITY.MEDIUM },
+    FEE_PAID_MANUAL: { message: 'Pago registrado en secretaría', criticity: CRITICITY.HIGH },
+    MEMBER_SUSPENDED: { message: 'Suspensión de socio por mora', criticity: CRITICITY.HIGH },
+    MEMBER_RECOVERED: { message: 'Recuperación de la condición de socio', criticity: CRITICITY.MEDIUM }
 }
 
 // Intentos fallidos de login antes de bloquear al usuario
@@ -235,6 +243,13 @@ const CITATION_WINDOW_OPEN_DAYS = 7
 const CITATION_MIN_HOURS = 48
 const CITATION_RESPONSE_HOURS = 24
 
+// Cuotas (D12, contexto sección 6): la cuota del mes se genera el día 1 y vence el día 10. El aviso de cuota por vencer
+// sale 3 días antes del vencimiento y el recordatorio de mora, cada 30 días de atraso
+const FEE_GENERATION_DAY = 1
+const FEE_DUE_DAY = 10
+const FEE_DUE_SOON_DAYS = 3
+const FEE_OVERDUE_REMINDER_DAYS = 30
+
 // Grupo de edad de una escala por su code (undefined si no es de esa escala)
 const findAgeGroup = (ageScale, code) => AGE_SCALES[ageScale]?.find(group => group.code === code)
 
@@ -260,5 +275,9 @@ module.exports = {
     GAME_DURATION_MINUTES,
     CITATION_WINDOW_OPEN_DAYS,
     CITATION_MIN_HOURS,
-    CITATION_RESPONSE_HOURS
+    CITATION_RESPONSE_HOURS,
+    FEE_GENERATION_DAY,
+    FEE_DUE_DAY,
+    FEE_DUE_SOON_DAYS,
+    FEE_OVERDUE_REMINDER_DAYS
 }

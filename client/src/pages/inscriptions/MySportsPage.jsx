@@ -37,7 +37,7 @@ function withdrawMessage(sportName, data) {
 
   const parts = [`Te diste de baja de ${sportName}.`]
   if (data.removedCategories > 0) parts.push(`Saliste de ${data.removedCategories === 1 ? '1 categoría' : `${data.removedCategories} categorías`}.`)
-  if (data.cancelledCitations > 0) parts.push(`Se ${data.cancelledCitations === 1 ? 'canceló 1 citación pendiente' : `cancelaron ${data.cancelledCitations} citaciones pendientes`}.`)
+  if (data.cancelledCitations > 0) parts.push(`Se ${data.cancelledCitations === 1 ? 'canceló 1 citación' : `cancelaron ${data.cancelledCitations} citaciones`}.`)
   if (data.lostPlayerRole) parts.push('Ya no tenés el rol Jugadora.')
   return parts.join(' ')
 }
@@ -195,7 +195,7 @@ export default function MySportsPage() {
             <DialogContent>
               <DialogContentText>
                 {confirming.kind === 'withdraw'
-                  ? `Vas a dejar de estar en tus categorías de ${confirming.sport.name}, se cancelan tus citaciones pendientes y, si no tenés otro deporte, dejás de ser Jugadora. La cuota deportiva deja de cobrarse desde el mes que viene; las cuotas ya generadas se siguen debiendo.`
+                  ? `Vas a dejar de estar en tus categorías de ${confirming.sport.name}, se cancelan tus citaciones de partidos que todavía no se jugaron y, si no tenés otro deporte, dejás de ser Jugadora. La cuota deportiva deja de cobrarse desde el mes que viene; las cuotas ya generadas se siguen debiendo.`
                   : `Se cancela tu solicitud de inscripción a ${confirming.sport.name}. Después la podés volver a pedir.`}
               </DialogContentText>
             </DialogContent>

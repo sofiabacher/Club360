@@ -245,8 +245,16 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 
 - **Pedido:** solo socios ACTIVE, en deportes activos del club, sin otra inscripción Pendiente o Aprobada en ese deporte. Avisa a los Representantes del deporte (`INSCRIPTION_REQUEST`, in-app).
 - **Aprobar** da el rol Jugadora (`assignBaseRole`) y avisa `INSCRIPTION_RESULT`. Rechazar, con un motivo opcional en la bitácora y en el aviso.
-- **Baja de un deporte** (contexto 3.3.1), en una transacción: inscripción Cancelada, `removeMemberFromSportCategories`, citaciones Pendientes de partidos futuros de ese deporte a Cancelada, `removeBaseRole(Jugadora)` si no le queda otra inscripción Aprobada y aviso `SPORT_WITHDRAWAL` a los Representantes.
+- **Baja de un deporte** (contexto 3.3.1), en una transacción: inscripción Cancelada, `removeMemberFromSportCategories`, citaciones Pendientes, Confirmadas y Confirmadas automáticamente de partidos futuros de ese deporte a Cancelada (avisando a las entrenadoras por las Confirmadas), `removeBaseRole(Jugadora)` si no le queda otra inscripción Aprobada y aviso `SPORT_WITHDRAWAL` a los Representantes.
 - El alcance por deporte de los Representantes es una sola función común (`getSportScope`), usada por inscripciones, ligas y partidos.
+
+## Cuotas y pagos (módulo `fees`)
+
+- **D12:** la cuota del mes se genera el **día 1** y vence el **día 10** (`FEE_GENERATION_DAY`, `FEE_DUE_DAY`). Se genera a los socios ACTIVE o SUSPENDED dados de alta antes del día 1 del período. `socialAmount` = `club.socialFee`; `sportAmount` = suma de `priceFee` de las inscripciones Aprobadas en ese momento. Única por `(memberId, period)`.
+- **Jobs** (las funciones reciben la fecha de referencia para poder probarlas): `generateFees` (día 1, 00:05) y `feeStatus` (todos los días, 00:15). `feeStatus` avisa las cuotas por vencer (3 días antes), pasa a Vencida y avisa, manda un recordatorio cada 30 días de atraso y suspende a quien supera `club.delayFee`.
+- **Pagos:** `payOwn` (socio mayor) o `manageLinked` (Familia), por el total. Simulado: tarjeta terminada en 0000 → Rechazado; si no, Aprobado. **No se guarda la tarjeta** (en la bitácora, solo los últimos 4 dígitos). El Admin registra pagos en secretaría (`SEC-`).
+- **Recuperación automática:** al aprobarse un pago, un SUSPENDED sin cuotas impagas por encima de `delayFee` vuelve a ACTIVE.
+- La mora se calcula siempre con `getOverdueDays` de `fees.service.js`.
 
 ## Lista de tareas (`docs/TODO.md`)
 
@@ -260,5 +268,4 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 
 ## Pendientes conocidos
 
-Las decisiones abiertas están en la sección **Decisiones pendientes** de `docs/TODO.md`:
-- **D12:** día de generación y de vencimiento de la cuota mensual. Bloquea el job de cuotas.
+Las decisiones abiertas están en la sección **Decisiones pendientes** de `docs/TODO.md`. Hoy no queda ninguna abierta que bloquee el código.

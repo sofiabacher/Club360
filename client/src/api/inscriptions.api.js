@@ -11,7 +11,7 @@ export const getMySports = () => axiosClient.get('/inscriptions/mine').then((res
 export const requestInscription = (clubSportId) => axiosClient.post('/inscriptions', { clubSportId }).then((res) => res.data)
 
 // Cancela una solicitud Pendiente o da de baja una Aprobada.
-// data: { withdrawn, removedCategories, cancelledCitations, lostPlayerRole, newSession: { token, session, requiresRoleSelection } | null }
+// data: { withdrawn, removedCategories, cancelledCitations, cancelledConfirmedCitations, lostPlayerRole, newSession: { token, session, requiresRoleSelection } | null }
 export const withdrawInscription = (id) => axiosClient.post(`/inscriptions/${id}/withdraw`).then((res) => res.data)
 
 // ---------- Representante (inscriptions.approve) ----------

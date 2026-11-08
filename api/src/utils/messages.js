@@ -348,6 +348,29 @@ module.exports = {
         pageInvalid: 'La página no es válida.'
     },
 
+    fees: {
+        feeNotFound: 'No encontramos la cuota.',
+        memberNotFound: 'No encontramos al socio.',
+        notMember: 'No sos socio del club.',
+        linkedMemberNotFound: 'No encontramos a esa jugadora entre tus vinculadas.',
+        alreadyPaid: 'Esta cuota ya está pagada.',
+        futurePeriod: 'No se pueden generar cuotas de un período que todavía no empezó.',
+
+        // Validaciones de formato
+        idInvalid: 'El identificador no es válido.',
+        periodInvalid: 'Elegí un período válido (AAAA-MM).',
+        stateInvalid: 'El estado no es válido.',
+        statusInvalid: 'La situación no es válida.',
+        searchInvalid: 'La búsqueda puede tener hasta 100 caracteres.',
+        pageInvalid: 'La página no es válida.',
+        noteInvalid: 'La nota puede tener hasta 300 caracteres.',
+        cardNumberInvalid: 'El número de tarjeta tiene que tener entre 13 y 19 dígitos.',
+        cardHolderInvalid: 'Ingresá el nombre del titular, como figura en la tarjeta.',
+        cardExpiryInvalid: 'Ingresá un vencimiento válido (MM/AA).',
+        cardExpired: 'La tarjeta está vencida.',
+        cardCvvInvalid: 'El código de seguridad tiene 3 o 4 dígitos.'
+    },
+
     upload: {
         invalidType: 'El archivo tiene que ser una imagen JPG, PNG o WEBP.',
         tooLarge: 'La imagen no puede pesar más de 5 MB.',

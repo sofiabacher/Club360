@@ -41,6 +41,11 @@ import MyCitationsPage from '../pages/citations/MyCitationsPage.jsx'
 import FamilyCitationsPage from '../pages/citations/FamilyCitationsPage.jsx'
 import MySportsPage from '../pages/inscriptions/MySportsPage.jsx'
 import InscriptionsPage from '../pages/inscriptions/InscriptionsPage.jsx'
+import MyFeesPage from '../pages/fees/MyFeesPage.jsx'
+import FamilyFeesPage from '../pages/fees/FamilyFeesPage.jsx'
+import FeesPage from '../pages/fees/FeesPage.jsx'
+import MemberFeesPage from '../pages/fees/MemberFeesPage.jsx'
+import PlayersFeesPage from '../pages/fees/PlayersFeesPage.jsx'
 import { getMenuRoutes } from '../navigation/menu.js'
 
 // Pantalla de cada path del menú. Mientras una sección no exista, su ruta muestra ComingSoonPage.
@@ -61,6 +66,10 @@ const SCREENS = {
   '/family/citations': FamilyCitationsPage,
   '/my-sports': MySportsPage,
   '/inscriptions': InscriptionsPage,
+  '/my-fees': MyFeesPage,
+  '/family/fees': FamilyFeesPage,
+  '/fees': FeesPage,
+  '/fees/players': PlayersFeesPage,
   '/club': ClubInfoPage,
   '/club/settings': ClubSettingsPage,
   '/club/sports': ClubSportsPage,
@@ -78,7 +87,8 @@ const EXTRA_SCREENS = [
   { path: '/staff/:id', permission: 'staff.manage', Screen: StaffDetailPage },
   { path: '/staff/:id/edit', permission: 'staff.manage', Screen: StaffFormPage },
   { path: '/leagues/categories/:id', permission: ['leagues.manage', 'leagues.assignPlayers', 'leagues.assignStaff'], Screen: CategoryDetailPage },
-  { path: '/citations/games/:gameId', permission: 'citations.create', Screen: GameCitationsPage }
+  { path: '/citations/games/:gameId', permission: 'citations.create', Screen: GameCitationsPage },
+  { path: '/fees/members/:memberId', permission: 'fees.manage', Screen: MemberFeesPage }
 ]
 
 // Una ruta por path de navigation/menu.js, protegida con sus permisos (alcanza con uno)

@@ -29,6 +29,8 @@ Este documento es el contexto acumulado del proyecto. Está pensado para pegarse
 - **Prioridades si sobra tiempo:** primero los resultados de partidos, después el bot (D11, ver sección 7).
 - **Particiones:** no se implementan porque no son requisito (ver sección 0).
 
+**Última actualización (08/11/2026) — cuotas y pagos:** se cerró la D12 (la cuota se genera el día 1 y vence el 10), desde cuándo paga un socio nuevo, cálculo de los montos, avisos de vencimiento y de mora, pago simulado, pago en secretaría y recuperación automática (ver sección 6). La baja de un deporte cancela también las citaciones confirmadas de partidos futuros (ver 3.3.1).
+
 **Última actualización (05/11/2026) — inscripciones y ajustes a citaciones:** reglas para pedir, aprobar y rechazar inscripciones (solo socios activos), aviso al Representante de cada solicitud, ventana para citar de 7 días a 48 horas antes del partido y aviso a las entrenadoras cuando una jugadora responde (ver 3.3 y sección 6).
 
 **Última actualización (05/11/2026) — citaciones:** cálculo de la mora para citar, cancelación de una citación por la entrenadora, y aviso a la jugadora y cancelación de la citación del partido no elegido cuando se resuelve un conflicto de horario (ver sección 6).
@@ -138,7 +140,7 @@ Se usan para el seed, los datos de prueba, la pantalla "El club" y el bot. Se re
 - Al confirmarla:
   - la inscripción pasa a Cancelada;
   - sale de todas sus categorías de ese deporte;
-  - sus citaciones Pendientes de partidos futuros de ese deporte pasan a Cancelada;
+  - sus citaciones Pendientes de partidos futuros de ese deporte pasan a Cancelada; **desde el 08/11/2026, también las Confirmadas** (incluidas las confirmadas automáticamente) de partidos futuros, y se avisa in-app a las entrenadoras de la categoría;
   - si ya no le queda ningún deporte con inscripción Aprobada, pierde el rol Jugadora y queda como Socio;
   - la cuota deportiva de ese deporte deja de generarse desde el mes siguiente;
   - se notifica al Representante del deporte (ver sección 6, canales).
@@ -299,7 +301,9 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 - **Efecto de la resolución en la jugadora (05/11/2026):** si la jugadora estaba citada en el partido que no se eligió, esa citación se cancela sola. Se le avisa a ella (y a su familia, si es menor) que, por la superposición de horario, se decidió que juegue el otro partido, y en sus pantallas el partido no elegido aparece marcado como "No jugás este partido", con el partido que sí juega. Después de resuelto el conflicto, el sistema no deja citarla en el partido no elegido.
 - **Tipos de cuota:** hay **cuota social** y **cuota deportiva**. Un Socio paga solo la cuota social; si además es deportista (Jugadora), se suman ambas.
   - **Una cuota deportiva por cada deporte (21/10/2026, decisión D6):** el Socio paga la cuota deportiva de cada deporte en el que tiene inscripción Aprobada, con el valor de ese deporte en el club (`clubSport.priceFee`). En la cuota mensual, `sportAmount` es la suma de todas. En el MVP solo existe Vóley, pero el cálculo ya contempla varios deportes.
-  - **Generación y vencimiento de la cuota mensual:** qué día se genera y qué día vence: [A DEFINIR] (ver sección 10, pendiente 20).
+  - **Generación y vencimiento de la cuota mensual (08/11/2026, decisión D12):** la cuota de cada mes se genera el **día 1** y vence el **día 10**. Se genera a los Socios Activos o Suspendidos (la deuda sigue corriendo) dados de alta antes del día 1: un Socio que se da de alta a mitad de mes paga desde el mes siguiente. A los Inactivos no se les genera. Los montos se fijan al generarla: la cuota social del club y la suma de las cuotas deportivas de los deportes con inscripción Aprobada en ese momento (una inscripción aprobada o dada de baja a mitad de mes impacta desde la cuota siguiente). Una cuota impaga pasa a Vencida al día siguiente del vencimiento. El Admin también puede generar a mano las cuotas del mes en curso (sin duplicar las que ya existen).
+  - **Avisos:** 3 días antes del vencimiento (cuota por vencer, in-app); al vencer (in-app y email); un recordatorio cada 30 días de atraso, con el total adeudado; y al superar el plazo de mora, la suspensión (in-app y email). En los menores, los avisos llegan también al adulto vinculado.
+  - **Pago (08/11/2026):** paga el propio Socio si es mayor, o el adulto Familia por sus jugadoras vinculadas, siempre por el total de la cuota. El pago simulado pide los datos de una tarjeta que no se guardan (las terminadas en 0000 se rechazan, para poder mostrar un rechazo). El Admin también puede registrar un pago hecho en secretaría. Al aprobarse un pago, si el Socio estaba Suspendido y ya no tiene cuotas impagas por encima del plazo, recupera su condición automáticamente.
 - **Mora (únicas dos restricciones funcionales del MVP):** con más de 180 días de atraso (default, configurable por el Admin) → (1) la jugadora puede perder su condición de socia y (2) la entrenadora no puede citarla hasta que regularice su situación. El resto del sistema sigue accesible (solo aviso/badge informativo). Se envían notificaciones desde el primer mes de atraso, junto con las advertencias correspondientes, si no regulariza su situación.
   - **Pérdida y recuperación de la condición (18/10/2026):** al superar el plazo, el Socio pasa a estado Suspendido (ver sección 8). La recupera automáticamente, sin intervención del Admin, cuando se aprueba un pago y ya no le queda ninguna cuota que supere el plazo de mora. La baja dada por el Admin es un estado distinto (Inactivo) y no se revierte sola.
 - **Pagos de cuotas simulados:** se registra estado de transacción (pendiente/aprobado/rechazado), sin pasarela real conectada. Sin tienda en el MVP, todo Pago está asociado a una Cuota (ver sección 8).
@@ -438,7 +442,7 @@ Asistente de consultas generales sobre el club y sobre cómo usar la plataforma,
 
 ## 10. Estado actual y próximos pasos
 
-**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**, **recuperación de contraseña y Mi cuenta (3.6.2 y 3.7, 21/10)**, **decisiones D2 a D7, D9 y D11 y emails de la demo (21/10)**, **gestión de roles y permisos (sección 4, 21/10)**, **club y alta de socios, D13 (3.1 y sección 8, 21/10)**, **staff y vínculo familiar (3.4, 3.5 y 3.6, 23/10)**, **ligas y categorías (sección 6, 26/10)**, **notificaciones (sección 6, 31/10; detalle e historial, 01/11)**, **partidos y superposiciones (sección 6, 01/11)**, **citaciones (sección 6, 05/11)**, **inscripciones (3.3, 05/11)**
+**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**, **recuperación de contraseña y Mi cuenta (3.6.2 y 3.7, 21/10)**, **decisiones D2 a D7, D9 y D11 y emails de la demo (21/10)**, **gestión de roles y permisos (sección 4, 21/10)**, **club y alta de socios, D13 (3.1 y sección 8, 21/10)**, **staff y vínculo familiar (3.4, 3.5 y 3.6, 23/10)**, **ligas y categorías (sección 6, 26/10)**, **notificaciones (sección 6, 31/10; detalle e historial, 01/11)**, **partidos y superposiciones (sección 6, 01/11)**, **citaciones (sección 6, 05/11)**, **inscripciones (3.3, 05/11)**, **cuotas y pagos, D12 (sección 6, 08/11)**
 
 **Pendiente:**
 1. ~~Modelo DER Lógico completo~~ — cerrado el 04/10/2026, actualizado el 10/10/2026 (ver sección 8)
@@ -460,7 +464,7 @@ Asistente de consultas generales sobre el club y sobre cómo usar la plataforma,
 17. ~~Valores numéricos de cada estado~~ — cerrado el 18/10/2026 (ver sección 8)
 18. ~~Pruebas~~ — cerrado el 21/10/2026: casos de prueba documentados en `.txt`, sin tests automatizados (D9, ver sección 11)
 19. ~~Envío de emails en la demo~~ — cerrado el 21/10/2026: Gmail SMTP con nodemailer; el dominio propio con Resend pasa a Futuro (ver secciones 7 y 11)
-20. Día de generación y día de vencimiento de la cuota mensual [A DEFINIR] (decisión D12, ver sección 6)
+20. ~~Día de generación y día de vencimiento de la cuota mensual~~ — cerrado el 08/11/2026: se genera el día 1 y vence el 10 (D12, ver sección 6)
 21. ~~Dónde se guarda el color de acento de cada club~~ — cerrado el 21/10/2026: campo `club.accentColor` (D13, ver sección 8)
 
 **Stack técnico:** ver sección 11.

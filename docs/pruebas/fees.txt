@@ -1,0 +1,305 @@
+CASOS DE PRUEBA — MÓDULO FEES (CUOTAS, PAGOS Y MORA)
+====================================================
+
+Club360 · Prompt 14 · 08/11/2026
+Formato según CLAUDE.md ("Pruebas"). Los resultados obtenidos salen del script de verificación del back (corrido contra
+la base local el 08/11/2026, con datos de prueba creados con los modelos y borrados al final; 66 chequeos aprobados).
+El script usa un club de prueba aparte para que el chequeo diario no toque a los socios de la demo. Los jobs se probaron
+llamando a sus funciones con fechas de referencia distintas (runDailyFeeCheck(today), generateFeesForPeriod). Lo que
+solo se puede comprobar en el navegador queda anotado en cada caso.
+
+Precondición general (datos de prueba):
+  - club con cuota social $ 15.000 y plazo de mora (delayFee) de 180 días; Vóley ($ 25.000) y Futsal ($ 18.000);
+  - socios dados de alta el 01/10/2026: Ana (ACTIVE, mayor, con Vóley y Futsal aprobados), Susana (SUSPENDED, sin
+    deportes), Inés (INACTIVE), Menor (13 años, Vóley aprobado, vinculada a Familia), Otra (menor vinculada a OtraFamilia),
+    Paula (Futsal aprobado) y Rosa (SUSPENDED); Mitad, dada de alta el 15/11/2026;
+  - Admin, RepVoley (Representante de Vóley) y RepFutsal (Representante de Futsal).
+Las pantallas: Gestión > Cuotas (Admin), Gestión > Cuotas de jugadoras (Representante), Mi espacio > Mis cuotas y
+Familia > Estado de cuenta.
+
+
+--------------------------------------------------
+ID: CP-FEES-01
+Módulo: fees
+Descripción: Generar las cuotas de un período (social + deportiva con dos deportes)
+Precondiciones: sesión del Admin.
+Pasos:
+  1. En Cuotas, elegir noviembre 2026 y "Generar cuotas de noviembre"; confirmar.
+Datos de entrada: período 2026-11.
+Resultado esperado: se genera una cuota por socio ACTIVE o SUSPENDED dado de alta antes del 01/11, que vence el 10/11.
+  Ana: social $ 15.000 + deportiva $ 43.000 (Vóley + Futsal) = $ 58.000; Susana: social $ 15.000 + deportiva $ 0. El
+  resultado dice "Se generaron 6 cuotas · 0 ya existían".
+Resultado obtenido: generateFeesForPeriod(2026-11) → created 6. Ana: socialAmount 15000, sportAmount 43000,
+  expirationDate 2026-11-10, Pendiente. Susana (SUSPENDED) tiene cuota, con deportiva 0. Falta ver la pantalla.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-02
+Módulo: fees
+Descripción: Generar dos veces el mismo período (no duplica)
+Precondiciones: las cuotas del caso 01.
+Pasos:
+  1. Volver a generar noviembre (con la función y con "Generar cuotas de noviembre"). 2. Intentar generar enero 2027.
+Datos de entrada: 2026-11; 2027-01.
+Resultado esperado: no se crea ninguna cuota nueva ("Se generaron 0 cuotas · 6 ya existían"). Un período futuro no se
+  puede generar.
+Resultado obtenido: created 0, existing 6, siguen siendo 6 cuotas. POST /fees/generate 2026-11 → 200 con 0 y 6;
+  2027-01 → 400 "No se pueden generar cuotas de un período que todavía no empezó."; 2026-13 → 400; un socio → 403.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-03
+Módulo: fees
+Descripción: Socio dado de alta a mitad de mes
+Precondiciones: Mitad, dada de alta el 15/11/2026.
+Pasos:
+  1. Generar noviembre y diciembre.
+Datos de entrada: 2026-11 y 2026-12.
+Resultado esperado: no tiene la cuota de noviembre y sí la de diciembre.
+Resultado obtenido: sin cuota 2026-11; con cuota 2026-12.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-04
+Módulo: fees
+Descripción: Socio inactivo (no se le genera)
+Precondiciones: Inés, INACTIVE.
+Pasos:
+  1. Generar noviembre.
+Datos de entrada: 2026-11.
+Resultado esperado: Inés no tiene cuota.
+Resultado obtenido: sin cuota 2026-11.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-05
+Módulo: fees
+Descripción: Aviso de cuota por vencer
+Precondiciones: las cuotas de noviembre, Pendientes.
+Pasos:
+  1. Correr el chequeo diario con fecha 07/11/2026 (3 días antes del vencimiento). 2. Correrlo otra vez ese día.
+Datos de entrada: today = 2026-11-07.
+Resultado esperado: a cada socio le llega, solo in-app, "Tu cuota de noviembre vence el martes 10/11 ($58.000)." (con su
+  monto); en el menor, también a su adulto. Correrlo dos veces el mismo día no repite el aviso.
+Resultado obtenido: 6 FEE_DUE_SOON, el de Ana con ese texto; uno para Familia. La segunda corrida no agregó ninguno.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-06
+Módulo: fees
+Descripción: Vencimiento y aviso con email
+Precondiciones: las cuotas de noviembre, Pendientes.
+Pasos:
+  1. Correr el chequeo diario con fecha 11/11/2026. 2. Correrlo otra vez.
+Datos de entrada: today = 2026-11-11.
+Resultado esperado: las cuotas pasan a Vencida. Aviso "Tu cuota de noviembre venció el 10/11. Regularizá tu situación
+  desde Mis cuotas." in-app y por email (en desarrollo, por consola), también al adulto del menor. Al menor sin email,
+  solo in-app. La segunda corrida no repite nada.
+Resultado obtenido: las 6 en Vencida; FEE_OVERDUE con ese texto; 6 emails por consola, entre ellos los de Ana y Familia;
+  el menor, solo in-app. Segunda corrida: overdue 0, sin avisos nuevos.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-07
+Módulo: fees
+Descripción: Recordatorio a los 30 días de atraso
+Precondiciones: las cuotas Vencidas del caso 06; plazo de mora del club cambiado a 30 días (para la prueba).
+Pasos:
+  1. Correr el chequeo diario con fecha 10/12/2026 (30 días de atraso).
+Datos de entrada: today = 2026-12-10.
+Resultado esperado: un solo aviso por socio: "Tenés 1 cuota vencida por $58.000. La más vieja tiene 30 días de atraso.
+  Si superás los 30 días, perdés tu condición de socio." (in-app y email). Todavía no se suspende a nadie (30 no supera 30).
+Resultado obtenido: FEE_OVERDUE para Ana con ese texto; Ana sigue ACTIVE; suspended 0.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-08
+Módulo: fees
+Descripción: Suspensión al superar el plazo
+Precondiciones: las del caso 07.
+Pasos:
+  1. Correr el chequeo diario con fecha 11/12/2026 (31 días de atraso).
+Datos de entrada: today = 2026-12-11.
+Resultado esperado: Ana y Menor pasan a SUSPENDED. Les llega "Por tener cuotas impagas hace más de 30 días, perdiste tu
+  condición de socio. …" in-app y por email (y a Familia por Menor). Bitácora MEMBER_SUSPENDED (HIGH, del sistema). Susana,
+  que ya estaba suspendida, no recibe otro aviso.
+Resultado obtenido: Ana SUSPENDED con MEMBER_SUSPENDED; email por consola; uno para Familia; bitácora con criticidad HIGH
+  y sin usuario. Susana: ningún MEMBER_SUSPENDED.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-09
+Módulo: fees
+Descripción: Pago aprobado
+Precondiciones: sesión de Ana (mayor) con el rol Socio; su cuota de noviembre Vencida. El plazo del club volvió a 180 días.
+Pasos:
+  1. En Mis cuotas, "Pagar"; completar la tarjeta y pagar.
+Datos de entrada: 4111 1111 1111 1111, ANA P14, 12/29, 123.
+Resultado esperado: el pago queda Aprobado, con un código PAY- en la variante numérica; la cuota queda Pagada; el pago
+  aparece en el historial. En la bitácora, solo los últimos 4 dígitos de la tarjeta; no se guarda ningún dato de ella.
+Resultado obtenido: 200, transactionState Aprobado, código PAY-XXXXXXXX, amount 58000, payment.userId = Ana; cuota
+  Pagada. Bitácora "… tarjeta terminada en 1111, código PAY-…". Validaciones: menos de 13 dígitos, tarjeta vencida
+  (01/20) y código de 2 dígitos → 400. Falta ver el diálogo en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-10
+Módulo: fees
+Descripción: Pago rechazado (tarjeta terminada en 0000)
+Precondiciones: las del caso 09, antes de pagar.
+Pasos:
+  1. Pagar con una tarjeta terminada en 0000. 2. "Reintentar" con otra.
+Datos de entrada: 4111 1111 1111 0000.
+Resultado esperado: el pago queda Rechazado y la cuota sigue igual; el diálogo ofrece reintentar. El rechazo aparece en
+  el historial de pagos.
+Resultado obtenido: 200 con transactionState Rechazado; la cuota sigue Vencida; bitácora PAYMENT_REJECTED con
+  "terminada en 0000". GET /fees/mine muestra los dos pagos. Falta ver el diálogo.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-11
+Módulo: fees
+Descripción: Pagar una cuota ya pagada (rechazado)
+Precondiciones: la cuota Pagada del caso 09.
+Pasos:
+  1. Volver a pagarla (por la API: en la pantalla ya no tiene el botón).
+Datos de entrada: la misma tarjeta.
+Resultado esperado: "Esta cuota ya está pagada."
+Resultado obtenido: 409 con ese mensaje.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-12
+Módulo: fees
+Descripción: Un menor intenta pagar (sin permiso)
+Precondiciones: sesión de Menor con el rol Socio.
+Pasos:
+  1. Entrar a Mis cuotas. 2. Pagar su cuota por la API.
+Datos de entrada: —
+Resultado esperado: ve sus cuotas sin el botón "Pagar", con la nota "El pago lo hace tu adulto responsable." El pago se
+  rechaza por falta de permiso (getEffectivePermissions le quita fees.payOwn).
+Resultado obtenido: GET /fees/mine con canPay false e isAdult false; el pago → 403. Falta ver la nota en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-13
+Módulo: fees
+Descripción: La Familia paga por su jugadora
+Precondiciones: sesión de Familia; la cuota de Menor sin pagar.
+Pasos:
+  1. En Estado de cuenta, ver las cuotas de Menor. 2. "Pagar" y completar la tarjeta.
+Datos de entrada: tarjeta válida.
+Resultado esperado: el pago queda Aprobado a nombre del adulto y la cuota, Pagada.
+Resultado obtenido: GET /fees/linked con la cuenta de Menor y canPay true; pago 200, Aprobado, payment.userId = Familia.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-14
+Módulo: fees
+Descripción: La Familia intenta pagar una cuota ajena
+Precondiciones: Otra, menor vinculada a OtraFamilia.
+Pasos:
+  1. Como Familia, pagar la cuota de Otra (por la API). 2. Como Ana, pagar la cuota de Otra.
+Datos de entrada: el id de la cuota de Otra.
+Resultado esperado: no se encuentra la cuota.
+Resultado obtenido: 404 en los dos.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-15
+Módulo: fees
+Descripción: Pago en secretaría
+Precondiciones: sesión del Admin; Rosa SUSPENDED con una cuota de abril vencida hace más de 180 días.
+Pasos:
+  1. En Cuotas, tocar a Rosa (o ir a su estado de cuenta). 2. "Registrar pago en secretaría", con una nota.
+Datos de entrada: nota "Pagó en efectivo".
+Resultado esperado: pago Aprobado a nombre del Admin con código SEC-; la cuota queda Pagada; Rosa recupera su condición.
+  Bitácora FEE_PAID_MANUAL (HIGH) con la nota. Registrarlo de nuevo no se puede.
+Resultado obtenido: 200, código SEC-XXXXXXXX, payment.userId = Admin, cuota Pagada, recovered true y Rosa ACTIVE;
+  FEE_PAID_MANUAL HIGH con la nota. Otra vez → 409. Falta ver el diálogo en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-16
+Módulo: fees
+Descripción: Recuperación automática del suspendido
+Precondiciones: Susana SUSPENDED con cuotas Vencidas de mayo (más de 180 días de atraso) y junio.
+Pasos:
+  1. Como Susana, pagar la de mayo después de la del caso 17.
+Datos de entrada: tarjeta válida.
+Resultado esperado: como ya no le queda ninguna cuota por encima del plazo, vuelve a ACTIVE, la pantalla muestra
+  "¡Recuperaste tu condición de socio!" y se registra MEMBER_RECOVERED.
+Resultado obtenido: recovered true, Susana ACTIVE, bitácora MEMBER_RECOVERED. Falta ver el mensaje en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-17
+Módulo: fees
+Descripción: Un pago que no recupera porque queda otra cuota con mora
+Precondiciones: las del caso 16, antes de pagar.
+Pasos:
+  1. Como Susana, pagar solo la de junio (la más nueva).
+Datos de entrada: tarjeta válida.
+Resultado esperado: el pago se aprueba, pero sigue SUSPENDED porque la de mayo supera el plazo.
+Resultado obtenido: 200 con recovered false; Susana SUSPENDED.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-18
+Módulo: fees
+Descripción: La vista del Representante
+Precondiciones: Paula SUSPENDED con su cuota de noviembre Vencida; Ana y Menor al día.
+Pasos:
+  1. Como RepVoley, ver Cuotas de jugadoras. 2. Como RepFutsal, ver lo mismo y filtrar por "Con cuotas vencidas".
+Datos de entrada: —
+Resultado esperado: cada Representante ve solo las jugadoras de su deporte (Ana aparece en los dos), con su situación y
+  los días de atraso, sin montos. Paula: "Vencida", "Suspendida" y "No se puede citar". Un socio no tiene acceso.
+Resultado obtenido: RepVoley ve a Ana y Menor ("Al día"), no a Paula. RepFutsal ve a Paula (overdue, canBeCited false) y
+  a Ana, no a Menor; el filtro deja solo a Paula. Sin campos de montos. Un socio → 403.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-19
+Módulo: fees
+Descripción: Una jugadora suspendida no se puede citar (con el P12)
+Precondiciones: una jugadora de una categoría pasa a SUSPENDED por el chequeo diario.
+Pasos:
+  1. Como su entrenadora, abrir las citaciones de un partido de la categoría e intentar citarla.
+Datos de entrada: —
+Resultado esperado: aparece con el chip "Mora" y sin casilla; citarla por la API se rechaza por cuotas atrasadas. En
+  Cuotas de jugadoras figura "No se puede citar".
+Resultado obtenido: la regla de mora de las citaciones (socia SUSPENDED o getOverdueDays mayor al plazo) es la misma que
+  usa canBeCited; se verificó en CP-CITATIONS-05 ("Citar a una socia Suspendida", 400) y en el caso 18 (canBeCited false). Falta
+  probar en el navegador con una suspensión hecha por el chequeo diario.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-20
+Módulo: fees
+Descripción: Integridad de los datos
+Precondiciones: los casos anteriores.
+Pasos:
+  1. Verificar DVH y DVV de todas las tablas con los datos de prueba cargados y después de borrarlos.
+Datos de entrada: —
+Resultado esperado: todo correcto (cuotas, pagos y socios se escriben solo por Sequelize, con la transacción en options).
+Resultado obtenido: DVH y DVV correctos en las dos verificaciones.
+Estado: Aprobado
