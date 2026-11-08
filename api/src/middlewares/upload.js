@@ -5,14 +5,25 @@ const fs = require('fs')
 
 const { createError } = require('../utils/errors')
 const { upload: messages } = require('../utils/messages')
-const { UPLOADS_DIR } = require('../utils/files')
+const { UPLOADS_DIR, UPLOAD_FOLDERS } = require('../utils/files')
 
 const ALLOWED_TYPES = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' }
 const MAX_SIZE = 5 * 1024 * 1024   // 5 MB
 
+// Carpetas con otros tipos permitidos. Los comprobantes de transferencias aceptan también PDF (y no WEBP)
+// PENDIENTE (P17, Cloudinary): los comprobantes van como recurso `raw` y privados (type: 'private' o 'authenticated'),
+// nunca con una URL pública; se descargan solo con GET /fees/payments/:id/receipt-file
+const FOLDER_TYPES = {
+    [UPLOAD_FOLDERS.RECEIPTS]: {
+        types: { 'image/jpeg': '.jpg', 'image/png': '.png', 'application/pdf': '.pdf' },
+        invalidMessage: messages.invalidReceiptType
+    }
+}
+
 // Uso: upload('routines').single('image')
 const upload = (folder) => {
     const destination = path.join(UPLOADS_DIR, folder)
+    const { types: allowedTypes, invalidMessage } = FOLDER_TYPES[folder] ?? { types: ALLOWED_TYPES, invalidMessage: messages.invalidType }
 
     const storage = multer.diskStorage({
         destination: (req, file, cb) => {
@@ -22,13 +33,13 @@ const upload = (folder) => {
 
         filename: (req, file, cb) => {
             const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`
-            cb(null, unique + ALLOWED_TYPES[file.mimetype])
+            cb(null, unique + allowedTypes[file.mimetype])
         }
     })
 
     const fileFilter = (req, file, cb) => {
-        if (!ALLOWED_TYPES[file.mimetype]) {
-            return cb(createError(messages.invalidType, 400))
+        if (!allowedTypes[file.mimetype]) {
+            return cb(createError(invalidMessage, 400))
         }
 
         cb(null, true)

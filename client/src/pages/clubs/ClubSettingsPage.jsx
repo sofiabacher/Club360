@@ -22,6 +22,17 @@ import { getErrorMessage, getFieldErrors } from '../../utils/apiErrors.js'
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/
 
+// Datos para transferencias (extraInfo.bankInfo). Las mismas reglas que el back, para avisar mientras se escribe.
+// width: columnas del campo desde sm
+const BANK_FIELDS = [
+  { key: 'holder', label: 'Titular', maxLength: 100, width: 12 },
+  { key: 'cuit', label: 'CUIT', maxLength: 13, placeholder: '30-12345678-9', width: 6, check: (value) => /^\d{2}-?\d{8}-?\d$/.test(value), hint: 'Con o sin guiones: 30-12345678-9.' },
+  { key: 'bank', label: 'Banco', maxLength: 100, width: 6 },
+  { key: 'cbu', label: 'CBU', maxLength: 22, numeric: true, width: 7, check: (value) => /^\d{22}$/.test(value), hint: 'Tiene que tener 22 dígitos.' },
+  { key: 'alias', label: 'Alias', maxLength: 20, width: 5, check: (value) => /^[A-Za-z0-9.]{6,20}$/.test(value), hint: 'De 6 a 20 caracteres: letras, números y puntos.' }
+]
+const emptyBank = { holder: '', cuit: '', bank: '', cbu: '', alias: '' }
+
 // Lo que devuelve la API, como textos para los campos del formulario
 function toForm(settings) {
   return {
@@ -35,9 +46,13 @@ function toForm(settings) {
     whatsapp: settings.extraInfo.whatsapp ?? '',
     secretaryHours: settings.extraInfo.secretaryHours,
     courts: settings.extraInfo.courts,
-    trainingSchedule: settings.extraInfo.trainingSchedule
+    trainingSchedule: settings.extraInfo.trainingSchedule,
+    bankInfo: { ...emptyBank, ...(settings.extraInfo.bankInfo ?? {}) }
   }
 }
+
+// Sin ningún dato bancario, el club no recibe transferencias (bankInfo: null)
+const hasBankInfo = (bankInfo) => Object.values(bankInfo).some((value) => value.trim() !== '')
 
 // El formulario como lo espera la API. Las filas que quedaron completamente vacías no se mandan
 function toPayload(form) {
@@ -55,7 +70,8 @@ function toPayload(form) {
       whatsapp: form.whatsapp,
       secretaryHours: form.secretaryHours.filter((line) => line.trim() !== ''),
       courts: form.courts.filter(filled),
-      trainingSchedule: form.trainingSchedule.filter(filled)
+      trainingSchedule: form.trainingSchedule.filter(filled),
+      bankInfo: hasBankInfo(form.bankInfo) ? Object.fromEntries(Object.entries(form.bankInfo).map(([key, value]) => [key, value.trim()])) : null
     }
   }
 }
@@ -144,6 +160,22 @@ export default function ClubSettingsPage() {
   }
 
   const setList = (field) => (value) => setForm((current) => ({ ...current, [field]: value }))
+
+  const setBankField = (key, numeric) => (event) => {
+    const value = numeric ? event.target.value.replace(/\D/g, '') : event.target.value
+    setForm((current) => ({ ...current, bankInfo: { ...current.bankInfo, [key]: value } }))
+    setErrors((current) => ({ ...current, [`extraInfo.bankInfo.${key}`]: undefined }))
+  }
+
+  // Error de un dato bancario: el del back o, si ya se cargó algún dato, el de la regla del campo
+  const bankError = (field) => {
+    const serverError = errors[`extraInfo.bankInfo.${field.key}`]
+    if (serverError) return serverError
+    const value = form.bankInfo[field.key].trim()
+    if (!hasBankInfo(form.bankInfo)) return null
+    if (value === '') return 'Completá este dato.'
+    return field.check && !field.check(value) ? field.hint : null
+  }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -317,6 +349,30 @@ export default function ClubSettingsPage() {
                 </Box>
               </Box>
             </Stack>
+          </SectionCard>
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <SectionCard title="Datos para transferencias" description="Los ven los socios y las familias para pagar las cuotas por transferencia. Sin estos datos, no se puede pagar por transferencia.">
+            <Grid container spacing={2}>
+              {BANK_FIELDS.map((field) => {
+                const fieldError = bankError(field)
+                return (
+                  <Grid key={field.key} size={{ xs: 12, sm: field.width }}>
+                    <TextField
+                      label={field.label}
+                      value={form.bankInfo[field.key]}
+                      onChange={setBankField(field.key, field.numeric)}
+                      error={Boolean(fieldError)}
+                      helperText={fieldError ?? (field.key === 'cbu' ? `${form.bankInfo.cbu.length}/22 dígitos` : ' ')}
+                      placeholder={field.placeholder}
+                      fullWidth
+                      slotProps={{ htmlInput: { maxLength: field.maxLength, ...(field.numeric && { inputMode: 'numeric' }) } }}
+                    />
+                  </Grid>
+                )
+              })}
+            </Grid>
           </SectionCard>
         </Grid>
       </Grid>

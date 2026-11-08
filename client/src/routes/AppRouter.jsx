@@ -46,6 +46,8 @@ import FamilyFeesPage from '../pages/fees/FamilyFeesPage.jsx'
 import FeesPage from '../pages/fees/FeesPage.jsx'
 import MemberFeesPage from '../pages/fees/MemberFeesPage.jsx'
 import PlayersFeesPage from '../pages/fees/PlayersFeesPage.jsx'
+import PaymentsHistoryPage from '../pages/fees/PaymentsHistoryPage.jsx'
+import PaymentVoucherPage from '../pages/fees/PaymentVoucherPage.jsx'
 import { getMenuRoutes } from '../navigation/menu.js'
 
 // Pantalla de cada path del menú. Mientras una sección no exista, su ruta muestra ComingSoonPage.
@@ -70,6 +72,7 @@ const SCREENS = {
   '/family/fees': FamilyFeesPage,
   '/fees': FeesPage,
   '/fees/players': PlayersFeesPage,
+  '/fees/payments': PaymentsHistoryPage,
   '/club': ClubInfoPage,
   '/club/settings': ClubSettingsPage,
   '/club/sports': ClubSportsPage,
@@ -88,7 +91,9 @@ const EXTRA_SCREENS = [
   { path: '/staff/:id/edit', permission: 'staff.manage', Screen: StaffFormPage },
   { path: '/leagues/categories/:id', permission: ['leagues.manage', 'leagues.assignPlayers', 'leagues.assignStaff'], Screen: CategoryDetailPage },
   { path: '/citations/games/:gameId', permission: 'citations.create', Screen: GameCitationsPage },
-  { path: '/fees/members/:memberId', permission: 'fees.manage', Screen: MemberFeesPage }
+  { path: '/fees/members/:memberId', permission: 'fees.manage', Screen: MemberFeesPage },
+  // Cualquier usuario con sesión: el back controla quién puede ver cada comprobante (404 si no corresponde)
+  { path: '/fees/payments/:id/voucher', permission: null, Screen: PaymentVoucherPage }
 ]
 
 // Una ruta por path de navigation/menu.js, protegida con sus permisos (alcanza con uno)

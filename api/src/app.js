@@ -3,11 +3,15 @@ const path = require('path')
 
 const cors = require('./middlewares/cors')
 const errorHandler = require('./middlewares/errorHandler')
+const { isPrivateUploadPath } = require('./utils/files')
+const { general } = require('./utils/messages')
 
 const app = express()
 
 app.use(cors)
 app.use(express.json())
+// Las carpetas privadas de uploads/ (los comprobantes de transferencias) no se sirven: se descargan desde su módulo
+app.use('/uploads', (req, res, next) => (isPrivateUploadPath(req.path) ? res.status(404).json({ success: false, message: general.notFound }) : next()))
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
 
 app.get('/health', (req, res) => {

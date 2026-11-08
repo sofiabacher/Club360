@@ -2,11 +2,12 @@
 // Reglas de express-validator: solo el formato de los datos, no reglas de negocio.
 // Que la cuota sea del socio (o de una vinculada), que esté impaga y que el período no sea futuro lo controla el service.
 const { body, param, query } = require('express-validator')
-const { FEE_STATES } = require('../../utils/constants')
+const { FEE_STATES, TRANSACTION_STATES, PAYMENT_METHODS } = require('../../utils/constants')
 const { fees: m } = require('../../utils/messages')
 
 const PERIOD_FORMAT = /^\d{4}-(0[1-9]|1[0-2])$/
 const PLAYER_STATUSES = ['ok', 'pending', 'overdue']
+const DATE_FORMAT = /^\d{4}-\d{2}-\d{2}$/
 
 const idParam = param('id').isInt({ min: 1 }).withMessage(m.idInvalid).bail().toInt()
 const searchQuery = query('search').optional().isString().withMessage(m.searchInvalid).bail().isLength({ max: 100 }).withMessage(m.searchInvalid)
@@ -56,6 +57,30 @@ const registerPayment = [
     body('note').optional({ values: 'null' }).isString().withMessage(m.noteInvalid).bail().trim().isLength({ max: 300 }).withMessage(m.noteInvalid)
 ]
 
+// El archivo del comprobante (campo receipt) lo controla el middleware upload; que haya llegado, el service
+const transfer = [idParam]
+
+// Fecha AAAA-MM-DD que existe en el calendario
+const dateQuery = (field) => query(field).optional({ values: 'falsy' })
+    .custom(value => DATE_FORMAT.test(value) && !isNaN(new Date(`${value}T12:00:00Z`)) && new Date(`${value}T12:00:00Z`).toISOString().startsWith(value))
+    .withMessage(m.dateInvalid)
+
+const payments = [
+    query('method').optional({ values: 'falsy' }).isIn(Object.values(PAYMENT_METHODS).map(String)).withMessage(m.methodInvalid),
+    query('state').optional({ values: 'falsy' }).isIn(Object.values(TRANSACTION_STATES).map(String)).withMessage(m.stateInvalid),
+    searchQuery,
+    dateQuery('from'),
+    dateQuery('to').custom((value, { req }) => !value || !req.query.from || req.query.from <= value).withMessage(m.dateRangeInvalid),
+    query('page').optional({ values: 'falsy' }).isInt({ min: 1 }).withMessage(m.pageInvalid)
+]
+
+const paymentId = [idParam]
+
+const reject = [
+    idParam,
+    body('reason').isString().withMessage(m.reasonInvalid).bail().trim().isLength({ min: 10, max: 300 }).withMessage(m.reasonInvalid)
+]
+
 const players = [
     query('status').optional({ values: 'falsy' }).isIn(PLAYER_STATUSES).withMessage(m.statusInvalid),
     searchQuery
@@ -68,5 +93,9 @@ module.exports = {
     memberAccount,
     generate,
     registerPayment,
+    transfer,
+    payments,
+    paymentId,
+    reject,
     players
 }

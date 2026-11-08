@@ -12,6 +12,7 @@ import HowToRegRounded from '@mui/icons-material/HowToRegRounded'
 import PersonRemoveRounded from '@mui/icons-material/PersonRemoveRounded'
 import PaymentsRounded from '@mui/icons-material/PaymentsRounded'
 import PersonOffRounded from '@mui/icons-material/PersonOffRounded'
+import ReceiptLongRounded from '@mui/icons-material/ReceiptLongRounded'
 import ScheduleRounded from '@mui/icons-material/ScheduleRounded'
 import SportsRounded from '@mui/icons-material/SportsRounded'
 import WarningAmberRounded from '@mui/icons-material/WarningAmberRounded'
@@ -35,6 +36,8 @@ export const NOTIFICATION_TYPES = {
   FEE_OVERDUE: { icon: PaymentsRounded, tone: 'overdue', path: feesPath },
   MEMBER_SUSPENDED: { icon: PersonOffRounded, tone: 'overdue', path: feesPath },
   FEE_DUE_SOON: { icon: ScheduleRounded, tone: 'pending', path: feesPath },
+  PAYMENT_REVIEW_REQUEST: { icon: ReceiptLongRounded, tone: 'pending', path: () => '/fees/payments' },
+  PAYMENT_RESULT: { icon: ReceiptLongRounded, tone: null, path: feesPath },
   FIXTURE_PUBLISHED: { icon: EventRounded, tone: null, path: gamesPath },
   SCHEDULE_CONFLICT: { icon: WarningAmberRounded, tone: 'urgent', path: () => '/games/assigned' },
   ROUTINE_PUBLISHED: { icon: FitnessCenterRounded, tone: null, path: () => '/my-routine' },

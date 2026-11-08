@@ -54,7 +54,8 @@ async function loadSports(transaction, summary) {
     return sportsByName
 }
 
-// Si el club ya existe, solo se completan accentColor (si tiene el valor por defecto) y extraInfo (si está vacío):
+// Si el club ya existe, solo se completan accentColor (si tiene el valor por defecto), extraInfo (si está vacío) y
+// extraInfo.bankInfo (si no existe, sin tocar el resto de extraInfo):
 // lo demás lo puede haber cambiado el Admin desde la configuración del club.
 // Antes de crearlo se busca también por los nombres anteriores (previousNames): si aparece, se le cambia el nombre.
 async function loadClub(transaction, summary) {
@@ -79,6 +80,7 @@ async function loadClub(transaction, summary) {
     const completed = {}
     if (club.accentColor === Club.rawAttributes.accentColor.defaultValue) completed.accentColor = accentColor
     if (club.extraInfo === null) completed.extraInfo = extraInfo
+    else if (!club.extraInfo.bankInfo) completed.extraInfo = { ...club.extraInfo, bankInfo: extraInfo.bankInfo }
 
     if (Object.keys(completed).length > 0) await club.update(completed, { transaction })
 

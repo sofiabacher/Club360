@@ -303,3 +303,303 @@ Datos de entrada: —
 Resultado esperado: todo correcto (cuotas, pagos y socios se escriben solo por Sequelize, con la transacción en options).
 Resultado obtenido: DVH y DVV correctos en las dos verificaciones.
 Estado: Aprobado
+
+
+==================================================
+PROMPT 14b — TRANSFERENCIA, COMPROBANTES Y FORMULARIO DE TARJETA (08/11/2026)
+==================================================
+
+Los resultados obtenidos salen del script de verificación del P14b (corrido contra la base local el 08/11/2026, después
+de recrear la base con el snapshot y el restore; 95 chequeos aprobados). Usa un club de prueba aparte, con sus datos
+bancarios, y borra al final los datos y los archivos de prueba. Lo que solo se puede comprobar en el navegador queda
+anotado en cada caso.
+
+Precondición general (datos de prueba del P14b):
+  - club con cuota social $ 15.000, plazo de mora de 180 días, Vóley ($ 25.000) y datos para transferencias cargados;
+  - Ana (mayor, Vóley), Susana (SUSPENDED), Menor (13 años, Vóley, vinculada a Familia), Beto (mayor, sin deportes),
+    Paula (mayor, Vóley); dos Admin activos, un Admin bloqueado y un Representante de Vóley;
+  - cuotas de noviembre 2026 generadas (vencen el 10/11).
+Archivos de prueba: una imagen PNG, un PDF, un .txt, un "PNG" que no es una imagen y un PDF de más de 5 MB.
+Pantallas: Mis cuotas y Familia > Estado de cuenta (diálogo "Pagar", pestañas "Tarjeta" y "Transferencia"),
+Gestión > Pagos (historial y revisión), Gestión > Cuotas (link "Ver historial de pagos"), Club > Configuración
+(tarjeta "Datos para transferencias") y la página del comprobante de pago.
+
+
+--------------------------------------------------
+ID: CP-FEES-21
+Módulo: fees
+Descripción: Informar una transferencia con el comprobante
+Precondiciones: sesión de Ana (Socio); su cuota de noviembre Pendiente.
+Pasos:
+  1. En Mis cuotas, "Pagar" en noviembre y elegir la pestaña "Transferencia".
+  2. Copiar el CBU y el alias con sus botones.
+  3. Arrastrar o elegir la imagen del comprobante y tocar "Informar transferencia".
+Datos de entrada: comprobante.png.
+Resultado esperado: se ven los datos del club (titular, CUIT, banco, CBU y alias) y el monto exacto ($ 40.000). Al
+  copiar aparece "Copiado". Se ven el nombre y el tamaño del archivo. Al informarla: "Recibimos tu comprobante. El club
+  lo va a revisar y te avisamos por acá." y el código TRF-. Se crea un pago Pendiente (medio Transferencia, con el
+  comprobante y userId = Ana). La cuota no cambia de estado y en la lista muestra "Transferencia en revisión", sin el
+  botón "Pagar". Queda en la bitácora "Transferencia informada".
+Resultado obtenido: 201, pago Pendiente con method 2, código TRF-XXXXXXXX, monto $ 40.000, receiptUrl en
+  /uploads/receipts/ y userId = Ana; la cuota sigue Pendiente; /fees/mine trae inReview true; bitácora
+  TRANSFER_REPORTED con el código. Falta probar en el navegador el copiado y el arrastre.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-22
+Módulo: fees
+Descripción: Informar una transferencia sin archivo
+Precondiciones: sesión de Ana.
+Pasos:
+  1. Enviar el pedido de transferencia sin adjuntar el comprobante.
+Datos de entrada: sin archivo.
+Resultado esperado: se rechaza con "Adjuntá el comprobante de la transferencia." En la pantalla, el botón "Informar
+  transferencia" está deshabilitado mientras no haya archivo.
+Resultado obtenido: 400 con ese mensaje; no se crea ningún pago.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-23
+Módulo: fees
+Descripción: Un archivo de otro tipo o de más de 5 MB
+Precondiciones: sesión de Ana.
+Pasos:
+  1. Adjuntar un .txt. 2. Adjuntar un PDF de más de 5 MB. 3. Adjuntar un archivo que dice ser PNG pero no lo es.
+Datos de entrada: notas.txt, grande.pdf (5 MB + 10 bytes), falso.png.
+Resultado esperado: los tres se rechazan ("El comprobante tiene que ser una imagen JPG o PNG, o un PDF." o "El archivo
+  no puede pesar más de 5 MB.") y no queda ningún archivo suelto en uploads/receipts. En la pantalla, el error aparece
+  debajo de la zona del archivo antes de enviar.
+Resultado obtenido: 400 en los tres, con esos mensajes; la carpeta receipts quedó igual que antes.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-24
+Módulo: fees
+Descripción: Una segunda transferencia de la misma cuota mientras la primera está en revisión
+Precondiciones: CP-FEES-21 (transferencia de Ana Pendiente).
+Pasos:
+  1. Informar otra transferencia de la misma cuota. 2. Pagarla con tarjeta. 3. Como Admin, registrar un pago en
+     secretaría de esa cuota.
+Datos de entrada: comprobante.pdf; tarjeta 4111 1111 1111 1111.
+Resultado esperado: los tres se rechazan con "Ya hay una transferencia en revisión para esta cuota." (409).
+Resultado obtenido: 409 en los tres casos, con ese mensaje.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-25
+Módulo: fees
+Descripción: El aviso a quienes gestionan cuotas
+Precondiciones: CP-FEES-21; la Familia informa también la transferencia de Menor.
+Pasos:
+  1. Revisar la campana de los Admin, del Admin bloqueado y del Representante.
+Datos de entrada: —
+Resultado esperado: a cada usuario ACTIVE del club con fees.manage le llega "Transferencia para revisar" (solo in-app):
+  "Ana P14b informó una transferencia de $40.000 por la cuota de noviembre." Si paga el adulto, dice de quién es la
+  cuota. No les llega al Admin bloqueado, al Representante ni a usuarios de otro club. Tocar el aviso lleva a Pagos.
+Resultado obtenido: los dos Admin activos recibieron el aviso con ese texto; el de la Familia dice "Familia P14b informó
+  una transferencia de $40.000 por la cuota de noviembre de Menor P14b."; ninguno al bloqueado, al Representante ni a
+  otro club; no salió por email.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-26
+Módulo: fees
+Descripción: Aprobar una transferencia
+Precondiciones: una transferencia de Ana Pendiente.
+Pasos:
+  1. Como Admin, en Pagos > "Transferencias por revisar", tocar la transferencia.
+  2. Ver el comprobante, la cuota y el monto esperado, y tocar "Aprobar".
+Datos de entrada: —
+Resultado esperado: el pago pasa a Aprobado y la cuota a Pagada. A Ana le llega "Se aprobó tu transferencia por la cuota
+  de noviembre. Ya podés descargar el comprobante." En Mis cuotas, el pago tiene el ícono del comprobante. Queda en la
+  bitácora "Pago aprobado". Revisarla de nuevo da 409.
+Resultado obtenido: 200, pago Aprobado y cuota Pagada; aviso PAYMENT_RESULT con ese texto; hasVoucher true; bitácora
+  PAYMENT_APPROVED; segunda aprobación → 409. En la transferencia de Menor (la informó Familia), el aviso le llega una
+  vez al adulto y una vez a la menor. Falta ver el Drawer en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-27
+Módulo: fees
+Descripción: Rechazar una transferencia sin motivo
+Precondiciones: una transferencia Pendiente.
+Pasos:
+  1. Como Admin, tocar "Rechazar" y confirmar sin escribir el motivo (o con menos de 10 caracteres).
+Datos de entrada: motivo vacío, "corto" y uno de 301 caracteres.
+Resultado esperado: se rechaza (400): el motivo tiene que tener entre 10 y 300 caracteres. En la pantalla, el botón
+  "Rechazar transferencia" está deshabilitado hasta que el motivo es válido. Un socio no puede rechazar (403).
+Resultado obtenido: 400 en los tres casos (campo reason); un socio → 403.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-28
+Módulo: fees
+Descripción: Rechazar una transferencia con motivo
+Precondiciones: la transferencia de Ana Pendiente.
+Pasos:
+  1. Como Admin, "Rechazar", escribir el motivo y confirmar.
+Datos de entrada: "El monto del comprobante no coincide con la cuota".
+Resultado esperado: el pago pasa a Rechazado con el motivo guardado; la cuota sigue impaga. A Ana le llega "Se rechazó
+  tu transferencia por la cuota de noviembre: El monto del comprobante no coincide con la cuota. Podés volver a
+  pagarla." En Mis cuotas, el pago figura Rechazado con el motivo y la cuota vuelve a mostrar "Pagar".
+Resultado obtenido: 200, pago Rechazado con el motivo en note, cuota Pendiente; aviso con ese texto; bitácora
+  PAYMENT_REJECTED con el motivo; /fees/mine trae inReview false y rejectionReason; revisarla de nuevo → 409.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-29
+Módulo: fees
+Descripción: Volver a pagar después del rechazo
+Precondiciones: CP-FEES-28.
+Pasos:
+  1. Como Ana, informar otra transferencia de la misma cuota. 2. Como Admin, aprobarla.
+Datos de entrada: comprobante.pdf.
+Resultado esperado: se acepta la nueva transferencia y, al aprobarla, la cuota queda Pagada.
+Resultado obtenido: 201 y después 200: cuota Pagada.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-30
+Módulo: fees
+Descripción: Una transferencia en revisión no suma mora
+Precondiciones: Paula con una cuota de marzo 2026 Vencida (243 días de atraso al 08/11, más que el plazo de 180).
+Pasos:
+  1. Como Paula, informar la transferencia de esa cuota.
+  2. Revisar sus días de atraso y la vista Cuotas de jugadoras del Representante.
+Datos de entrada: comprobante.png.
+Resultado esperado: mientras la transferencia está Pendiente, esa cuota no cuenta para los días de atraso: no la
+  suspende el chequeo diario y se la puede citar. Las demás cuotas sí cuentan. La cuota sigue Vencida.
+Resultado obtenido: getOverdueDays pasa de 243 a 0; al 20/11 da 10 (la de noviembre, que sí cuenta). En Cuotas de
+  jugadoras: overdueDays 0, canBeCited true y situación "Vencida".
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-31
+Módulo: fees
+Descripción: Recuperación automática al aprobar una transferencia
+Precondiciones: Susana SUSPENDED con una cuota de abril Vencida.
+Pasos:
+  1. Como Susana, informar la transferencia de abril. 2. Como Admin, aprobarla.
+Datos de entrada: comprobante.png.
+Resultado esperado: Susana vuelve a ACTIVE y queda en la bitácora "Socio recuperado"; el Admin ve "El socio recuperó
+  su condición."
+Resultado obtenido: recovered true, Susana ACTIVE y bitácora MEMBER_RECOVERED.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-32
+Módulo: fees
+Descripción: Descargar el comprobante adjunto siendo de otro socio
+Precondiciones: la transferencia de Ana con su comprobante.
+Pasos:
+  1. Pedir el comprobante adjunto como Beto (otro socio), como el Representante y sin sesión.
+  2. Pedirlo como Ana, como el Admin; el de Menor, como Familia y como la propia Menor.
+  3. Abrir la ruta del archivo en /uploads/receipts/... directo.
+Datos de entrada: —
+Resultado esperado: otro socio y el Representante → 404; sin sesión → 401; quien pagó, el socio, su adulto y el Admin
+  lo descargan con su tipo (imagen o PDF). /uploads/receipts no es accesible de ninguna forma.
+Resultado obtenido: Beto y el Representante → 404; sin sesión → 401; Ana, el Admin, Familia y Menor → 200 (image/png o
+  application/pdf, con X-Content-Type-Options: nosniff). /uploads/receipts/... → 404, también con mayúsculas, %72,
+  //, ./, avatars/../, avatars/..%2f y ..%5c.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-33
+Módulo: fees
+Descripción: El comprobante de pago con tarjeta, transferencia y secretaría
+Precondiciones: Paula paga noviembre con tarjeta; la transferencia de Menor aprobada; un pago en secretaría de Beto.
+Pasos:
+  1. Abrir el comprobante de cada pago (desde el diálogo de pago aprobado, desde Mis cuotas, Estado de cuenta o Pagos).
+  2. Tocar "Imprimir o guardar como PDF".
+  3. Pedir el comprobante de una transferencia Pendiente, de una Rechazada y de un pago de otro socio.
+Datos de entrada: tarjeta 4242-4242-4242-4242.
+Resultado esperado: encabezado Bordó con el nombre del club, franja del color del club y fondo Crema; "COMPROBANTE DE
+  PAGO" con el código; fecha de aprobación; socio y número; período; cuota social, deportiva y total. Medio:
+  "Tarjeta terminada en 4242", "Transferencia bancaria" (con "Pagó: Familia P14b, adulto responsable") o "Pago en
+  secretaría" (con quién lo registró). Al pie: "Pago simulado — proyecto escolar Club360". Al imprimir queda solo el
+  comprobante. Pendiente, Rechazado u otro socio → 404.
+Resultado obtenido: los tres comprobantes traen los datos correctos (club con CUIT de bankInfo y accentColor, socio,
+  período, $ 15.000 + $ 25.000 = $ 40.000 y el medio). Del pago con tarjeta solo queda "Tarjeta ****4242" en note. La
+  menor también ve el suyo. Pendiente, Rechazado y otro socio → 404; sin sesión → 401. Los dos pagos de la demo
+  (PAY- y SEC-) tienen comprobante. Falta probar la impresión en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-34
+Módulo: fees
+Descripción: El número de tarjeta con guiones mientras se escribe
+Precondiciones: sesión de un socio mayor con una cuota impaga.
+Pasos:
+  1. "Pagar", pestaña "Tarjeta". Escribir el número, el vencimiento y el código.
+  2. Salir de cada campo con un dato incompleto.
+Datos de entrada: 4242424242424242; vencimiento 1229; código 123.
+Resultado esperado: el número se ve como 4242-4242-4242-4242 (solo acepta números, hasta 19 dígitos); el vencimiento
+  queda 12/29 con la barra automática; el código se ve oculto. Con un dato incompleto aparece el mensaje debajo del
+  campo y el botón "Pagar" queda deshabilitado. Al pagar se envían solo los dígitos.
+Resultado obtenido: el back acepta el número con guiones o sin ellos (lo guarda solo en "Tarjeta ****4242"). El formato
+  mientras se escribe falta probarlo en el navegador.
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-FEES-35
+Módulo: fees
+Descripción: Historial de pagos del Admin
+Precondiciones: dos transferencias Pendientes y un pago en secretaría.
+Pasos:
+  1. Como Admin, entrar a Gestión > Pagos (o al link "Ver historial de pagos" de Cuotas).
+  2. Ver "Transferencias por revisar" y "Todos los pagos", y probar los filtros.
+Datos de entrada: medio Secretaría; búsqueda "menor p14b"; fechas desde 2030; desde 2026-12-01 hasta 2026-11-01.
+Resultado esperado: el contador de "Transferencias por revisar" y del link de Cuotas muestra 2; las transferencias
+  Pendientes aparecen primero (la más vieja antes). Cada pago muestra fecha, socio y número, período, monto, medio,
+  estado y código; los Aprobados, el ícono del comprobante. Los filtros funcionan; fechas inválidas → 400. Sin
+  fees.manage → 403.
+Resultado obtenido: orden TRF (Ana), TRF (Menor), SEC (Beto); pendingReview 2 en /fees/payments y en /fees; los filtros
+  por medio, estado, búsqueda y fechas devuelven lo esperado; fecha inválida y desde > hasta → 400; un socio → 403.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-36
+Módulo: fees / clubs
+Descripción: Datos para transferencias en la configuración del club
+Precondiciones: sesión del Admin.
+Pasos:
+  1. En Club > Configuración, completar la tarjeta "Datos para transferencias" con un CBU de 3 dígitos; después con un
+     alias "AB-12"; después sin titular; por último con datos válidos.
+  2. Borrar los datos bancarios y, como socio, abrir la pestaña "Transferencia".
+Datos de entrada: CBU 1234567890123456789012, alias club.p14b.dos.
+Resultado esperado: CBU de 22 dígitos; alias de 6 a 20 caracteres con letras, números y puntos (se guarda en
+  mayúsculas); los cinco datos obligatorios si se carga alguno. Sin datos bancarios, el socio ve "El club todavía no
+  cargó sus datos para transferencias. Consultá en secretaría." y el back rechaza la transferencia (409).
+Resultado obtenido: CBU, alias y titular inválidos → 400 por campo; los válidos se guardan con el alias en mayúsculas;
+  sin bankInfo, informar una transferencia → 409 con ese mensaje y sin archivo suelto.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-37
+Módulo: fees
+Descripción: Integridad después del cambio en el modelo y con los datos de prueba
+Precondiciones: base recreada (snapshot, DB_FORCE_SYNC y restore con --recompute-dvh) y migración de los pagos SEC-.
+Pasos:
+  1. Verificar las columnas nuevas de payment, los pagos migrados y DVH/DVV de todas las tablas, al principio, con los
+     datos de prueba y después de borrarlos.
+Datos de entrada: —
+Resultado esperado: payment tiene method, receiptUrl y note; los pagos SEC- quedaron con method = CASH; todo correcto.
+Resultado obtenido: columnas presentes; SEC-QKAG4CF6 con method 3 y su nota de la bitácora; PAY-58B6SB45 con method 1
+  y "Tarjeta ****1111"; DVH y DVV correctos en las tres verificaciones.
+Estado: Aprobado

@@ -40,6 +40,13 @@ export const TRANSACTION_STATES = {
     REJECTED: 3 
 }
 
+// payment.method — medio de pago. CASH: pago en secretaría registrado por el Admin
+export const PAYMENT_METHODS = {
+    CARD: 1,
+    TRANSFER: 2,
+    CASH: 3
+}
+
 // citation.citationState — CANCELLED: el partido se canceló
 export const CITATION_STATES = { 
     PENDING: 1, 

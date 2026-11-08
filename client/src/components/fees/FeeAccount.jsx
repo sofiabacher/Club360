@@ -1,24 +1,23 @@
+import { Link as RouterLink } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Divider from '@mui/material/Divider'
+import IconButton from '@mui/material/IconButton'
 import Stack from '@mui/material/Stack'
+import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import ReceiptLongRounded from '@mui/icons-material/ReceiptLongRounded'
+import ReceiptRounded from '@mui/icons-material/ReceiptRounded'
 
 import EmptyState from '../common/EmptyState.jsx'
 import StatusChip from '../common/StatusChip.jsx'
 import FeeStateChip from './FeeStateChip.jsx'
-import { FEE_STATES, MEMBER_STATES, TRANSACTION_STATES } from '../../utils/constants.js'
+import { PAYMENT_CHIPS, PAYMENT_METHOD_LABELS } from './paymentLabels.js'
+import { FEE_STATES, MEMBER_STATES } from '../../utils/constants.js'
 import { formatDate, formatDayMonth, formatMoney, formatPeriod } from '../../utils/format.js'
-
-const PAYMENT_CHIPS = {
-  [TRANSACTION_STATES.APPROVED]: { status: 'ok', label: 'Aprobado' },
-  [TRANSACTION_STATES.PENDING]: { status: 'pending', label: 'Pendiente' },
-  [TRANSACTION_STATES.REJECTED]: { status: 'overdue', label: 'Rechazado' }
-}
 
 // Situación general: al día, con cuotas pendientes o con cuotas vencidas
 function accountStatus(fees) {
@@ -36,26 +35,31 @@ function FeeRow({ fee, action }) {
         <Stack direction="row" sx={{ alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
           <Typography sx={{ fontWeight: 600, color: 'navy.main' }}>{formatPeriod(fee.period)}</Typography>
           <FeeStateChip feeState={fee.feeState} />
+          {fee.inReview && <StatusChip status="pending" label="Transferencia en revisión" />}
         </Stack>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
           Cuota social {formatMoney(fee.socialAmount)} · Cuota deportiva {formatMoney(fee.sportAmount)}
         </Typography>
-        {unpaid && (
+        {unpaid && !fee.inReview && (
           <Typography variant="body2" sx={{ color: fee.overdueDays > 0 ? 'error.main' : 'text.secondary', fontWeight: fee.overdueDays > 0 ? 600 : 400 }}>
             {fee.overdueDays > 0 ? `${fee.overdueDays} ${fee.overdueDays === 1 ? 'día' : 'días'} de atraso` : `Vence el ${formatDayMonth(fee.expirationDate)}`}
           </Typography>
         )}
+        {fee.inReview && (
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>El club está revisando el comprobante. Mientras tanto no suma días de atraso.</Typography>
+        )}
       </Box>
       <Stack direction="row" sx={{ alignItems: 'center', gap: 2, justifyContent: 'space-between' }}>
         <Typography variant="numeric" sx={{ fontSize: '1.5rem', color: 'navy.main' }}>{formatMoney(fee.total)}</Typography>
-        {unpaid && action}
+        {unpaid && !fee.inReview && action}
       </Stack>
     </Stack>
   )
 }
 
 // Estado de cuenta de un socio (Mis cuotas, la Familia y el Admin): resumen con el total adeudado, aviso de suspensión,
-// cuotas (la más reciente primero) e historial de pagos.
+// cuotas (la más reciente primero) e historial de pagos, con el comprobante de cada pago Aprobado. Una cuota con una
+// transferencia en revisión no muestra acciones.
 //   - onPay(fee): muestra "Pagar" en las impagas si account.canPay; si no puede porque es menor, una nota;
 //   - renderAction(fee): acción propia en cada impaga (por ejemplo, el pago en secretaría del Admin);
 //   - payButtonColor: 'primary' (naranja, la acción principal de la pantalla) o 'secondary'
@@ -65,7 +69,7 @@ export default function FeeAccount({ account, onPay, renderAction, payButtonColo
   const suspended = member.memberStateId === MEMBER_STATES.SUSPENDED
 
   // Un solo botón naranja por vista: el de la impaga más vieja (la que conviene pagar primero); el resto, en azul
-  const oldestUnpaid = [...fees].reverse().find((fee) => fee.feeState !== FEE_STATES.PAID)
+  const oldestUnpaid = [...fees].reverse().find((fee) => fee.feeState !== FEE_STATES.PAID && !fee.inReview)
 
   const actionFor = (fee) => {
     if (renderAction) return renderAction(fee)
@@ -134,10 +138,20 @@ export default function FeeAccount({ account, onPay, renderAction, payButtonColo
                         {formatPeriod(payment.period)} · {formatMoney(payment.amount)}
                       </Typography>
                       <Typography variant="body2" sx={{ color: 'text.secondary', overflowWrap: 'anywhere' }}>
-                        {formatDate(payment.createdAt)} · {payment.confirmationCode}
+                        {formatDate(payment.createdAt)} · {PAYMENT_METHOD_LABELS[payment.method]} · {payment.confirmationCode}
                       </Typography>
+                      {payment.rejectionReason && (
+                        <Typography variant="body2" sx={{ color: 'error.main', overflowWrap: 'anywhere' }}>Motivo: {payment.rejectionReason}</Typography>
+                      )}
                     </Box>
                     <StatusChip status={chip.status} label={chip.label} />
+                    {payment.hasVoucher && (
+                      <Tooltip title="Ver comprobante de pago">
+                        <IconButton component={RouterLink} to={`/fees/payments/${payment.id}/voucher`} color="secondary" aria-label={`Ver comprobante de pago ${payment.confirmationCode}`}>
+                          <ReceiptRounded />
+                        </IconButton>
+                      </Tooltip>
+                    )}
                   </Stack>
                 )
               })}

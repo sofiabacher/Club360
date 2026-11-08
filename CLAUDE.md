@@ -17,6 +17,7 @@ Plataforma web de gestión para clubes deportivos (proyecto integrador escolar).
   - `league` suma `ageScale` (1 o 2) y `category` suma `ageGroup` (código de la escala, ver `AGE_SCALES`).
   - `game` suma `isHome` (`BOOLEAN NOT NULL DEFAULT true`): partido de local o de visitante.
   - `notification` suma `batchId` (`CHAR(36)` NULL): identifica las notificaciones de un mismo aviso general; las del sistema lo tienen en NULL.
+  - `payment` suma `method` (`TINYINT NOT NULL DEFAULT 1`, `PAYMENT_METHODS`: 1 tarjeta, 2 transferencia, 3 secretaría), `receiptUrl` (`VARCHAR(255)` NULL) y `note` (`VARCHAR(300)` NULL).
   - `club` suma `accentColor` (`VARCHAR(7)`, color propio del club) y `extraInfo` (JSON: WhatsApp, horarios de secretaría, canchas y horarios de entrenamiento).
 - `docs/pruebas/`: casos de prueba documentados en `.txt`, uno por módulo (ver "Pruebas").
 
@@ -254,7 +255,11 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 - **Jobs** (las funciones reciben la fecha de referencia para poder probarlas): `generateFees` (día 1, 00:05) y `feeStatus` (todos los días, 00:15). `feeStatus` avisa las cuotas por vencer (3 días antes), pasa a Vencida y avisa, manda un recordatorio cada 30 días de atraso y suspende a quien supera `club.delayFee`.
 - **Pagos:** `payOwn` (socio mayor) o `manageLinked` (Familia), por el total. Simulado: tarjeta terminada en 0000 → Rechazado; si no, Aprobado. **No se guarda la tarjeta** (en la bitácora, solo los últimos 4 dígitos). El Admin registra pagos en secretaría (`SEC-`).
 - **Recuperación automática:** al aprobarse un pago, un SUSPENDED sin cuotas impagas por encima de `delayFee` vuelve a ACTIVE.
-- La mora se calcula siempre con `getOverdueDays` de `fees.service.js`.
+- La mora se calcula siempre con `getOverdueDays` de `fees.service.js`. Una cuota con una transferencia Pendiente **no** suma días de atraso.
+- **Transferencia (P14b):** los datos bancarios están en `club.extraInfo.bankInfo`. El socio adjunta el comprobante (JPG, PNG o PDF, hasta 5 MB, carpeta `receipts`) y se crea un `payment` Pendiente con `method = TRANSFER` y código `TRF-`; la cuota no cambia de estado. Una sola transferencia Pendiente por cuota: mientras exista, la cuota no se paga de otra forma (409). La revisa quien tiene `fees.manage` (aviso `PAYMENT_REVIEW_REQUEST`): aprobar → cuota Pagada y recuperación automática; rechazar → motivo obligatorio (10 a 300) en `note`. El resultado se avisa con `PAYMENT_RESULT`.
+- **Comprobantes adjuntos:** nunca por `/uploads` público. Se descargan con `GET /fees/payments/:id/receipt-file` (con sesión: `fees.manage`, quien pagó, el socio o su adulto; si no, 404). En Cloudinary van como recurso `raw` privado.
+- **Comprobante de pago:** todo pago Aprobado (cualquier medio) tiene uno (`GET /fees/payments/:id/voucher` y la página `/fees/payments/:id/voucher`). De la tarjeta solo se guardan los últimos 4 dígitos, en `note` ("Tarjeta ****1234").
+- **Formulario de tarjeta:** el número se muestra en grupos de 4 con guiones mientras se escribe, pero se envían solo los dígitos.
 
 ## Lista de tareas (`docs/TODO.md`)
 

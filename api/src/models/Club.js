@@ -16,7 +16,9 @@ const Club = sequelize.define('Club', {
     //     "whatsapp": "11 5000-0000",
     //     "secretaryHours": ["Lunes a viernes de 9 a 13 y de 16 a 21", "Sábados de 9 a 13"],
     //     "courts": [{ "name": "Cancha 1", "address": "Av. Ejemplo 1234" }],
-    //     "trainingSchedule": [{ "sport": "Vóley", "schedule": "Lunes, miércoles y viernes de 18 a 22" }]
+    //     "trainingSchedule": [{ "sport": "Vóley", "schedule": "Lunes, miércoles y viernes de 18 a 22" }],
+    //     "bankInfo": { "holder": "Club Valencia", "cuit": "30-00000000-0", "bank": "Banco Ejemplo",
+    //                   "cbu": "0000000000000000000000", "alias": "CLUB.VALENCIA.CUOTAS" }   // Datos para transferencias (P14b)
     // }
     // MariaDB guarda JSON como texto y lo devuelve como string: el getter lo deja siempre como objeto
     extraInfo: {

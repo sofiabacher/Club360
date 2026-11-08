@@ -20,7 +20,21 @@ const pairList = (field, [first, second], message) => [
     requiredText(`${field}.*.${second}`, 100, message)
 ]
 
-const EXTRA_INFO_KEYS = ['whatsapp', 'secretaryHours', 'courts', 'trainingSchedule']
+const EXTRA_INFO_KEYS = ['whatsapp', 'secretaryHours', 'courts', 'trainingSchedule', 'bankInfo']
+const BANK_INFO_KEYS = ['holder', 'cuit', 'bank', 'cbu', 'alias']
+
+// Datos para transferencias (extraInfo.bankInfo): opcionales, pero si vienen, los cinco campos son obligatorios
+const bankInfo = [
+    body('extraInfo.bankInfo')
+        .optional({ values: 'null' })
+        .isObject({ strict: true }).withMessage(m.extraInfoInvalid).bail()
+        .custom(value => Object.keys(value).every(key => BANK_INFO_KEYS.includes(key))).withMessage(m.extraInfoInvalid),
+    body('extraInfo.bankInfo.holder').if(body('extraInfo.bankInfo').exists({ values: 'null' })).isString().withMessage(m.bankHolderInvalid).bail().trim().isLength({ min: 1, max: 100 }).withMessage(m.bankHolderInvalid),
+    body('extraInfo.bankInfo.cuit').if(body('extraInfo.bankInfo').exists({ values: 'null' })).isString().withMessage(m.bankCuitInvalid).bail().trim().matches(/^\d{2}-?\d{8}-?\d$/).withMessage(m.bankCuitInvalid),
+    body('extraInfo.bankInfo.bank').if(body('extraInfo.bankInfo').exists({ values: 'null' })).isString().withMessage(m.bankNameInvalid).bail().trim().isLength({ min: 1, max: 100 }).withMessage(m.bankNameInvalid),
+    body('extraInfo.bankInfo.cbu').if(body('extraInfo.bankInfo').exists({ values: 'null' })).isString().withMessage(m.bankCbuInvalid).bail().trim().matches(/^\d{22}$/).withMessage(m.bankCbuInvalid),
+    body('extraInfo.bankInfo.alias').if(body('extraInfo.bankInfo').exists({ values: 'null' })).isString().withMessage(m.bankAliasInvalid).bail().trim().matches(/^[A-Za-z0-9.]{6,20}$/).withMessage(m.bankAliasInvalid)
+]
 
 // extraInfo (estructura comentada en el modelo Club): todas las claves son opcionales y no se aceptan otras
 const extraInfo = [
@@ -32,7 +46,8 @@ const extraInfo = [
     body('extraInfo.secretaryHours').optional({ values: 'null' }).isArray({ max: 10 }).withMessage(m.secretaryHoursInvalid),
     requiredText('extraInfo.secretaryHours.*', 100, m.secretaryHoursInvalid),
     ...pairList('extraInfo.courts', ['name', 'address'], m.courtsInvalid),
-    ...pairList('extraInfo.trainingSchedule', ['sport', 'schedule'], m.trainingScheduleInvalid)
+    ...pairList('extraInfo.trainingSchedule', ['sport', 'schedule'], m.trainingScheduleInvalid),
+    ...bankInfo
 ]
 
 const updateSettings = [

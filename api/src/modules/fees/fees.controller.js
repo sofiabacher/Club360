@@ -36,7 +36,83 @@ const pay = async (req, res, next) => {
     }
 }
 
+// ---------- Transferencias y comprobantes ----------
+
+const transferInfo = async (req, res, next) => {
+    try {
+        const data = await service.getTransferInfo(req.user)
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+// El comprobante adjunto llega en req.file (middleware upload, campo receipt)
+const transfer = async (req, res, next) => {
+    try {
+        const data = await service.reportTransfer(req.user, req.params.id, req.file)
+        res.status(201).json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+// Devuelve el archivo con su tipo, para verlo en el navegador. nosniff: el navegador no adivina otro tipo
+const receiptFile = async (req, res, next) => {
+    try {
+        const { filePath, contentType, filename } = await service.getReceiptFile(req.user, req.params.id)
+        res.set({ 'Content-Type': contentType, 'Content-Disposition': `inline; filename="${filename}"`, 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'private, no-store' })
+        res.sendFile(filePath, (error) => { if (error) next(error) })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const voucher = async (req, res, next) => {
+    try {
+        const data = await service.getVoucher(req.user, req.params.id)
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
 // ---------- Admin ----------
+
+const payments = async (req, res, next) => {
+    try {
+        const { method, state, search, from, to, page } = req.query
+        const data = await service.listPayments(req.user, { method, state, search, from, to, page })
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const approveTransfer = async (req, res, next) => {
+    try {
+        const data = await service.approveTransfer(req.user, req.params.id)
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const rejectTransfer = async (req, res, next) => {
+    try {
+        const data = await service.rejectTransfer(req.user, req.params.id, { reason: req.body.reason })
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
 
 const list = async (req, res, next) => {
     try {
@@ -95,6 +171,13 @@ module.exports = {
     mine,
     linked,
     pay,
+    transferInfo,
+    transfer,
+    receiptFile,
+    voucher,
+    payments,
+    approveTransfer,
+    rejectTransfer,
     list,
     memberAccount,
     generate,

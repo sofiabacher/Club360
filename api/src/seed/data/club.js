@@ -27,7 +27,15 @@ const CLUB_SEED = {
             ],
             trainingSchedule: [
                 { sport: 'Vóley', schedule: 'Lunes, miércoles y viernes de 18 a 22' }
-            ]
+            ],
+            // [PROVISORIO] contexto 2.1. Datos para transferencias (P14b): el seed los completa solo si el club no los tiene
+            bankInfo: {
+                holder: 'Club Valencia',
+                cuit: '30-00000000-0',
+                bank: 'Banco Ejemplo',
+                cbu: '0000000000000000000000',
+                alias: 'CLUB.VALENCIA.CUOTAS'
+            }
         }
     },
 

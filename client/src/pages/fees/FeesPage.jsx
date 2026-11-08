@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -28,6 +28,7 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { useTheme } from '@mui/material/styles'
+import ReceiptLongRounded from '@mui/icons-material/ReceiptLongRounded'
 import SearchRounded from '@mui/icons-material/SearchRounded'
 
 import { generateFees, getFees } from '../../api/fees.api.js'
@@ -130,7 +131,9 @@ export default function FeesPage() {
   const isFuture = query.period > currentPeriod()
   const openMember = (memberId) => navigate(`/fees/members/${memberId}`)
 
-  const registerButton = (fee) => fee.feeState !== FEE_STATES.PAID && (
+  const registerButton = (fee) => (fee.inReview
+    ? <StatusChip status="pending" label="Transferencia en revisión" />
+    : fee.feeState !== FEE_STATES.PAID && (
     <Button
       size="small"
       color="secondary"
@@ -141,7 +144,7 @@ export default function FeesPage() {
     >
       Registrar pago en secretaría
     </Button>
-  )
+  ))
 
   return (
     <>
@@ -149,6 +152,9 @@ export default function FeesPage() {
         <Box>
           <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Cuotas</Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>Se generan el día 1 de cada mes y vencen el 10.</Typography>
+          <Button component={RouterLink} to="/fees/payments" color="secondary" size="small" startIcon={<ReceiptLongRounded />} sx={{ mt: 0.5, ml: -0.5 }}>
+            Ver historial de pagos{result?.pendingReview ? ` · ${result.pendingReview} ${result.pendingReview === 1 ? 'transferencia' : 'transferencias'} por revisar` : ''}
+          </Button>
         </Box>
         <Stack direction="row" sx={{ gap: 2, alignItems: 'center' }}>
           <TextField
@@ -254,7 +260,7 @@ export default function FeesPage() {
                   </Stack>
                 </CardContent>
               </CardActionArea>
-              {fee.feeState !== FEE_STATES.PAID && <Box sx={{ px: 1, pb: 1 }}>{registerButton(fee)}</Box>}
+              {(fee.feeState !== FEE_STATES.PAID || fee.inReview) && <Box sx={{ px: 1, pb: 1 }}>{registerButton(fee)}</Box>}
             </Card>
           ))}
         </Stack>

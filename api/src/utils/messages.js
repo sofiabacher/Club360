@@ -4,7 +4,8 @@ module.exports = {
     general: {
         serverError: 'Ocurrió un error interno. Probá de nuevo más tarde.',
         invalidJson: 'Los datos enviados no tienen un formato válido.',
-        validationError: 'Revisá los datos ingresados.'
+        validationError: 'Revisá los datos ingresados.',
+        notFound: 'No encontramos lo que buscás.'
     },
 
     auth: {
@@ -118,6 +119,11 @@ module.exports = {
         whatsappInvalid: 'El WhatsApp puede tener hasta 30 caracteres.',
         secretaryHoursInvalid: 'Cada horario de secretaría tiene que tener entre 1 y 100 caracteres (hasta 10 líneas).',
         courtsInvalid: 'Cada cancha necesita nombre y dirección (hasta 100 caracteres cada uno, hasta 20 canchas).',
+        bankHolderInvalid: 'Ingresá el titular de la cuenta (hasta 100 caracteres).',
+        bankCuitInvalid: 'Ingresá un CUIT válido (por ejemplo, 30-12345678-9).',
+        bankNameInvalid: 'Ingresá el banco (hasta 100 caracteres).',
+        bankCbuInvalid: 'El CBU tiene que tener 22 dígitos.',
+        bankAliasInvalid: 'El alias tiene que tener entre 6 y 20 caracteres: letras, números y puntos.',
         trainingScheduleInvalid: 'Cada horario de entrenamiento necesita deporte y horario (hasta 100 caracteres cada uno, hasta 20).',
         isActiveInvalid: 'Indicá si el deporte está activo.',
         idInvalid: 'El identificador no es válido.'
@@ -355,6 +361,13 @@ module.exports = {
         linkedMemberNotFound: 'No encontramos a esa jugadora entre tus vinculadas.',
         alreadyPaid: 'Esta cuota ya está pagada.',
         futurePeriod: 'No se pueden generar cuotas de un período que todavía no empezó.',
+        transferInReview: 'Ya hay una transferencia en revisión para esta cuota.',
+        noBankInfo: 'El club todavía no cargó sus datos para transferencias. Consultá en secretaría.',
+        receiptRequired: 'Adjuntá el comprobante de la transferencia.',
+        paymentNotFound: 'No encontramos el pago.',
+        notReviewable: 'Solo se revisan transferencias pendientes.',
+        receiptNotFound: 'No encontramos el comprobante adjunto.',
+        voucherNotFound: 'No encontramos el comprobante de pago. Solo tienen comprobante los pagos aprobados.',
 
         // Validaciones de formato
         idInvalid: 'El identificador no es válido.',
@@ -368,12 +381,17 @@ module.exports = {
         cardHolderInvalid: 'Ingresá el nombre del titular, como figura en la tarjeta.',
         cardExpiryInvalid: 'Ingresá un vencimiento válido (MM/AA).',
         cardExpired: 'La tarjeta está vencida.',
-        cardCvvInvalid: 'El código de seguridad tiene 3 o 4 dígitos.'
+        cardCvvInvalid: 'El código de seguridad tiene 3 o 4 dígitos.',
+        methodInvalid: 'El medio de pago no es válido.',
+        dateInvalid: 'Elegí una fecha válida.',
+        dateRangeInvalid: 'La fecha "desde" no puede ser posterior a la fecha "hasta".',
+        reasonInvalid: 'Escribí el motivo del rechazo (entre 10 y 300 caracteres).'
     },
 
     upload: {
         invalidType: 'El archivo tiene que ser una imagen JPG, PNG o WEBP.',
-        tooLarge: 'La imagen no puede pesar más de 5 MB.',
+        invalidReceiptType: 'El comprobante tiene que ser una imagen JPG o PNG, o un PDF.',
+        tooLarge: 'El archivo no puede pesar más de 5 MB.',
         failed: 'No pudimos subir el archivo.'
     },
 

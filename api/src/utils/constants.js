@@ -41,6 +41,13 @@ const TRANSACTION_STATES = {
     REJECTED: 3 
 }
 
+// payment.method — medio de pago (P14b). CASH: pago en secretaría registrado por el Admin
+const PAYMENT_METHODS = {
+    CARD: 1,
+    TRANSFER: 2,
+    CASH: 3
+}
+
 // citation.citationState — CANCELLED: el partido se canceló
 const CITATION_STATES = { 
     PENDING: 1, 
@@ -150,6 +157,7 @@ const LOG_ACTIONS = {
     PAYMENT_APPROVED: { message: 'Pago aprobado', criticity: CRITICITY.MEDIUM },
     PAYMENT_REJECTED: { message: 'Pago rechazado', criticity: CRITICITY.MEDIUM },
     FEE_PAID_MANUAL: { message: 'Pago registrado en secretaría', criticity: CRITICITY.HIGH },
+    TRANSFER_REPORTED: { message: 'Transferencia informada', criticity: CRITICITY.LOW },
     MEMBER_SUSPENDED: { message: 'Suspensión de socio por mora', criticity: CRITICITY.HIGH },
     MEMBER_RECOVERED: { message: 'Recuperación de la condición de socio', criticity: CRITICITY.MEDIUM }
 }
@@ -230,6 +238,8 @@ const NOTIFICATION_TYPES = {
     CONFLICT_RESOLVED: { email: false },    // Conflicto de horario resuelto: qué partido juega (jugadora y Familia)
     CITATION_RESPONSE: { email: false },    // Una jugadora confirmó o rechazó su citación (entrenadoras de la categoría)
     INSCRIPTION_REQUEST: { email: false },  // Solicitud de inscripción nueva (Representante del deporte)
+    PAYMENT_REVIEW_REQUEST: { email: false },   // Transferencia informada para revisar (usuarios con fees.manage)
+    PAYMENT_RESULT: { email: false },       // Resultado de la revisión de una transferencia (quien pagó y el socio, con Familia)
     GENERAL: { email: 'optional' }          // Avisos generales del Admin, el Representante y la Entrenadora
 }
 
@@ -259,6 +269,7 @@ module.exports = {
     INSCRIPTION_STATES,
     FEE_STATES,
     TRANSACTION_STATES,
+    PAYMENT_METHODS,
     CITATION_STATES,
     GAME_STATES,
     CRITICITY,

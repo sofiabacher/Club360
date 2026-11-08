@@ -20,6 +20,13 @@ const toAmount = (value) => (value === null || value === undefined ? null : Numb
 // Inscripciones que impiden desactivar un deporte
 const BLOCKING_INSCRIPTION_STATES = [INSCRIPTION_STATES.PENDING, INSCRIPTION_STATES.APPROVED]
 
+// Datos para transferencias (extraInfo.bankInfo): los cinco campos, o null si el club no los cargó
+function normalizeBankInfo(bankInfo) {
+    if (!bankInfo) return null
+    const { holder, cuit, bank, cbu, alias } = bankInfo
+    return { holder, cuit, bank, cbu, alias: alias?.toUpperCase() }
+}
+
 // extraInfo con todas sus claves (las que no vienen quedan vacías), así el front no tiene que preguntar si existen
 function normalizeExtraInfo(extraInfo) {
     const info = extraInfo ?? {}
@@ -28,7 +35,8 @@ function normalizeExtraInfo(extraInfo) {
         whatsapp: info.whatsapp || null,
         secretaryHours: info.secretaryHours ?? [],
         courts: (info.courts ?? []).map(({ name, address }) => ({ name, address })),
-        trainingSchedule: (info.trainingSchedule ?? []).map(({ sport, schedule }) => ({ sport, schedule }))
+        trainingSchedule: (info.trainingSchedule ?? []).map(({ sport, schedule }) => ({ sport, schedule })),
+        bankInfo: normalizeBankInfo(info.bankInfo)
     }
 }
 
@@ -210,7 +218,14 @@ async function updateSport(actor, sportId, { isActive, priceFee }) {
     return sports.find(item => item.sportId === result.sport.id)
 }
 
+// Datos para transferencias del club (los usa fees), o null si no los cargó
+async function getBankInfo(clubId) {
+    const club = await findClub(clubId, { attributes: ['id', 'extraInfo'] })
+    return normalizeBankInfo(club.extraInfo?.bankInfo)
+}
+
 module.exports = {
+    getBankInfo,
     getActiveSports,
     getInfo,
     getSettings,
