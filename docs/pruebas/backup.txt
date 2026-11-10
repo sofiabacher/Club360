@@ -1,0 +1,211 @@
+CASOS DE PRUEBA — MÓDULO BACKUP (COPIAS DE SEGURIDAD Y RESTAURACIÓN)
+=====================================================================
+
+Club360 · Prompt 16 · 09/11/2026
+Formato según CLAUDE.md ("Pruebas"). Los resultados obtenidos salen del script de verificación del P16 (corrido contra la
+base local el 09/11/2026; 81 chequeos aprobados), con un segundo club de prueba ("Club P16": Admin y las socias Ana, Bea y
+Caro). El script borra al final el club, su bitácora y sus backups (y el backup automático del club 1 que genera la
+prueba del job). Lo que solo se puede comprobar en el navegador queda anotado en cada caso.
+
+Pantalla: Sistema > Copias de seguridad. Los backups se guardan en api/backups/club-{id}/.
+
+
+--------------------------------------------------
+ID: CP-BACKUP-01
+Módulo: backup
+Descripción: Generar un backup manual
+Precondiciones: sesión del Admin (backup.manage).
+Pasos:
+  1. Tocar "Generar backup".
+Datos de entrada: —
+Resultado esperado: se guarda backup-AAAAMMDD-HHmmss-manual.json con meta (app, formatVersion 1, club, tipo, fecha, quién,
+  filas por tabla y checksum SHA-256) y data (las filas del club, sin bitácora ni catálogos). Aparece en la lista con su
+  fecha, tipo "Manual", tamaño, filas y quién lo generó. Queda "Backup generado".
+Resultado obtenido: 201 con el nombre esperado; la lista trae tipo MANUAL, tamaño, filas y createdBy p16.admin.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BACKUP-02
+Módulo: backup
+Descripción: Quedan solo los últimos 7
+Precondiciones: sesión del Admin.
+Pasos:
+  1. Generar 8 backups.
+Datos de entrada: —
+Resultado esperado: la lista muestra 7: se borran los más viejos (de todos los tipos).
+Resultado obtenido: 7 backups en la lista.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BACKUP-03
+Módulo: backup
+Descripción: Descargar un backup
+Precondiciones: CP-BACKUP-01.
+Pasos:
+  1. Tocar "Descargar".
+Datos de entrada: —
+Resultado esperado: se descarga el .json; su checksum coincide con los datos. Queda "Backup descargado".
+Resultado obtenido: 200; meta.app Club360, meta.clubId del club, checksum correcto, sin "log" ni "sport" en data;
+  BACKUP_DOWNLOADED registrado.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BACKUP-04
+Módulo: backup
+Descripción: Restaurar de la lista (un socio dado de baja vuelve)
+Precondiciones: CP-BACKUP-01; después del backup, Bea se da de baja (Inactiva) y se registra algo en la bitácora.
+Pasos:
+  1. Tocar "Restaurar" en el backup, escribir RESTAURAR y confirmar.
+Datos de entrada: confirm = RESTAURAR.
+Resultado esperado: el diálogo muestra la fecha, el tipo, las filas por tabla y la advertencia. Al restaurar, Bea vuelve a
+  estar Activa con el mismo id y su teléfono se lee bien; la integridad da OK; se generó antes un backup "Previo a
+  restaurar". La bitácora conserva lo registrado después del backup y suma "Backup restaurado" (Crítica) con el archivo
+  y el backup previo. El club 1 no cambia.
+Resultado obtenido: Bea ACTIVE con el mismo id; teléfono "11 4000-0003" (cifrado conservado); verificación OK; existe el
+  -pre_restore.json; el registro posterior al backup sigue; BACKUP_RESTORED con criticidad 4; las filas del club 1 son
+  iguales antes y después.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BACKUP-05
+Módulo: backup
+Descripción: Volver con el backup previo a restaurar
+Precondiciones: CP-BACKUP-04.
+Pasos:
+  1. Restaurar el backup "Previo a restaurar".
+Datos de entrada: confirm = RESTAURAR.
+Resultado esperado: el club vuelve al estado anterior a la restauración (Bea otra vez Inactiva).
+Resultado obtenido: 200 y Bea INACTIVE.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BACKUP-06
+Módulo: backup
+Descripción: Restaurar un archivo subido
+Precondiciones: un backup descargado (CP-BACKUP-03).
+Pasos:
+  1. Arrastrar el .json a "Restaurar desde un archivo", escribir RESTAURAR y confirmar.
+  2. Intentar con un .txt.
+Datos de entrada: mi-backup.json; notas.txt.
+Resultado esperado: se restaura igual que de la lista. El .txt se rechaza (400 "El backup tiene que ser un archivo
+  .json."). El archivo no se guarda en uploads/.
+Resultado obtenido: 200 y Bea ACTIVE; el .txt → 400.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BACKUP-07
+Módulo: backup
+Descripción: Un archivo de otro club
+Precondiciones: un backup del club 1.
+Pasos:
+  1. Subirlo como Admin del club de prueba.
+Datos de entrada: backup del club 1 (con su checksum correcto).
+Resultado esperado: 400 "Este backup es de otro club." y "Restauración de backup fallida" en la bitácora.
+Resultado obtenido: 400 con ese mensaje.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BACKUP-08
+Módulo: backup
+Descripción: Un archivo modificado a mano
+Precondiciones: un backup descargado.
+Pasos:
+  1. Cambiar el monto de una cuota en el JSON (sin tocar el checksum) y subirlo.
+Datos de entrada: socialAmount de la primera cuota = 99999.00.
+Resultado esperado: 400 "El archivo fue modificado o está dañado."
+Resultado obtenido: 400 con ese mensaje.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BACKUP-09
+Módulo: backup
+Descripción: Validaciones de formato y de catálogos
+Precondiciones: —
+Pasos:
+  1. Subir un JSON que no es de Club360. 2. Subir un backup que apunta a un deporte que no existe (con el checksum
+     recalculado).
+Datos de entrada: {"meta":{"app":"Otra"},"data":{}}; clubSport.sportId = 999999.
+Resultado esperado: 400 "El archivo no es un backup de Club360 válido." y 400 por los deportes o permisos que no existen.
+Resultado obtenido: 400 en los dos casos, con esos mensajes.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BACKUP-10
+Módulo: backup
+Descripción: Un backup anterior al usuario que restaura
+Precondiciones: se crea un segundo Admin (AdminDos) después del backup.
+Pasos:
+  1. Como AdminDos, restaurar ese backup.
+Datos de entrada: —
+Resultado esperado: 400 "Este backup es anterior a tu usuario o no te da permiso para restaurar. Pedile a otro
+  administrador que lo haga."
+Resultado obtenido: 400 con ese mensaje. Las cinco validaciones fallidas quedaron registradas (BACKUP_RESTORE_FAILED).
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BACKUP-11
+Módulo: backup
+Descripción: Sin escribir RESTAURAR y nombres de archivo inválidos
+Precondiciones: —
+Pasos:
+  1. Restaurar con confirm "restaurar". 2. Descargar "..%2F..%2Fsnapshot.json". 3. Descargar un nombre válido que no
+     existe en la carpeta del club. 4. Como socia, pedir la lista.
+Datos de entrada: los indicados.
+Resultado esperado: 1 → 400 (en la pantalla, el botón queda deshabilitado hasta escribir RESTAURAR). 2 → rechazado (el
+  nombre tiene que cumplir el patrón y se busca solo en la carpeta del club). 3 → 404. 4 → 403.
+Resultado obtenido: 400, 400, 404 y 403.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BACKUP-12
+Módulo: backup
+Descripción: Un error a mitad de la restauración
+Precondiciones: un backup con una notificación duplicada (mismo id), con el checksum recalculado: pasa las validaciones
+  pero falla al insertar.
+Pasos:
+  1. Subirlo y restaurar.
+Datos de entrada: —
+Resultado esperado: "No se pudo restaurar el backup. Los datos del club quedaron como estaban." y las filas del club
+  iguales que antes (una sola transacción).
+Resultado obtenido: 500 con ese mensaje; las filas del club idénticas antes y después.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BACKUP-13
+Módulo: backup
+Descripción: Backup automático
+Precondiciones: —
+Pasos:
+  1. Correr la función del job (runAutoBackups) con la fecha del domingo 15/11/2026 a las 03:00 (en el servidor, los
+     domingos a las 03:00).
+Datos de entrada: —
+Resultado esperado: un backup de tipo "Automático" por cada club, también si está bloqueado por integridad. Si falla en
+  uno, queda "Backup automático fallido" y sigue con el siguiente.
+Resultado obtenido: un -auto.json en el club de prueba y otro en el club 1 (el de la demo se borró al final de la prueba).
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BACKUP-14
+Módulo: backup
+Descripción: Probar en el navegador y en el celular
+Precondiciones: sesión del Admin.
+Pasos:
+  1. Generar, descargar y restaurar un backup desde la pantalla, en la compu y en el celular.
+Datos de entrada: —
+Resultado esperado: "Generar backup" (naranja), la nota de los domingos, la lista (tarjetas en el celular), el diálogo con
+  RESTAURAR y, al terminar, el resultado con el estado de la integridad.
+Resultado obtenido: —
+Estado: Pendiente

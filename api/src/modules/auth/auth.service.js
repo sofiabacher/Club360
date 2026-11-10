@@ -6,6 +6,7 @@ const { Op, UniqueConstraintError } = require('sequelize')
 const sequelize = require('../../config/db')
 const { User, Member, Club } = require('../../models')
 const { getAvailableRoles, getEffectivePermissions, removeBaseRole } = require('../access/access.service')
+const { assertLoginAllowed } = require('../integrity/integrity.service')
 
 const logger = require('../../utils/logger')
 const { createError } = require('../../utils/errors')
@@ -111,6 +112,11 @@ async function verifyCredentials({ username, password }) {
 
 async function login({ username, password }) {
     const user = await verifyCredentials({ username, password })
+
+    // Club bloqueado por integridad: 503 INTEGRITY_LOCK, salvo quien puede repararlo o restaurarlo. La contraseña ya se
+    // validó, así que no suma un intento fallido
+    await assertLoginAllowed(user)
+
     const roles = await getAvailableRoles(user.id)
 
     if (roles.length === 0) {

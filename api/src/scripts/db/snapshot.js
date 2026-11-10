@@ -2,16 +2,17 @@
 // api/backups/snapshot-AAAAMMDD-HHmmss.json, para recrear la base (DB_FORCE_SYNC) sin perder los datos y volver a
 // cargarlos con `npm run db:restore`.
 //
-// Las filas se leen sin pasar por los modelos (SELECT * con QueryTypes.SELECT, igual que raw: true), tal cual están en la
-// base: el teléfono cifrado, los hashes de las contraseñas, los dvh y las fechas. Se leen las columnas que tiene la base
-// y no las del modelo, así el snapshot funciona aunque el modelo ya tenga una columna nueva que la base todavía no.
+// Las filas se leen con readTableRows de utils/clubData.js (la misma lectura de los backups por club): SELECT *, tal
+// cual están en la base: el teléfono cifrado, los hashes de las contraseñas, los dvh y las fechas. Se leen las columnas
+// que tiene la base y no las del modelo, así el snapshot funciona aunque el modelo ya tenga una columna nueva que la base
+// todavía no. A diferencia de un backup, copia la base completa: todos los clubes, los catálogos, la bitácora y dvv.
 // Uso: npm run db:snapshot
 const fs = require('fs')
 const path = require('path')
-const { QueryTypes } = require('sequelize')
 
 const sequelize = require('../../config/db')
 const models = require('../../models')
+const { readTableRows } = require('../../utils/clubData')
 
 const BACKUPS_DIR = path.join(__dirname, '../../../backups')
 
@@ -26,8 +27,7 @@ async function snapshot() {
 
     const tables = {}
     for (const Model of Object.values(models)) {
-        const order = Model.primaryKeyAttributes.map(name => `\`${Model.rawAttributes[name].field}\``).join(', ')
-        const rows = await sequelize.query(`SELECT * FROM \`${Model.getTableName()}\` ORDER BY ${order}`, { type: QueryTypes.SELECT })
+        const rows = await readTableRows(Model)
         tables[Model.getTableName()] = { model: Model.name, count: rows.length, rows }
     }
 

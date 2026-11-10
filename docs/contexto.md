@@ -29,6 +29,8 @@ Este documento es el contexto acumulado del proyecto. Está pensado para pegarse
 - **Prioridades si sobra tiempo:** primero los resultados de partidos, después el bot (D11, ver sección 7).
 - **Particiones:** no se implementan porque no son requisito (ver sección 0).
 
+**Última actualización (09/11/2026) — bitácora, integridad y copias de seguridad:** el backup y la restauración son por club, se restauran desde la lista del servidor o subiendo un archivo, y si la verificación de integridad encuentra un registro alterado el club queda bloqueado para todos menos quienes administran la integridad y los backups (ver sección 6, sección 10 y sección 11).
+
 **Última actualización (08/11/2026) — rutinas y paneles de inicio:** la rutina se carga por día de entrenamiento (campo nuevo `routine.dayOfWeek`), la preparadora edita la semana actual y las futuras, y se definieron los paneles de inicio de la Jugadora y de la Familia (ver sección 6 y sección 8).
 
 **Última actualización (08/11/2026) — pago por transferencia y comprobantes:** el Socio puede pagar por transferencia con los datos bancarios del club y adjuntar el comprobante, que revisa el Admin desde un historial de pagos; todo pago aprobado tiene un comprobante de pago imprimible; `payment` suma `method`, `receiptUrl` y `note` (ver 2.1, sección 6 y sección 8).
@@ -340,6 +342,7 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
   | Respuesta a una citación: confirmación o rechazo (05/11) | Entrenadoras de la categoría | in-app |
   | Transferencia informada para revisar (08/11) | Usuarios con gestión de cuotas | in-app |
   | Resultado de la revisión de una transferencia (08/11) | Quien pagó y el Socio (y Familia si es menor) | in-app |
+  | Error de integridad detectado (09/11) | Usuarios con gestión de la integridad | in-app + email |
   | Solicitud de inscripción nueva (05/11) | Representante del deporte | in-app |
   | Avisos generales (Admin, Representante, Entrenadora) | Según el permiso de envío | in-app, y email si quien envía lo elige |
 
@@ -456,7 +459,7 @@ Asistente de consultas generales sobre el club y sobre cómo usar la plataforma,
 
 ## 10. Estado actual y próximos pasos
 
-**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**, **recuperación de contraseña y Mi cuenta (3.6.2 y 3.7, 21/10)**, **decisiones D2 a D7, D9 y D11 y emails de la demo (21/10)**, **gestión de roles y permisos (sección 4, 21/10)**, **club y alta de socios, D13 (3.1 y sección 8, 21/10)**, **staff y vínculo familiar (3.4, 3.5 y 3.6, 23/10)**, **ligas y categorías (sección 6, 26/10)**, **notificaciones (sección 6, 31/10; detalle e historial, 01/11)**, **partidos y superposiciones (sección 6, 01/11)**, **citaciones (sección 6, 05/11)**, **inscripciones (3.3, 05/11)**, **cuotas y pagos, D12 (sección 6, 08/11)**, **pago por transferencia y comprobantes de pago (sección 6, 08/11)**, **rutinas y paneles de inicio (sección 6, 08/11)**
+**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**, **recuperación de contraseña y Mi cuenta (3.6.2 y 3.7, 21/10)**, **decisiones D2 a D7, D9 y D11 y emails de la demo (21/10)**, **gestión de roles y permisos (sección 4, 21/10)**, **club y alta de socios, D13 (3.1 y sección 8, 21/10)**, **staff y vínculo familiar (3.4, 3.5 y 3.6, 23/10)**, **ligas y categorías (sección 6, 26/10)**, **notificaciones (sección 6, 31/10; detalle e historial, 01/11)**, **partidos y superposiciones (sección 6, 01/11)**, **citaciones (sección 6, 05/11)**, **inscripciones (3.3, 05/11)**, **cuotas y pagos, D12 (sección 6, 08/11)**, **pago por transferencia y comprobantes de pago (sección 6, 08/11)**, **rutinas y paneles de inicio (sección 6, 08/11)**, **bitácora, integridad y copias de seguridad (sección 11, 09/11)**
 
 **Pendiente:**
 1. ~~Modelo DER Lógico completo~~ — cerrado el 04/10/2026, actualizado el 10/10/2026 (ver sección 8)
@@ -466,7 +469,7 @@ Asistente de consultas generales sobre el club y sobre cómo usar la plataforma,
 5. Cronograma de trabajo con objetivo de terminar a mediados de noviembre (dejar margen)
 6. Definir roles/participantes del equipo de desarrollo (quién hace qué)
 7. Manuales de usuario
-8. Diseño de seguridad técnica (encriptación reversible/irreversible, dígitos verificadores horizontales/verticales), bitácora técnica, backup/restore — aún no desarrollados en detalle. Las particiones no se hacen (ver sección 0)
+8. Diseño de seguridad técnica (encriptación reversible/irreversible, dígitos verificadores horizontales/verticales), bitácora técnica, backup/restore — **definidos el 09/11/2026** (ver sección 11, "Bitácora, integridad y copias de seguridad"); falta redactarlos en la documentación formal. Las particiones no se hacen (ver sección 0)
 9. ~~Mecanismo de recuperación de contraseña~~ — cerrado el 21/10/2026 (ver 3.7)
 10. ~~Datos de contacto, horarios y direcciones de Valencia y sus canchas~~ — cargados con datos provisorios el 21/10/2026 (D2, ver 2.1). Reemplazar por los reales cuando estén
 11. ~~Cómo recibe el adulto responsable el código de vínculo familiar~~ — cerrado el 21/10/2026 (D3, ver 3.5)
@@ -525,7 +528,11 @@ El repositorio incluye un `CLAUDE.md` en la raíz con estas mismas convenciones,
   - Límites a tener en cuenta: Gmail permite unos 500 envíos por día y algunos mails pueden caer en spam. Por eso solo algunas notificaciones van por email (ver sección 6).
   - En desarrollo, si no hay SMTP configurado, el mailer muestra por consola el destinatario, el asunto y los links del email.
   - El dominio propio con Resend queda en Futuro (sección 7). El mailer se mantiene detrás de `utils/mailer/`, así que cambiar de proveedor solo toca la configuración.
-- **Backups:** se guardan en `api/backups/`, excluidos del repo.
+- **Bitácora, integridad y copias de seguridad (09/11/2026):**
+  - **Bitácora:** el Admin la consulta con filtros (fechas, criticidad, acción, usuario y texto) y la descarga en CSV (UTF-8 con separador `;` para Excel). Solo ve los registros de su club. La descarga queda registrada.
+  - **Integridad:** se verifica el DVH de cada registro del club (y de los catálogos compartidos de deportes y permisos) y el DVV de cada tabla, al iniciar sesión (con un resultado guardado en memoria por 5 minutos), todas las noches a las 02:30 y a pedido del Admin. Si hay un registro alterado, **el club queda bloqueado**: solo entran quienes tienen permiso de integridad o de backup, para reparar o restaurar; el resto ve "Sistema en mantenimiento" y los procesos automáticos del club se pausan. Se avisa por in-app y email solo cuando el estado pasa de correcto a error. **Reparar** (por tabla o todo, como el CU020 de HotelDesk) recalcula los dígitos y acepta los datos actuales; si se sospecha una modificación externa, se restaura un backup. El informe se descarga en CSV.
+  - **Backup por club:** copia en JSON de todas las filas del club (sin la bitácora, ni los catálogos compartidos, ni los archivos subidos), con un checksum SHA-256 para detectar archivos modificados. Manual o automático (domingos a las 03:00); se guardan los últimos 7 por club en `api/backups/club-{id}/`, excluidos del repo, y se pueden descargar (en Render el disco no es persistente, así que en la demo hay que descargarlos).
+  - **Restauración por club:** desde un backup de la lista o subiendo un archivo. Solo backups del mismo club, sin modificar y en los que quien restaura existe como usuario activo con permiso de backup. Antes guarda un backup del estado actual, reemplaza los datos del club en una sola transacción (si algo falla, no cambia nada), recalcula los dígitos y verifica la integridad. La bitácora no se restaura, para conservar el rastro de lo que pasó. No afecta a otros clubes.
 - **Pruebas (21/10/2026, decisión D9):** sin tests automatizados. Las pruebas son **casos de prueba documentados en archivos `.txt`**, en `docs/pruebas/`, uno por módulo. Cada caso indica ID, módulo, descripción, precondiciones, pasos, datos de entrada, resultado esperado, resultado obtenido y estado. Los scripts de verificación que corre Claude Code en cada prompt se mantienen como chequeo técnico, pero no reemplazan los casos documentados.
 
 **Diseño visual (definido el 18/10/2026, decisión D10):** referencia oficial: el moodboard adjunto al proyecto (`Club360_Moodboard.png`, "Propuesta 1"), copiado en el repo como `docs/moodboard.png`. Personalidad: **ordenado, vivo, cercano, confiable** — "orden de tablero, energía de partido y calidez de club de barrio".

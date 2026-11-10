@@ -14,9 +14,9 @@ const { Op } = require('sequelize')
 
 const sequelize = require('../../config/db')
 const {
-    Fee, Payment, Member, User, Club, Inscription, ClubSport, Sport, Notification, Permission, RolePermission, UserRole, UserPermission
+    Fee, Payment, Member, User, Club, Inscription, ClubSport, Sport, Notification
 } = require('../../models')
-const { getEffectivePermissions } = require('../access/access.service')
+const { getEffectivePermissions, getActiveUsersWithPermission } = require('../access/access.service')
 const { getBankInfo } = require('../clubs/clubs.service')
 const { getSportScope } = require('../staff/staff.service')
 const { notify } = require('../notifications/notifications.service')
@@ -29,7 +29,6 @@ const {
     FEE_STATES,
     TRANSACTION_STATES,
     PAYMENT_METHODS,
-    USER_STATES,
     MEMBER_STATES,
     INSCRIPTION_STATES,
     FEE_DUE_DAY,
@@ -55,6 +54,9 @@ const PLAYER_STATUS = { OK: 'ok', PENDING: 'pending', OVERDUE: 'overdue' }
 const REJECTED_CARD_SUFFIX = '0000'
 
 const SYSTEM = (clubId) => ({ clubId, userId: null, roleId: null })
+
+// Filtro de los jobs por club: clubIds null → todos los clubes
+const clubScope = (clubIds, field = 'clubId') => (clubIds ? { [field]: clubIds } : {})
 
 const actorOf = ({ id: userId, clubId, activeRoleId }) => ({ clubId, userId, roleId: activeRoleId })
 
@@ -167,9 +169,10 @@ async function generateFeesForPeriod(clubId, period) {
 }
 
 // Job generateFees (día 1): genera las cuotas del mes para cada club
-async function generateMonthlyFees(today = todayAR()) {
+// clubIds: los clubes en los que corre (el job saltea los bloqueados por integridad); por defecto, todos
+async function generateMonthlyFees(today = todayAR(), { clubIds = null } = {}) {
     const period = periodOf(today)
-    const clubs = await Club.findAll({ attributes: ['id'] })
+    const clubs = await Club.findAll({ where: clubScope(clubIds, 'id'), attributes: ['id'] })
     const results = []
 
     for (const club of clubs) {
@@ -200,9 +203,9 @@ async function alreadyNotified(clubId, userId, type, title) {
 }
 
 // 1. Cuotas Pendientes que vencen dentro de FEE_DUE_SOON_DAYS días exactos: aviso FEE_DUE_SOON (in-app)
-async function notifyDueSoon(today) {
+async function notifyDueSoon(today, clubIds) {
     const dueDate = addDays(today, FEE_DUE_SOON_DAYS)
-    const fees = await Fee.findAll({ where: { feeState: FEE_STATES.PENDING, expirationDate: dueDate }, include: [includeMemberUser] })
+    const fees = await Fee.findAll({ where: { ...clubScope(clubIds), feeState: FEE_STATES.PENDING, expirationDate: dueDate }, include: [includeMemberUser] })
 
     let sent = 0
     for (const fee of fees) {
@@ -225,8 +228,8 @@ async function notifyDueSoon(today) {
 }
 
 // 2. Cuotas Pendientes con el vencimiento ya pasado: pasan a Vencida y se avisa FEE_OVERDUE (in-app y email)
-async function markOverdue(today) {
-    const fees = await Fee.findAll({ where: { feeState: FEE_STATES.PENDING, expirationDate: { [Op.lt]: today } }, include: [includeMemberUser] })
+async function markOverdue(today, clubIds) {
+    const fees = await Fee.findAll({ where: { ...clubScope(clubIds), feeState: FEE_STATES.PENDING, expirationDate: { [Op.lt]: today } }, include: [includeMemberUser] })
 
     for (const fee of fees) {
         const month = monthNameOf(fee.period)
@@ -248,8 +251,8 @@ async function markOverdue(today) {
 }
 
 // Cuotas Vencidas agrupadas por socio: Map memberId → { member, fees }
-async function overdueFeesByMember() {
-    const fees = await Fee.findAll({ where: { feeState: FEE_STATES.OVERDUE }, include: [includeMemberUser] })
+async function overdueFeesByMember(clubIds) {
+    const fees = await Fee.findAll({ where: { ...clubScope(clubIds), feeState: FEE_STATES.OVERDUE }, include: [includeMemberUser] })
     const byMember = new Map()
 
     for (const fee of fees) {
@@ -261,10 +264,10 @@ async function overdueFeesByMember() {
 }
 
 // 3. Recordatorio de mora: a los socios cuyo atraso es múltiplo de FEE_OVERDUE_REMINDER_DAYS, un FEE_OVERDUE con el resumen
-async function sendReminders(today, delayFeeOf) {
+async function sendReminders(today, delayFeeOf, clubIds) {
     let sent = 0
 
-    for (const { member, clubId, fees } of (await overdueFeesByMember()).values()) {
+    for (const { member, clubId, fees } of (await overdueFeesByMember(clubIds)).values()) {
         const days = await getOverdueDays(member.id, { today })
         if (days === 0 || days % FEE_OVERDUE_REMINDER_DAYS !== 0) continue
 
@@ -288,9 +291,9 @@ async function sendReminders(today, delayFeeOf) {
 }
 
 // 4. Suspensión: los socios ACTIVE con más días de atraso que el plazo del club pasan a SUSPENDED (con aviso por email)
-async function suspendOverdueMembers(today, delayFeeOf) {
+async function suspendOverdueMembers(today, delayFeeOf, clubIds) {
     const members = await Member.findAll({
-        where: { memberStateId: MEMBER_STATES.ACTIVE },
+        where: { ...clubScope(clubIds), memberStateId: MEMBER_STATES.ACTIVE },
         attributes: ['id', 'clubId', 'userId', 'numMember', 'memberStateId'],
         include: [
             { model: User, as: 'user', attributes: ['name', 'lastName'] },
@@ -324,14 +327,15 @@ async function suspendOverdueMembers(today, delayFeeOf) {
 }
 
 // Job feeStatus (todos los días): por vencer, vencidas, recordatorios y suspensiones, en ese orden. Idempotente
-async function runDailyFeeCheck(today = todayAR()) {
-    const clubs = await Club.findAll({ attributes: ['id', 'delayFee'] })
+// clubIds: los clubes en los que corre (el job saltea los bloqueados por integridad); por defecto, todos
+async function runDailyFeeCheck(today = todayAR(), { clubIds = null } = {}) {
+    const clubs = await Club.findAll({ where: clubScope(clubIds, 'id'), attributes: ['id', 'delayFee'] })
     const delayFeeOf = new Map(clubs.map(club => [club.id, club.delayFee]))
 
-    const dueSoon = await notifyDueSoon(today)
-    const overdue = await markOverdue(today)
-    const reminders = await sendReminders(today, delayFeeOf)
-    const suspended = await suspendOverdueMembers(today, delayFeeOf)
+    const dueSoon = await notifyDueSoon(today, clubIds)
+    const overdue = await markOverdue(today, clubIds)
+    const reminders = await sendReminders(today, delayFeeOf, clubIds)
+    const suspended = await suspendOverdueMembers(today, delayFeeOf, clubIds)
 
     return { today, dueSoon, overdue, reminders, suspended }
 }
@@ -599,36 +603,6 @@ async function assertReceiptContent(filePath) {
     }
 }
 
-// Usuarios ACTIVE del club que tienen fees.manage con alguno de sus roles (calculado con getEffectivePermissions, que
-// suma los permisos directos y saca los de mayores a los menores). Primero se buscan los candidatos: quienes tienen un
-// rol con ese permiso o el permiso directo
-async function getFeeManagers(clubId, { transaction } = {}) {
-    const permission = await Permission.findOne({ where: { name: PERMISSIONS.FEES_MANAGE }, attributes: ['id'], transaction })
-    if (!permission) return []
-
-    const [rolePermissions, userPermissions] = await Promise.all([
-        RolePermission.findAll({ where: { permissionId: permission.id }, attributes: ['roleId'], raw: true, transaction }),
-        UserPermission.findAll({ where: { permissionId: permission.id }, attributes: ['userId'], raw: true, transaction })
-    ])
-    const withRole = await UserRole.findAll({ where: { roleId: rolePermissions.map(row => row.roleId) }, attributes: ['userId'], raw: true, transaction })
-    const candidateIds = [...new Set([...withRole, ...userPermissions].map(row => row.userId))]
-    if (candidateIds.length === 0) return []
-
-    const users = await User.findAll({ where: { id: candidateIds, clubId, userStateId: USER_STATES.ACTIVE }, attributes: ['id'], raw: true, transaction })
-    const roles = await UserRole.findAll({ where: { userId: users.map(user => user.id) }, attributes: ['userId', 'roleId'], raw: true, transaction })
-
-    const managers = []
-    for (const user of users) {
-        for (const { roleId } of roles.filter(row => row.userId === user.id)) {
-            if ((await getEffectivePermissions(user.id, roleId)).includes(PERMISSIONS.FEES_MANAGE)) {
-                managers.push(user.id)
-                break
-            }
-        }
-    }
-    return managers
-}
-
 // Informar una transferencia (fees.payOwn o fees.manageLinked): mismas cuotas que el pago con tarjeta, por el total.
 // Crea un pago Pendiente con el comprobante adjunto y código TRF-; la cuota no cambia hasta que la revisa el club.
 // Avisa PAYMENT_REVIEW_REQUEST a quienes gestionan cuotas. Si algo falla, se borra el archivo subido
@@ -641,7 +615,7 @@ async function reportTransfer(user, feeId, file) {
         if (!await getBankInfo(user.clubId)) throw createError(m.noBankInfo, 409)
 
         const allowed = await payableMemberIds(user)
-        const managers = await getFeeManagers(user.clubId)
+        const managers = await getActiveUsersWithPermission(user.clubId, PERMISSIONS.FEES_MANAGE)
 
         const result = await sequelize.transaction(async (transaction) => {
             const fee = await lockUnpaidFee({ id: feeId, clubId: user.clubId, memberId: allowed }, transaction)

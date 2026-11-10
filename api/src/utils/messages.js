@@ -406,6 +406,40 @@ module.exports = {
         removeImageInvalid: 'Indicá si se quita la imagen.'
     },
 
+    logs: {
+        nothingToExport: 'No hay registros para exportar.',
+
+        // Validaciones de formato
+        dateInvalid: 'Elegí una fecha válida (AAAA-MM-DD).',
+        dateRangeInvalid: 'El rango de fechas no es válido.',
+        criticityInvalid: 'La criticidad no es válida.',
+        actionInvalid: 'La acción no es válida.',
+        userIdInvalid: 'El usuario no es válido.',
+        searchInvalid: 'La búsqueda puede tener hasta 100 caracteres.',
+        pageInvalid: 'La página no es válida.'
+    },
+
+    integrity: {
+        locked: 'El sistema está en mantenimiento. Probá de nuevo más tarde.',
+        tablesInvalid: 'Elegí las tablas a reparar, o todas.',
+        nothingToRepair: 'No hay errores para reparar en esas tablas.'
+    },
+
+    backup: {
+        notFound: 'No encontramos ese backup.',
+        fileNameInvalid: 'El nombre del archivo de backup no es válido.',
+        confirmRequired: 'Para restaurar, escribí RESTAURAR.',
+        fileRequired: 'Elegí el archivo de backup (.json).',
+        fileType: 'El backup tiene que ser un archivo .json.',
+        fileTooLarge: 'El archivo de backup no puede pesar más de 20 MB.',
+        invalidFormat: 'El archivo no es un backup de Club360 válido.',
+        otherClub: 'Este backup es de otro club.',
+        checksumMismatch: 'El archivo fue modificado o está dañado.',
+        missingCatalogs: 'El backup hace referencia a deportes o permisos que no existen en la base.',
+        restorerMissing: 'Este backup es anterior a tu usuario o no te da permiso para restaurar. Pedile a otro administrador que lo haga.',
+        restoreFailed: 'No se pudo restaurar el backup. Los datos del club quedaron como estaban.'
+    },
+
     upload: {
         invalidType: 'El archivo tiene que ser una imagen JPG, PNG o WEBP.',
         invalidReceiptType: 'El comprobante tiene que ser una imagen JPG o PNG, o un PDF.',

@@ -8,6 +8,7 @@ import EventBusyRounded from '@mui/icons-material/EventBusyRounded'
 import EventRounded from '@mui/icons-material/EventRounded'
 import FactCheckRounded from '@mui/icons-material/FactCheckRounded'
 import FitnessCenterRounded from '@mui/icons-material/FitnessCenterRounded'
+import GppMaybeRounded from '@mui/icons-material/GppMaybeRounded'
 import HowToRegRounded from '@mui/icons-material/HowToRegRounded'
 import PersonRemoveRounded from '@mui/icons-material/PersonRemoveRounded'
 import PaymentsRounded from '@mui/icons-material/PaymentsRounded'
@@ -44,6 +45,7 @@ export const NOTIFICATION_TYPES = {
   INSCRIPTION_REQUEST: { icon: HowToRegRounded, tone: 'pending', path: () => '/inscriptions' },
   INSCRIPTION_RESULT: { icon: HowToRegRounded, tone: 'ok', path: () => '/my-sports' },
   SPORT_WITHDRAWAL: { icon: SportsRounded, tone: 'pending', path: () => '/inscriptions' },
+  INTEGRITY_ALERT: { icon: GppMaybeRounded, tone: 'overdue', path: () => '/integrity' },
   GENERAL: { icon: CampaignRounded, tone: null, path: () => null }
 }
 

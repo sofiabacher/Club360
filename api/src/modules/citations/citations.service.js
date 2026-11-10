@@ -478,9 +478,10 @@ async function listLinked(user, { memberId, scope = 'upcoming' } = {}) {
 
 // Confirmación automática (job autoConfirmCitations): las Pendientes con el plazo vencido pasan a Confirmada
 // automáticamente. Se registra cada una en la bitácora, sin usuario ni rol. Devuelve cuántas confirmó
-async function autoConfirmExpired() {
+// clubIds: los clubes en los que corre (el job saltea los bloqueados por integridad); por defecto, todos
+async function autoConfirmExpired({ clubIds = null } = {}) {
     const expired = await Citation.findAll({
-        where: { citationState: CITATION_STATES.PENDING, dateMaxResponse: { [Op.lte]: new Date() } },
+        where: { ...(clubIds && { clubId: clubIds }), citationState: CITATION_STATES.PENDING, dateMaxResponse: { [Op.lte]: new Date() } },
         include: [
             { model: Game, as: 'game', attributes: ['id', 'rival'], include: [{ model: Category, as: 'category', attributes: ['name'] }] },
             { model: Member, as: 'member', attributes: ['id'], include: [{ model: User, as: 'user', attributes: ['name', 'lastName'] }] }

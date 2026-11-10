@@ -1,0 +1,149 @@
+CASOS DE PRUEBA — MÓDULO INTEGRITY (DÍGITOS VERIFICADORES Y BLOQUEO)
+=====================================================================
+
+Club360 · Prompt 16 · 09/11/2026
+Formato según CLAUDE.md ("Pruebas"). Los resultados obtenidos salen del script de verificación del P16 (corrido contra la
+base local el 09/11/2026; 81 chequeos aprobados), con un segundo club de prueba ("Club P16": Admin y las socias Ana, Bea y
+Caro, cada una con su cuota de noviembre). Las alteraciones se hicieron en el club de prueba, con SQL directo, para no
+tocar los datos de la demo. Lo que solo se puede comprobar en el navegador queda anotado en cada caso.
+
+Pantalla: Sistema > Integridad de datos. Mantenimiento: /maintenance.
+
+
+--------------------------------------------------
+ID: CP-INTEGRITY-01
+Módulo: integrity
+Descripción: Verificar con todo correcto
+Precondiciones: sesión del Admin.
+Pasos:
+  1. Entrar a Integridad de datos (verifica al abrir) o tocar "Verificar ahora".
+Datos de entrada: —
+Resultado esperado: tarjeta verde "Los datos del club están íntegros" con la fecha; cada tabla con su nombre en español,
+  las filas revisadas y "Correcta". Deportes y Permisos aparecen como compartidas por todos los clubes.
+Resultado obtenido: status OK; la tabla fee se informa como "Cuotas".
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INTEGRITY-02
+Módulo: integrity
+Descripción: Alterar un dato con SQL directo y verificar
+Precondiciones: club OK.
+Pasos:
+  1. En MySQL Workbench: UPDATE fee SET socialAmount = 1 WHERE id = {una cuota del club}.
+  2. Tocar "Verificar ahora" (o esperar el login de alguien o el job nocturno).
+Datos de entrada: socialAmount = 1.
+Resultado esperado: tarjeta roja con "Se detectaron 1 registros alterados" y "Los demás usuarios no pueden entrar hasta
+  que se reparen."; la tabla Cuotas con el chip rojo y la clave de la fila (desplegable). A los usuarios ACTIVE con
+  integrity.manage les llega "Se detectaron 1 registros alterados en Cuotas. Los demás usuarios no pueden entrar hasta
+  que se reparen." (in-app y email), una sola vez aunque se vuelva a verificar. Queda "Error de integridad detectado"
+  (Crítica) en la bitácora. El layout del Admin muestra el aviso rojo con "Revisar".
+Resultado obtenido: verifyClub marca la fila de la cuota (DVH guardado distinto del calculado) y el DVV correcto; al
+  verificar dos veces llega un solo INTEGRITY_ALERT, con ese texto, y el email sale por consola; un solo INTEGRITY_ERROR.
+  Falta verlo en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INTEGRITY-03
+Módulo: integrity
+Descripción: Con el club bloqueado, la jugadora no entra y el Admin sí
+Precondiciones: CP-INTEGRITY-02.
+Pasos:
+  1. Iniciar sesión como Bea (Jugadora). 2. Como Ana, con la sesión abierta, seguir navegando. 3. Iniciar sesión como
+     el Admin.
+Datos de entrada: contraseñas correctas.
+Resultado esperado: Bea ve en el formulario "El sistema está en mantenimiento. Probá de nuevo más tarde." (503
+  INTEGRITY_LOCK) y no se le suma un intento fallido. Ana pasa a la pantalla de mantenimiento en la siguiente request.
+  Queda "Acceso bloqueado por integridad" una vez por usuaria. El Admin entra y ve el aviso.
+Resultado obtenido: login de Bea → 503 INTEGRITY_LOCK con ese mensaje y failedAttempts 0; GET /auth/me con el token de
+  Ana → 503; un solo ACCESS_BLOCKED_INTEGRITY para Ana aunque hizo dos requests; el Admin → 200.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INTEGRITY-04
+Módulo: integrity
+Descripción: Un error en un club no bloquea a otro
+Precondiciones: CP-INTEGRITY-02 (fila alterada en el club de prueba).
+Pasos:
+  1. Ver el estado del club 1.
+Datos de entrada: —
+Resultado esperado: el club 1 sigue OK (el DVV no cambia al alterar un campo, y el DVH alterado es de otro club).
+Resultado obtenido: getIntegrityStatus(1) → OK.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INTEGRITY-05
+Módulo: integrity
+Descripción: Reparar una tabla
+Precondiciones: CP-INTEGRITY-02.
+Pasos:
+  1. Tocar "Reparar tabla" en Cuotas y confirmar el diálogo.
+Datos de entrada: —
+Resultado esperado: el diálogo explica que reparar acepta los datos tal como están ahora y ofrece "Restaurar un backup".
+  Al confirmar, el estado vuelve a OK, el club se desbloquea y Bea puede entrar. Queda "Integridad reparada" (Alta) con
+  la tabla y la clave de la fila. Reparar una tabla sin errores → 400. Una socia no puede reparar.
+Resultado obtenido: reparar member (sin errores) → 400; Ana → 503 (club bloqueado); reparar fee → OK; INTEGRITY_REPAIRED
+  "Cuotas (fee): filas {id}"; el login de Bea y el token de Ana vuelven a funcionar.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INTEGRITY-06
+Módulo: integrity
+Descripción: Reparar todo
+Precondiciones: el DVV de member alterado (UPDATE dvv SET dvv = dvv + 1 WHERE tableName = 'member') y el nombre de
+  un usuario cambiado por SQL.
+Pasos:
+  1. Verificar. 2. "Reparar todo" y confirmar.
+Datos de entrada: —
+Resultado esperado: se detectan el DVV distinto de Socios y la fila de Usuarios; "Reparar todo" deja el estado en OK.
+Resultado obtenido: member con dvvOk false, user con 1 error; reparar todo → OK.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INTEGRITY-07
+Módulo: integrity
+Descripción: Descargar el informe
+Precondiciones: CP-INTEGRITY-02.
+Pasos:
+  1. Tocar "Descargar informe" y abrirlo en Excel.
+Datos de entrada: —
+Resultado esperado: un CSV (UTF-8 con BOM, ';') con Tabla, Filas revisadas, Clave, DVH guardado, DVH calculado y DVV
+  correcto, con una línea por fila alterada y una por tabla sin errores.
+Resultado obtenido: el archivo empieza con el BOM y esos encabezados; la línea "Cuotas;3;{id};{guardado};{calculado};Sí".
+  Falta abrirlo en Excel.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INTEGRITY-08
+Módulo: integrity
+Descripción: El job nocturno con un dato alterado
+Precondiciones: CP-INTEGRITY-02.
+Pasos:
+  1. Correr la función del job (runNightlyCheck) con la fecha 10/11/2026 (en el servidor corre a las 02:30).
+  2. Correr la selección de clubes de los jobs que escriben (getUnlockedClubIds).
+Datos de entrada: today = 2026-11-10.
+Resultado esperado: el club de prueba queda en ERROR y el club 1 en OK, sin repetir el aviso. Los jobs de cuotas y
+  citaciones saltean el club bloqueado y lo registran ("Tarea omitida por integridad"); el backup automático corre igual.
+Resultado obtenido: club de prueba ERROR y club 1 OK; sigue habiendo un solo INTEGRITY_ALERT; getUnlockedClubIds no
+  incluye al club de prueba e incluye al 1, con un JOB_SKIPPED_INTEGRITY.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INTEGRITY-09
+Módulo: integrity
+Descripción: Pantalla de mantenimiento
+Precondiciones: club bloqueado; sesión de una jugadora abierta.
+Pasos:
+  1. Navegar en la app. 2. Tocar "Probar de nuevo" (bloqueado y después de reparar).
+Datos de entrada: —
+Resultado esperado: pasa a /maintenance (cancha de fondo, logo y el mensaje). Mientras siga bloqueado, vuelve ahí; después
+  de reparar, entra con la misma sesión (el token no se borró).
+Resultado obtenido: —
+Estado: Pendiente

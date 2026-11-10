@@ -567,8 +567,39 @@ async function removeBaseRole(userId, roleName, { transaction } = {}) {
     return removed > 0
 }
 
+// Usuarios ACTIVE del club que tienen un permiso (permissionName) con alguno de sus roles (calculado con getEffectivePermissions, que
+// suma los permisos directos y saca los de mayores a los menores). Primero se buscan los candidatos: quienes tienen un
+// rol con ese permiso o el permiso directo
+async function getActiveUsersWithPermission(clubId, permissionName, { transaction } = {}) {
+    const permission = await Permission.findOne({ where: { name: permissionName }, attributes: ['id'], transaction })
+    if (!permission) return []
+
+    const [rolePermissions, userPermissions] = await Promise.all([
+        RolePermission.findAll({ where: { permissionId: permission.id }, attributes: ['roleId'], raw: true, transaction }),
+        UserPermission.findAll({ where: { permissionId: permission.id }, attributes: ['userId'], raw: true, transaction })
+    ])
+    const withRole = await UserRole.findAll({ where: { roleId: rolePermissions.map(row => row.roleId) }, attributes: ['userId'], raw: true, transaction })
+    const candidateIds = [...new Set([...withRole, ...userPermissions].map(row => row.userId))]
+    if (candidateIds.length === 0) return []
+
+    const users = await User.findAll({ where: { id: candidateIds, clubId, userStateId: USER_STATES.ACTIVE }, attributes: ['id'], raw: true, transaction })
+    const roles = await UserRole.findAll({ where: { userId: users.map(user => user.id) }, attributes: ['userId', 'roleId'], raw: true, transaction })
+
+    const result = []
+    for (const user of users) {
+        for (const { roleId } of roles.filter(row => row.userId === user.id)) {
+            if ((await getEffectivePermissions(user.id, roleId)).includes(permissionName)) {
+                result.push(user.id)
+                break
+            }
+        }
+    }
+    return result
+}
+
 module.exports = {
     getAvailableRoles,
+    getActiveUsersWithPermission,
     getEffectivePermissions,
     listPermissions,
     listRoles,

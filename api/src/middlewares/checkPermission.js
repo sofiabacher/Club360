@@ -18,7 +18,8 @@ const checkPermission = (permissionName) => async (req, res, next) => {
             throw createError(auth.roleSelectionRequired, 403, 'ROLE_SELECTION_REQUIRED')
         }
 
-        const permissions = await getEffectivePermissions(userId, activeRoleId)
+        // Si isAuth ya los calculó (club bloqueado por integridad), se reutilizan
+        const permissions = req.permissions ?? await getEffectivePermissions(userId, activeRoleId)
         if (required.some(name => permissions.includes(name))) return next()
 
         await logger(

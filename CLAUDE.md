@@ -117,7 +117,7 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
   2. `DB_FORCE_SYNC=true`, `npm run dev` y volver a `false`;
   3. `npm run db:restore`, **sin** correr el seed antes.
 
-  El restore inserta las filas tal cual estaban (`bulkInsert`, con los ids, el teléfono cifrado y los `dvh` originales) y al final verifica la integridad. Es una herramienta de desarrollo y la única excepción a la regla de escribir datos solo por Sequelize. Las columnas nuevas tienen que admitir NULL o tener default, para que los datos viejos entren. No se usan parches de SQL ni `DB_ALTER_SYNC`.
+  El restore inserta las filas tal cual estaban (`bulkInsert`, con los ids, el teléfono cifrado y los `dvh` originales) y al final verifica la integridad. Es una herramienta de desarrollo y, junto con la restauración del módulo `backup`, una de las dos excepciones a la regla de escribir datos solo con los modelos. Las columnas nuevas tienen que admitir NULL o tener default, para que los datos viejos entren. No se usan parches de SQL ni `DB_ALTER_SYNC`.
 
 ## Imágenes
 
@@ -273,6 +273,14 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 
 - Se elige **por permisos**: `citations.respond` + `games.viewOwn` → `PlayerHome`; si no, `games.viewLinked` + `fees.manageLinked` → `FamilyHome`; si no, los accesos rápidos.
 - Los paneles usan los endpoints existentes de cada módulo (`/games/mine`, `/citations/mine`, `/fees/mine`, `/routines/mine` y sus `linked`). No hay módulo ni endpoint de "dashboard". Cada bloque carga y falla por separado.
+
+## Bitácora, integridad y backup (módulos `logs`, `integrity` y `backup`)
+
+- **Filas de un club:** se leen, borran e insertan solo con `utils/clubData.js` (`CLUB_TABLES` en orden de dependencia, `readClubRows`, `deleteClubRows`, `insertClubRows`). Quedan afuera `sport`, `permission`, `dvv` y `log`. **Todo modelo nuevo con `clubId` se agrega a `CLUB_TABLES`.** Lo usan `integrity` y `backup`; `db:snapshot` y `db:restore` siguen copiando la base completa con las mismas funciones de lectura e inserción.
+- **Bitácora:** solo del club del usuario. CSV en UTF-8 con BOM y separador `;`. Exportar se registra (`LOGS_EXPORTED`). `log.action` es `STRING(50)`: los `message` de `LOG_ACTIONS` tienen que entrar.
+- **Integridad:** `verifyClub` (DVH de las filas del club y de los catálogos, y DVV de cada tabla) y `getIntegrityStatus` (caché en memoria de `INTEGRITY_CACHE_MINUTES`). Con estado `ERROR` el club se **bloquea**: login e `isAuth` responden 503 `INTEGRITY_LOCK`, salvo a quien tiene `integrity.manage` o `backup.manage`, y los jobs saltean ese club. `INTEGRITY_ALERT` (in-app + email) solo al pasar de `OK` a `ERROR`. Reparar actualiza `dvh` con `hooks: false` y recalcula el DVV.
+- **Backup:** JSON por club con `meta` y `checksum` SHA-256, en `api/backups/club-{clubId}/`, últimos `BACKUP_KEEP_LAST` (7). Manual o con el job de los domingos 03:00. Los nombres de archivo se validan con regex y solo se buscan en la carpeta del club.
+- **Restauración:** valida formato, club, checksum, catálogos y que quien restaura exista activo con `backup.manage` en el backup; guarda un `PRE_RESTORE`; reemplaza las filas del club en **una transacción** con `queryInterface` (sin hooks, conserva ids, `dvh` y teléfono cifrado; sin desactivar `FOREIGN_KEY_CHECKS`); recalcula el DVV y verifica. La bitácora no se toca.
 
 ## Lista de tareas (`docs/TODO.md`)
 

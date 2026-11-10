@@ -80,6 +80,23 @@ export const GAME_STATES = {
 // Niveles de criticidad de la bitácora
 export const CRITICITY = { LOW: 1, MEDIUM: 2, HIGH: 3, CRITICAL: 4 }
 
+// Nombre de cada criticidad y su chip (StatusChip): Baja neutro, Media pending, Alta overdue, Crítica critical (Bordó)
+export const CRITICITY_LABELS = { 1: 'Baja', 2: 'Media', 3: 'Alta', 4: 'Crítica' }
+export const CRITICITY_CHIPS = { 1: 'neutral', 2: 'pending', 3: 'overdue', 4: 'critical' }
+
+// Tipo de backup (los mismos que BACKUP_TYPES del back)
+export const BACKUP_TYPES = { MANUAL: 'MANUAL', AUTO: 'AUTO', PRE_RESTORE: 'PRE_RESTORE' }
+export const BACKUP_TYPE_LABELS = { MANUAL: 'Manual', AUTO: 'Automático', PRE_RESTORE: 'Previo a restaurar' }
+
+// Nombre en español de cada tabla (los mismos que TABLE_LABELS del back): resumen de un backup
+export const TABLE_LABELS = {
+  club: 'Club', user: 'Usuarios', role: 'Roles', user_role: 'Roles de los usuarios', role_permission: 'Permisos de los roles',
+  user_permission: 'Permisos directos', permission: 'Permisos (catálogo)', sport: 'Deportes (catálogo)', clubSport: 'Deportes del club',
+  member: 'Socios', staff: 'Staff', inscription: 'Inscripciones', fee: 'Cuotas', payment: 'Pagos', league: 'Ligas', category: 'Categorías',
+  categoryPlayer: 'Jugadoras de las categorías', categoryStaff: 'Staff de las categorías', game: 'Partidos', citation: 'Citaciones',
+  routine: 'Rutinas', notification: 'Notificaciones'
+}
+
 // Escalas de edad del vóley (copia de api/src/utils/constants.js). Cada liga elige una (league.ageScale) y sus
 // categorías un grupo (category.ageGroup = code). Una jugadora entra si su edad de temporada (año actual − año de
 // nacimiento) es <= maxAge; null = sin límite (Mayores).

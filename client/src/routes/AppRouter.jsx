@@ -51,6 +51,10 @@ import PaymentVoucherPage from '../pages/fees/PaymentVoucherPage.jsx'
 import RoutinesManagePage from '../pages/routines/RoutinesManagePage.jsx'
 import RoutinesAssignedPage from '../pages/routines/RoutinesAssignedPage.jsx'
 import MyRoutinePage from '../pages/routines/MyRoutinePage.jsx'
+import LogsPage from '../pages/logs/LogsPage.jsx'
+import IntegrityPage from '../pages/integrity/IntegrityPage.jsx'
+import BackupPage from '../pages/backup/BackupPage.jsx'
+import MaintenancePage from '../pages/MaintenancePage.jsx'
 import { getMenuRoutes } from '../navigation/menu.js'
 
 // Pantalla de cada path del menú. Mientras una sección no exista, su ruta muestra ComingSoonPage.
@@ -79,6 +83,9 @@ const SCREENS = {
   '/routines': RoutinesManagePage,
   '/routines/assigned': RoutinesAssignedPage,
   '/my-routine': MyRoutinePage,
+  '/logs': LogsPage,
+  '/integrity': IntegrityPage,
+  '/backup': BackupPage,
   '/club': ClubInfoPage,
   '/club/settings': ClubSettingsPage,
   '/club/sports': ClubSportsPage,
@@ -114,6 +121,8 @@ export default function AppRouter() {
       <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
       <Route path="/activate" element={<PublicRoute><ActivateAccountPage /></PublicRoute>} />
       <Route path="/family-link" element={<PublicRoute><FamilyLinkPage /></PublicRoute>} />
+      {/* Club bloqueado por integridad (503 INTEGRITY_LOCK): sin sesión obligatoria, la manda axiosClient */}
+      <Route path="/maintenance" element={<MaintenancePage />} />
 
       <Route
         path="/select-role"

@@ -81,6 +81,9 @@ const ROUTINE_DAYS = DAYS_OF_WEEK.filter(day => day.value <= 5)
 // Niveles de criticidad de la bitácora
 const CRITICITY = { LOW: 1, MEDIUM: 2, HIGH: 3, CRITICAL: 4 }
 
+// Nombre de cada criticidad (bitácora y CSV)
+const CRITICITY_LABELS = { 1: 'Baja', 2: 'Media', 3: 'Alta', 4: 'Crítica' }
+
 // Acciones registrables en la bitácora. Cada módulo agrega las suyas acá.
 const LOG_ACTIONS = {
     LOGIN_SUCCESS: { message: 'Inicio de sesión exitoso', criticity: CRITICITY.LOW },
@@ -91,6 +94,17 @@ const LOG_ACTIONS = {
     REGISTER_SUCCESS: { message: 'Registro con número de socio', criticity: CRITICITY.MEDIUM },
     REGISTER_FAIL: { message: 'Registro con número de socio fallido', criticity: CRITICITY.MEDIUM },
     ACCESS_DENIED: { message: 'Acceso denegado', criticity: CRITICITY.MEDIUM },
+    // Bitácora, integridad y backup (P16)
+    LOGS_EXPORTED: { message: 'Bitácora exportada', criticity: CRITICITY.MEDIUM },
+    INTEGRITY_ERROR: { message: 'Error de integridad detectado', criticity: CRITICITY.CRITICAL },
+    INTEGRITY_REPAIRED: { message: 'Integridad reparada', criticity: CRITICITY.HIGH },
+    ACCESS_BLOCKED_INTEGRITY: { message: 'Acceso bloqueado por integridad', criticity: CRITICITY.MEDIUM },
+    JOB_SKIPPED_INTEGRITY: { message: 'Tarea omitida por integridad', criticity: CRITICITY.HIGH },
+    BACKUP_CREATED: { message: 'Backup generado', criticity: CRITICITY.MEDIUM },
+    BACKUP_DOWNLOADED: { message: 'Backup descargado', criticity: CRITICITY.MEDIUM },
+    BACKUP_RESTORED: { message: 'Backup restaurado', criticity: CRITICITY.CRITICAL },
+    BACKUP_RESTORE_FAILED: { message: 'Restauración de backup fallida', criticity: CRITICITY.HIGH },
+    BACKUP_AUTO_FAILED: { message: 'Backup automático fallido', criticity: CRITICITY.HIGH },
     MAIL_ERROR: { message: 'Error en el envío de correo', criticity: CRITICITY.HIGH },
     PASSWORD_RECOVERY: { message: 'Pedido de recuperación de contraseña', criticity: CRITICITY.MEDIUM },
     PASSWORD_CHANGE: { message: 'Cambio de contraseña', criticity: CRITICITY.MEDIUM },
@@ -257,6 +271,7 @@ const NOTIFICATION_TYPES = {
     INSCRIPTION_REQUEST: { email: false },  // Solicitud de inscripción nueva (Representante del deporte)
     PAYMENT_REVIEW_REQUEST: { email: false },   // Transferencia informada para revisar (usuarios con fees.manage)
     PAYMENT_RESULT: { email: false },       // Resultado de la revisión de una transferencia (quien pagó y el socio, con Familia)
+    INTEGRITY_ALERT: { email: true },       // Error de integridad: el club queda bloqueado (usuarios con integrity.manage)
     GENERAL: { email: 'optional' }          // Avisos generales del Admin, el Representante y la Entrenadora
 }
 
@@ -277,10 +292,50 @@ const FEE_DUE_DAY = 10
 const FEE_DUE_SOON_DAYS = 3
 const FEE_OVERDUE_REMINDER_DAYS = 30
 
+// Integridad (P16): cuánto dura en memoria el último resultado de la verificación de cada club
+const INTEGRITY_CACHE_MINUTES = 5
+
+// Nombre en español de cada tabla (informe de integridad y backups)
+const TABLE_LABELS = {
+    club: 'Club',
+    user: 'Usuarios',
+    role: 'Roles',
+    user_role: 'Roles de los usuarios',
+    role_permission: 'Permisos de los roles',
+    user_permission: 'Permisos directos',
+    permission: 'Permisos (catálogo)',
+    sport: 'Deportes (catálogo)',
+    clubSport: 'Deportes del club',
+    member: 'Socios',
+    staff: 'Staff',
+    inscription: 'Inscripciones',
+    fee: 'Cuotas',
+    payment: 'Pagos',
+    league: 'Ligas',
+    category: 'Categorías',
+    categoryPlayer: 'Jugadoras de las categorías',
+    categoryStaff: 'Staff de las categorías',
+    game: 'Partidos',
+    citation: 'Citaciones',
+    routine: 'Rutinas',
+    notification: 'Notificaciones'
+}
+
+// Tipo de backup (meta.type y el sufijo del archivo)
+const BACKUP_TYPES = { MANUAL: 'MANUAL', AUTO: 'AUTO', PRE_RESTORE: 'PRE_RESTORE' }
+
+// Backups que se conservan por club (de todos los tipos): al guardar uno nuevo, se borran los más viejos
+const BACKUP_KEEP_LAST = 7
+
 // Grupo de edad de una escala por su code (undefined si no es de esa escala)
 const findAgeGroup = (ageScale, code) => AGE_SCALES[ageScale]?.find(group => group.code === code)
 
 module.exports = {
+    CRITICITY_LABELS,
+    INTEGRITY_CACHE_MINUTES,
+    TABLE_LABELS,
+    BACKUP_TYPES,
+    BACKUP_KEEP_LAST,
     USER_STATES,
     MEMBER_STATES,
     INSCRIPTION_STATES,

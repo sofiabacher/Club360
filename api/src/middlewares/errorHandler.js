@@ -14,7 +14,9 @@ module.exports = (err, req, res, next) => {
         message = general.invalidJson
     }
 
-    if (status >= 500) {
+    // Los errores propios (createError) con 5xx, como el 503 del bloqueo por integridad, se responden con su mensaje y
+    // su código; solo los inesperados se muestran en la consola y, en producción, con un mensaje general
+    if (status >= 500 && !err.isOperational) {
         console.error('Error no capturado:', err)
         if (app.isProd) message = general.serverError
     }

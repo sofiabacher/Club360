@@ -1,5 +1,6 @@
 const { User } = require('../models')
 const { getAvailableRoles } = require('../modules/access/access.service')
+const { assertRequestAllowed } = require('../modules/integrity/integrity.service')
 const { verifySessionToken } = require('../utils/token')
 const { createError } = require('../utils/errors')
 const { USER_STATES } = require('../utils/constants')
@@ -45,6 +46,12 @@ module.exports = async (req, res, next) => {
         }
 
         req.user = { id: user.id, clubId: user.clubId, activeRoleId, isAdult: isAdult(user.birthDate) }
+
+        // Club bloqueado por integridad: solo sigue quien tiene integrity.manage o backup.manage (503 INTEGRITY_LOCK).
+        // Los permisos que se calculan acá quedan en req.permissions para que checkPermission no los repita
+        const permissions = await assertRequestAllowed(req.user, req.originalUrl)
+        if (permissions) req.permissions = permissions
+
         next()
 
     } catch (error) {

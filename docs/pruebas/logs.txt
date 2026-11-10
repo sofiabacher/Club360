@@ -1,0 +1,131 @@
+CASOS DE PRUEBA — MÓDULO LOGS (BITÁCORA)
+=========================================
+
+Club360 · Prompt 16 · 09/11/2026
+Formato según CLAUDE.md ("Pruebas"). Los resultados obtenidos salen del script de verificación del P16 (corrido contra la
+base local el 09/11/2026; 81 chequeos aprobados), que crea un segundo club de prueba ("Club P16", con su Admin y tres
+socias) para comprobar que nada cruza del club 1 (la demo) al de prueba, y lo borra al final con su bitácora. Lo que solo
+se puede comprobar en el navegador queda anotado en cada caso.
+
+Precondición general: en el club de prueba, 55 registros "Inicio de sesión exitoso" del Admin, uno "Usuario bloqueado"
+(Alta) con comillas, punto y coma, un salto de línea, tildes y ñ en el detalle, uno "Acceso denegado" de Ana y uno
+"Cierre de sesión" del 01/10/2026.
+Pantalla: Sistema > Bitácora.
+
+
+--------------------------------------------------
+ID: CP-LOGS-01
+Módulo: logs
+Descripción: Ver la bitácora con la cantidad por criticidad
+Precondiciones: sesión del Admin.
+Pasos:
+  1. Entrar a Bitácora.
+Datos de entrada: —
+Resultado esperado: arriba, cuatro tarjetas con la cantidad de registros Baja, Media, Alta y Crítica de todo el filtro (no
+  solo de la página). Abajo, los registros del club del más nuevo al más viejo, de a 50, con la fecha y hora, el usuario,
+  el rol, la acción, el detalle (cortado; completo al tocarlo) y la criticidad (Baja gris, Media ámbar, Alta roja,
+  Crítica Bordó). En el celular, en tarjetas.
+Resultado obtenido: 50 registros en la página, total ≥ 58, más de una página; la suma de byCriticity es igual al total.
+  Falta verlo en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LOGS-02
+Módulo: logs
+Descripción: Filtrar por fechas, criticidad, acción, usuario y texto
+Precondiciones: CP-LOGS-01.
+Pasos:
+  1. Filtrar por criticidad Alta. 2. Por la acción "Acceso denegado". 3. Por el usuario Ana. 4. Buscar "ana p16" y
+     "paginado 54". 5. Desde el 01/10/2026 hasta el 01/10/2026. 6. "Limpiar filtros".
+Datos de entrada: los indicados.
+Resultado esperado: cada filtro devuelve solo lo que corresponde; "hasta" incluye todo ese día; la búsqueda mira el
+  detalle y el nombre o el usuario de quien hizo la acción. "Limpiar filtros" vuelve a todo.
+Resultado obtenido: criticidad 3 → solo Altas; acción → 1 ("Acceso de Ana"); usuario → 1; "ana p16" → solo registros de
+  Ana; "paginado 54" → 1; 01/10 a 01/10 → solo "Registro viejo".
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LOGS-03
+Módulo: logs
+Descripción: Un rango de fechas inválido
+Precondiciones: sesión del Admin.
+Pasos:
+  1. Poner "desde" 10/11/2026 y "hasta" 01/11/2026.
+Datos de entrada: from 2026-11-10, to 2026-11-01.
+Resultado esperado: 400 "El rango de fechas no es válido." En la pantalla, el campo "Hasta" lo marca y "Descargar CSV"
+  queda deshabilitado.
+Resultado obtenido: 400 con ese mensaje.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LOGS-04
+Módulo: logs
+Descripción: Exportar a CSV y abrirlo en Excel
+Precondiciones: sesión del Admin (logs.export).
+Pasos:
+  1. Filtrar por criticidad Alta y tocar "Descargar CSV". 2. Abrir el archivo con Excel.
+Datos de entrada: —
+Resultado esperado: se descarga bitacora-club-p16-AAAAMMDD-HHmm.csv y aparece "Bitácora descargada correctamente."
+  Excel lo abre en columnas (Fecha, Hora, Usuario, Nombre, Rol, Acción, Detalle, Criticidad), con tildes y ñ bien, y el
+  detalle con comillas, punto y coma y salto de línea en una sola celda. La criticidad con su nombre. Queda en la
+  bitácora "Bitácora exportada" con los filtros.
+Resultado obtenido: el archivo empieza con el BOM y la fila de encabezados separada por ';'; Content-Disposition con el
+  nombre esperado; el detalle va entre comillas con las comillas duplicadas; ";Alta" en la criticidad; LOGS_EXPORTED
+  con "criticity=3". Falta abrirlo en Excel.
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-LOGS-05
+Módulo: logs
+Descripción: Exportar sin registros
+Precondiciones: sesión del Admin.
+Pasos:
+  1. Filtrar del 01/01/2020 al 02/01/2020 y descargar.
+Datos de entrada: —
+Resultado esperado: 404 "No hay registros para exportar." (en la pantalla, el mensaje en rojo).
+Resultado obtenido: 404 con ese mensaje.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LOGS-06
+Módulo: logs
+Descripción: Un usuario sin logs.export
+Precondiciones: sesión de un usuario con logs.view y sin logs.export (o de una socia).
+Pasos:
+  1. Entrar a Bitácora. 2. Pedir /logs/export por la API.
+Datos de entrada: —
+Resultado esperado: no ve el botón "Descargar CSV" y la API responde 403.
+Resultado obtenido: 403 (con una socia). El botón se muestra solo con logs.export; falta verlo en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LOGS-07
+Módulo: logs
+Descripción: No se ven registros de otro club
+Precondiciones: sesión del Admin del club de prueba.
+Pasos:
+  1. Ver la bitácora y los usuarios del filtro.
+Datos de entrada: —
+Resultado esperado: solo registros y usuarios del club de prueba, ninguno del club 1.
+Resultado obtenido: ningún id de registro del club 1 en la respuesta; los usuarios del filtro son todos del club de prueba.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LOGS-08
+Módulo: logs
+Descripción: La bitácora conserva quién hizo cada acción después de restaurar
+Precondiciones: un registro de Ana; se restaura un backup del club.
+Pasos:
+  1. Restaurar un backup. 2. Buscar el registro de Ana.
+Datos de entrada: —
+Resultado esperado: el registro sigue con su usuario (log no tiene FK a user, role ni club). Si el usuario ya no existe,
+  se muestra "(usuario eliminado)".
+Resultado obtenido: el registro "Acceso de Ana" conserva el userId de Ana después de restaurar.
+Estado: Aprobado

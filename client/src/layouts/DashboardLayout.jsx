@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link as RouterLink, Outlet, useLocation } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import AppBar from '@mui/material/AppBar'
+import Button from '@mui/material/Button'
 import Box from '@mui/material/Box'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
@@ -12,6 +13,7 @@ import useMediaQuery from '@mui/material/useMediaQuery'
 import { useTheme } from '@mui/material/styles'
 import MenuRounded from '@mui/icons-material/MenuRounded'
 
+import { getIntegrityStatus } from '../api/integrity.api.js'
 import Sidebar from '../components/layout/Sidebar.jsx'
 import NotificationBell from '../components/notifications/NotificationBell.jsx'
 import UserMenu from '../components/layout/UserMenu.jsx'
@@ -33,6 +35,20 @@ export default function DashboardLayout() {
 
   const [mobileOpen, setMobileOpen] = useState(false)
   const [error, setError] = useState('')
+  const [integrityError, setIntegrityError] = useState(false)
+
+  // Aviso de integridad para quien puede repararla: se consulta el estado del club (desde la caché del back) al cambiar
+  // de pantalla. Con error, los demás usuarios no pueden entrar (503 INTEGRITY_LOCK)
+  const canManageIntegrity = hasPermission('integrity.manage')
+  useEffect(() => {
+    if (!canManageIntegrity) {
+      setIntegrityError(false)
+      return
+    }
+    getIntegrityStatus()
+      .then(({ data }) => setIntegrityError(data.status === 'ERROR'))
+      .catch(() => {})
+  }, [canManageIntegrity, location.pathname])
 
   const items = useMemo(() => getVisibleMenu(permissions), [permissions])
   const title = getSectionTitle(location.pathname, items)
@@ -86,6 +102,16 @@ export default function DashboardLayout() {
 
         <Box component="main" sx={{ flexGrow: 1, px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, sm: 3 }, '@media print': { p: 0 } }}>
           <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+            {integrityError && (
+              <Alert
+                severity="error"
+                variant="filled"
+                sx={{ mb: 3, displayPrint: 'none' }}
+                action={location.pathname !== '/integrity' && <Button component={RouterLink} to="/integrity" color="inherit" size="small">Revisar</Button>}
+              >
+                Se detectaron errores de integridad. Los demás usuarios no pueden entrar.
+              </Alert>
+            )}
             <Outlet />
           </Box>
         </Box>

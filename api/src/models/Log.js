@@ -12,7 +12,12 @@ const Log = sequelize.define('Log', {
     criticity: { type: DataTypes.TINYINT, allowNull: false, defaultValue: 1 }   // CRITICITY en utils/constants.js
 }, {
     tableName: 'log',
-    updatedAt: false
+    updatedAt: false,
+    // Sin FK (ver models/index.js): los índices los agrega el modelo. La bitácora se filtra por club y fecha
+    indexes: [
+        { name: 'log_club_created', fields: ['clubId', 'createdAt'] },
+        { name: 'log_user', fields: ['userId'] }
+    ]
 })
 
 module.exports = Log

@@ -1,8 +1,9 @@
 // Restore de un snapshot (herramienta de DESARROLLO): vuelve a cargar los datos guardados con `npm run db:snapshot` en
 // una base recién recreada con DB_FORCE_SYNC, para aplicar un cambio en el modelo sin perder los datos cargados.
 //
-// Es la ÚNICA excepción a la regla de escribir datos solo por Sequelize (modelos y hooks): inserta con
-// queryInterface.bulkInsert para restaurar exactamente lo que había, con sus ids, sus fechas, el teléfono ya cifrado y
+// Es una de las dos excepciones a la regla de escribir datos solo por Sequelize (modelos y hooks; la otra es la
+// restauración de un backup por club, módulo backup): inserta con queryInterface.bulkInsert (insertTableRows de
+// utils/clubData.js) para restaurar exactamente lo que había, con sus ids, sus fechas, el teléfono ya cifrado y
 // los dígitos verificadores ya calculados (con Model.bulkCreate se volvería a cifrar el teléfono y correrían los hooks).
 // Al terminar recalcula el DVV de cada tabla y verifica los DVH.
 //
@@ -13,14 +14,13 @@
 //      npm run db:restore -- --recompute-dvh      (además recalcula los DVH, si cambió el tipo de alguna columna)
 const fs = require('fs')
 const path = require('path')
-const { DataTypes } = require('sequelize')
 
 const sequelize = require('../../config/db')
 const models = require('../../models')
 const { computeRowDVH, computeTableDVV } = require('../../utils/integrity')
+const { insertTableRows } = require('../../utils/clubData')
 
 const BACKUPS_DIR = path.join(__dirname, '../../../backups')
-const CHUNK_SIZE = 500
 
 const args = process.argv.slice(2)
 const recomputeDvh = args.includes('--recompute-dvh')
@@ -46,18 +46,6 @@ function findSnapshot() {
     return path.join(BACKUPS_DIR, files[files.length - 1])
 }
 
-// Lleva un valor del JSON a lo que espera la columna: las fechas (DATETIME) vuelven a ser Date, así Sequelize las
-// escribe con la zona horaria de la conexión; los objetos (columnas JSON, ej. club.extraInfo) van como texto
-function toColumnValue(attribute, value) {
-    if (value === null || value === undefined) return null
-    if (attribute.type instanceof DataTypes.DATE && !(attribute.type instanceof DataTypes.DATEONLY)) return new Date(value)
-    if (typeof value === 'object') return JSON.stringify(value)
-    return value
-}
-
-// Columnas del modelo por nombre de columna en la base
-const columnsOf = (Model) => new Map(Object.values(Model.rawAttributes).map(attribute => [attribute.field, attribute]))
-
 async function assertEmptyDatabase() {
     const notEmpty = []
     for (const Model of allModels) {
@@ -70,9 +58,9 @@ async function assertEmptyDatabase() {
     }
 }
 
-// Inserta las filas de cada tabla del snapshot. Devuelve los avisos (tablas o columnas que ya no existen en el modelo)
+// Inserta las filas de cada tabla del snapshot con insertTableRows de utils/clubData.js (la misma inserción de la
+// restauración de un backup). Devuelve los avisos (tablas o columnas que ya no existen en el modelo)
 async function insertTables(tables, transaction) {
-    const queryInterface = sequelize.getQueryInterface()
     const modelsByTable = new Map(allModels.map(Model => [Model.getTableName(), Model]))
     const warnings = []
     const inserted = {}
@@ -84,21 +72,9 @@ async function insertTables(tables, transaction) {
             continue
         }
 
-        const columns = columnsOf(Model)
-        const dropped = new Set(rows.flatMap(row => Object.keys(row)).filter(name => !columns.has(name)))
-        if (dropped.size > 0) warnings.push(`${tableName}: se ignoraron las columnas que ya no están en el modelo: ${[...dropped].join(', ')}`)
-
-        const records = rows.map(row => Object.fromEntries(
-            Object.entries(row)
-                .filter(([name]) => columns.has(name))
-                .map(([name, value]) => [name, toColumnValue(columns.get(name), value)])
-        ))
-
-        for (let start = 0; start < records.length; start += CHUNK_SIZE) {
-            await queryInterface.bulkInsert(tableName, records.slice(start, start + CHUNK_SIZE), { transaction })
-        }
-
-        inserted[tableName] = records.length
+        const result = await insertTableRows(Model, rows, { transaction })
+        if (result.droppedColumns.length > 0) warnings.push(`${tableName}: se ignoraron las columnas que ya no están en el modelo: ${result.droppedColumns.join(', ')}`)
+        inserted[tableName] = result.inserted
     }
 
     return { warnings, inserted }

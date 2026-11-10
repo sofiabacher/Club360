@@ -39,7 +39,9 @@ const theme = createTheme(base, {
     ok: { bg: '#E3F4EB', fg: '#16683F' },        // Al día, confirmada, aprobada
     pending: { bg: '#FEF3C7', fg: '#8A5300' },   // Pendiente
     overdue: { bg: '#FCE8E8', fg: '#A32929' },   // Vencida, rechazada, cancelada
-    urgent: { bg: '#FDEBDD', fg: '#B4470D' }     // Requiere acción ya (ej. citación sin responder)
+    urgent: { bg: '#FDEBDD', fg: '#B4470D' },    // Requiere acción ya (ej. citación sin responder)
+    critical: { bg: '#8E2C3A', fg: '#FFFFFF' },  // Crítico, relleno en Bordó (ej. criticidad Crítica de la bitácora)
+    neutral: { bg: '#EEF0F4', fg: '#4B5563' }    // Neutro, gris (ej. criticidad Baja de la bitácora)
   },
 
   typography: {

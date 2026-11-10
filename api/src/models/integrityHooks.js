@@ -17,13 +17,16 @@ function runInOrder(Model, transaction, task) {
     return next
 }
 
-function registerIntegrityHooks(models) {
-    const { Dvv } = models
+// Recalcula y guarda el DVV de una tabla. La usan los hooks y, fuera de ellos, la reparación de la integridad y la
+// restauración de un backup (que escriben sin hooks)
+async function updateTableDVV(Model, transaction) {
+    const { Dvv } = require('./index')   // Se requiere acá adentro: models/index.js requiere este archivo
+    const dvv = await computeTableDVV(Model, transaction)
+    await Dvv.upsert({ tableName: Model.getTableName(), dvv }, { transaction })
+    return dvv
+}
 
-    async function updateTableDVV(Model, transaction) {
-        const dvv = await computeTableDVV(Model, transaction)
-        await Dvv.upsert({ tableName: Model.getTableName(), dvv }, { transaction })
-    }
+function registerIntegrityHooks(models) {
 
     // Relee la fila desde la base y guarda su DVH: así se calcula sobre los mismos valores que va a leer la verificación
     // (los DECIMAL vuelven como "1500.00", los booleanos como 1/0)
@@ -100,4 +103,4 @@ function registerIntegrityHooks(models) {
     }
 }
 
-module.exports = { registerIntegrityHooks }
+module.exports = { registerIntegrityHooks, updateTableDVV }

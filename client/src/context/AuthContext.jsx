@@ -67,8 +67,9 @@ export function AuthProvider({ children }) {
     lastRefresh.current = Date.now()
     getMe()
       .then(({ data }) => setSession({ ...emptySession, ...data.session }))
-      .catch(() => {
-        clearSession()
+      .catch((err) => {
+        // Con el club bloqueado por integridad, el token se conserva: cuando se repare, la sesión sigue
+        if (err.response?.data?.code !== 'INTEGRITY_LOCK') clearSession()
         setSession(emptySession)
       })
       .finally(() => setLoading(false))

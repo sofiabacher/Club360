@@ -42,6 +42,9 @@ const { registerIntegrityHooks } = require('./integrityHooks')
 const RESTRICT = { onDelete: 'RESTRICT', onUpdate: 'CASCADE' }
 const CASCADE = { onDelete: 'CASCADE', onUpdate: 'CASCADE' }     // Solo tablas intermedias
 const SET_NULL = { onDelete: 'SET NULL', onUpdate: 'CASCADE' }   // Solo FK que admiten NULL
+// Sin FK en la base: la bitácora conserva el club, el usuario y el rol aunque esas filas se borren o se reemplacen al
+// restaurar un backup del club (P16). La asociación sigue sirviendo para los include
+const NO_CONSTRAINT = { constraints: false }
 
 // parent 1-N child. `many` es el alias en parent y `one` el alias en child.
 function oneToMany(parent, child, foreignKey, many, one, rule = RESTRICT) {
@@ -68,7 +71,7 @@ function manyToMany(a, b, through, throughAlias) {
 // ---------- Club ----------
 oneToMany(Club, User, 'clubId', 'users', 'club')
 oneToMany(Club, Role, 'clubId', 'roles', 'club')
-oneToMany(Club, Log, 'clubId', 'logs', 'club')
+oneToMany(Club, Log, 'clubId', 'logs', 'club', NO_CONSTRAINT)
 oneToMany(Club, Notification, 'clubId', 'notifications', 'club')
 oneToMany(Club, ClubSport, 'clubId', 'clubSports', 'club')
 oneToMany(Club, Member, 'clubId', 'members', 'club')
@@ -112,8 +115,8 @@ oneToOne(User, Member, 'userId', 'member', 'user')
 oneToOne(User, Staff, 'userId', 'staff', 'user')
 oneToMany(User, Member, 'adultUserId', 'dependents', 'adultUser', SET_NULL)   // Adulto responsable de socios menores
 
-oneToMany(User, Log, 'userId', 'logs', 'user', SET_NULL)
-oneToMany(Role, Log, 'roleId', 'logs', 'role', SET_NULL)
+oneToMany(User, Log, 'userId', 'logs', 'user', NO_CONSTRAINT)
+oneToMany(Role, Log, 'roleId', 'logs', 'role', NO_CONSTRAINT)
 
 oneToMany(User, Notification, 'recipientId', 'receivedNotifications', 'recipient')
 oneToMany(User, Notification, 'transmitterId', 'sentNotifications', 'transmitter', SET_NULL)
