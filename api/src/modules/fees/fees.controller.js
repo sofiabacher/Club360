@@ -62,8 +62,9 @@ const transfer = async (req, res, next) => {
 // Devuelve el archivo con su tipo, para verlo en el navegador. nosniff: el navegador no adivina otro tipo
 const receiptFile = async (req, res, next) => {
     try {
-        const { filePath, contentType, filename } = await service.getReceiptFile(req.user, req.params.id)
+        const { filePath, buffer, contentType, filename } = await service.getReceiptFile(req.user, req.params.id)
         res.set({ 'Content-Type': contentType, 'Content-Disposition': `inline; filename="${filename}"`, 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'private, no-store' })
+        if (buffer) return res.send(buffer)   // Descargado de Cloudinary por el back
         res.sendFile(filePath, (error) => { if (error) next(error) })
 
     } catch (error) {

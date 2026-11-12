@@ -1,4 +1,5 @@
 // Fechas calculadas en la zona horaria de Argentina, para que no dependan de la zona del servidor (ej. Render en UTC).
+// TIME_ZONE es la zona de la aplicación: la usan también los jobs (cron.schedule), la bitácora y los nombres de archivo
 const TIME_ZONE = 'America/Argentina/Buenos_Aires'
 const ADULT_AGE = 18
 
@@ -87,6 +88,7 @@ function daysBetween(from, to) {
 }
 
 module.exports = {
+    TIME_ZONE,
     today,
     addDays,
     isoDayOfWeek,

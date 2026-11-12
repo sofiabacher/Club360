@@ -6,8 +6,11 @@ const { buildRecoveryEmail, buildPasswordChangedNotice, buildActivationEmail, bu
 const { LOG_ACTIONS } = require('../constants')
 const { mail } = require('../messages')
 
-// Envía el email y, si falla, lo registra en la bitácora (MAIL_ERROR) y relanza el error
+// Envía el email y, si falla, lo registra en la bitácora (MAIL_ERROR) y relanza el error.
+// Sin email (por ejemplo, un menor) no se llama al proveedor
 async function send(user, { subject, html }, failMessage) {
+    if (!user.email) return
+
     try {
         await transporter.sendMail({ to: user.email, subject, html })
 

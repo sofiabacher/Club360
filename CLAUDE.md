@@ -26,7 +26,7 @@ Plataforma web de gestión para clubes deportivos (proyecto integrador escolar).
 
 ## Stack
 
-- Backend: Node.js, Express 5, Sequelize 6, MySQL 8, JWT, express-validator, multer, Cloudinary (imágenes en producción), node-cron, nodemailer con Gmail SMTP (email). JavaScript con CommonJS (`require`).
+- Backend: Node.js, Express 5, Sequelize 6, MySQL 8, JWT, express-validator, multer, Cloudinary (imágenes en producción), node-cron, API HTTP de Brevo (email). JavaScript con CommonJS (`require`).
 - Frontend: React 19, Vite, Material UI 7, React Router 7, axios. JavaScript con ES Modules (`import`).
 - Sin TypeScript, sin ESLint/Prettier, sin tests automatizados (ver "Pruebas").
 
@@ -126,14 +126,15 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
   - **producción:** Cloudinary, en la carpeta `club360/<carpeta>` (variables `CLOUDINARY_*`). El disco de Render no es persistente.
 - Los services no saben dónde quedó el archivo: guardan en la base lo que devuelve el middleware (la ruta local `/uploads/...` o la URL de Cloudinary).
 - Para borrar una imagen al reemplazarla, se usa una función única de `utils/` que sabe borrar en los dos destinos. No se borra con `fs` desde los services.
+- **Comprobantes de transferencia en Cloudinary:** `resource_type: 'raw'` y `type: 'private'`. `receipt-file` genera un link firmado (`private_download_url`, unos 60 segundos), descarga el archivo y lo reenvía; el link nunca sale al navegador.
 - En el front, las imágenes se muestran con el helper de `utils/` que deja la URL tal cual si es absoluta (Cloudinary) o le antepone `VITE_API_URL` si es una ruta local.
 
 ## Emails
 
-- Se envían con **nodemailer y Gmail SMTP** (variables `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` con contraseña de aplicación, `MAIL_FROM`). No se usa Resend.
-- Todo envío pasa por `utils/mailer/`; ningún módulo usa nodemailer directo. Cambiar de proveedor solo toca `config/mail.js`.
-- **Desarrollo sin SMTP configurado:** si `app.isDev` es verdadero y no hay credenciales, el mailer muestra por consola el destinatario, el asunto y los links del email.
-- **Qué notificaciones van por email:** solo las marcadas en `docs/contexto.md`, sección 6 ("Canal de cada notificación"). El resto es solo in-app. Gmail tiene un límite diario de envíos, así que no se mandan emails fuera de esa tabla.
+- Se envían con la **API HTTP de Brevo** (`POST /v3/smtp/email`, con `fetch`), elegida con `MAIL_PROVIDER` (`brevo`, `console` y, si se conservó para el desarrollo, `smtp`). Variables: `BREVO_API_KEY`, `MAIL_FROM` (la casilla verificada en Brevo) y `MAIL_FROM_NAME`. No se usa Gmail SMTP en producción: Render gratis bloquea los puertos SMTP.
+- Todo envío pasa por `utils/mailer/`; ningún módulo llama a Brevo ni a nodemailer directo. Cambiar de proveedor solo toca `config/mail.js`.
+- **Desarrollo sin proveedor configurado:** si `app.isDev` es verdadero y no hay credenciales, el mailer muestra por consola el destinatario, el asunto y los links del email.
+- **Qué notificaciones van por email:** solo las marcadas en `docs/contexto.md`, sección 6 ("Canal de cada notificación"). El resto es solo in-app. Brevo gratis permite 300 emails por día, así que no se mandan emails fuera de esa tabla.
 - Los emails son avisos cortos en español rioplatense, con encabezado Marino y botón Naranja con estilos en línea, que invitan a entrar a la plataforma.
 
 ## Notificaciones
@@ -155,9 +156,13 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
 
 ## Deploy de la demo
 
-- Backend en **Render** y frontend en **Vercel**.
+- **Base** en Railway (MySQL, conexión pública con SSL), **backend** en Render (plan gratuito) y **frontend** en Vercel. Pasos manuales en `docs/deploy.md`.
 - El front necesita `client/vercel.json` con una reescritura de todas las rutas a `index.html`, para que React Router funcione al recargar una página.
 - El front apunta al back con `VITE_API_URL`. El back usa `FRONTEND_URL` para CORS y para los links de los emails.
+- **Render gratis:** disco no persistente (los archivos van a Cloudinary y los backups hay que descargarlos), sin SMTP (emails por Brevo), corre en UTC y se duerme a los 15 minutos sin tráfico. Un servicio externo llama a `GET /health` cada 10 minutos: `/health` **no** consulta la base.
+- **Zona horaria:** todo `cron.schedule` lleva `timezone: 'America/Argentina/Buenos_Aires'`, y ninguna fecha de negocio depende de la zona del servidor.
+- **Arranque en producción:** sin `DATABASE_URL`, los secretos JWT, `ENCRYPTION_KEY` o `FRONTEND_URL`, el servidor no arranca; sin Cloudinary o sin proveedor de email, arranca y avisa. Nunca se muestran valores de variables.
+- **Datos:** el seed y los datos de la demo se corren desde una compu contra Railway, con la `ENCRYPTION_KEY` del back de Render. `DB_FORCE_SYNC` y `DB_ALTER_SYNC` siempre en `false` contra esa base.
 
 ## Diseño visual (front)
 

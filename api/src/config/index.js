@@ -4,6 +4,9 @@ require('dotenv').config({ path: path.join(__dirname, '../../.env') })
 
 const env = process.env.NODE_ENV || 'development'
 
+// FRONTEND_URL sin la barra final, para que coincida con el Origin del navegador y los links no queden con '//'
+const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '')
+
 module.exports = {
     app: {
         env,
@@ -15,7 +18,8 @@ module.exports = {
     },
 
     db: {
-        url: process.env.DATABASE_URL,   // Base en la nube (demo). Si existe, tiene prioridad
+        url: process.env.DATABASE_URL?.trim() || undefined,   // Base en la nube (demo). Si existe, tiene prioridad
+        ssl: process.env.DB_SSL !== 'false',   // Solo se usa con DATABASE_URL. Con DB_SSL=false se conecta sin SSL
         name: process.env.DB_NAME,
         user: process.env.DB_USER,
         password: process.env.DB_PASS,
@@ -39,7 +43,16 @@ module.exports = {
         key: process.env.ENCRYPTION_KEY
     },
 
-    // Emails con nodemailer y Gmail SMTP. pass es una contraseña de aplicación de Gmail, no la de la cuenta
+    // Emails (config/mail.js). provider: 'brevo', 'smtp' o 'console'; sin MAIL_PROVIDER se elige según las credenciales
+    mail: {
+        provider: process.env.MAIL_PROVIDER?.trim().toLowerCase() || null,
+        from: process.env.MAIL_FROM || process.env.SMTP_USER,   // Casilla remitente (en Brevo, la verificada)
+        fromName: process.env.MAIL_FROM_NAME || 'Club360',
+        brevoApiKey: process.env.BREVO_API_KEY
+    },
+
+    // Gmail SMTP con nodemailer, solo para el desarrollo local (Render gratis bloquea los puertos SMTP).
+    // pass es una contraseña de aplicación de Gmail, no la de la cuenta
     smtp: (() => {
         const port = parseInt(process.env.SMTP_PORT, 10) || 465
         return {
@@ -47,14 +60,24 @@ module.exports = {
             port,
             secure: port === 465,   // 465: SSL directo; 587: STARTTLS
             user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-            from: process.env.MAIL_FROM || (process.env.SMTP_USER ? `Club360 <${process.env.SMTP_USER}>` : undefined)
+            pass: process.env.SMTP_PASS
         }
     })(),
 
-    cors: {
-        origin: process.env.FRONTEND_URL || 'http://localhost:5173'
+    // Archivos subidos en producción (middlewares/upload.js). Sin las tres, las subidas en producción responden 503
+    cloudinary: {
+        cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+        apiKey: process.env.CLOUDINARY_API_KEY,
+        apiSecret: process.env.CLOUDINARY_API_SECRET,
+        isConfigured: Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
     },
+
+    cors: {
+        origin: frontendUrl   // También es la base de los links de los emails
+    },
+
+    // true si la variable está cargada (no vacía). Lo usa el chequeo de arranque de server.js, que muestra solo el nombre
+    isSet: (name) => Boolean(process.env[name]?.trim()),
 
     seed: {
         admin: {   // Usuario Admin que crea el seed. La contraseña no tiene valor por defecto

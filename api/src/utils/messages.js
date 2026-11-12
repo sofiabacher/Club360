@@ -444,7 +444,8 @@ module.exports = {
         invalidType: 'El archivo tiene que ser una imagen JPG, PNG o WEBP.',
         invalidReceiptType: 'El comprobante tiene que ser una imagen JPG o PNG, o un PDF.',
         tooLarge: 'El archivo no puede pesar más de 5 MB.',
-        failed: 'No pudimos subir el archivo.'
+        failed: 'No pudimos subir el archivo.',
+        unavailable: 'No se pueden subir archivos en este momento.'
     },
 
     mail: {

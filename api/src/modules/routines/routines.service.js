@@ -19,7 +19,7 @@ const { notify } = require('../notifications/notifications.service')
 const logger = require('../../utils/logger')
 const { createError } = require('../../utils/errors')
 const { today: todayAR, addDays, getCurrentWeekStart } = require('../../utils/dates')
-const { UPLOAD_FOLDERS, toPublicPath, deleteUpload } = require('../../utils/files')
+const { deleteUpload } = require('../../utils/files')
 const { DAYS_OF_WEEK, ROUTINE_DAYS, GAME_STATES, MEMBER_STATES, LOG_ACTIONS } = require('../../utils/constants')
 const { PERMISSIONS } = require('../../utils/permissions')
 const { routines: m } = require('../../utils/messages')
@@ -227,7 +227,7 @@ async function findEditableRoutine(user, routineId, transaction) {
 
 // Crear la rutina de un día. Si ese día ya tiene una, 409. file: la imagen (opcional, middleware upload)
 async function createRoutine(actor, { categoryId, weekStart, dayOfWeek, title, description, videoUrl }, file) {
-    const imageUrl = file ? toPublicPath(UPLOAD_FOLDERS.ROUTINES, file.filename) : null
+    const imageUrl = file?.url ?? null
 
     try {
         const category = await findManageCategory(actor, categoryId)
@@ -266,7 +266,7 @@ async function createRoutine(actor, { categoryId, weekStart, dayOfWeek, title, d
 // Editar una rutina: título, descripción, video y la imagen (una nueva la reemplaza; removeImage la quita).
 // La imagen anterior se borra después de guardar
 async function updateRoutine(actor, routineId, { title, description, videoUrl, removeImage }, file) {
-    const newImage = file ? toPublicPath(UPLOAD_FOLDERS.ROUTINES, file.filename) : null
+    const newImage = file?.url ?? null
     let previousImage = null
 
     try {

@@ -11,13 +11,12 @@ const { Log, User, Role, Club } = require('../../models')
 
 const logger = require('../../utils/logger')
 const { createError } = require('../../utils/errors')
-const { addDays } = require('../../utils/dates')
+const { addDays, TIME_ZONE } = require('../../utils/dates')
 const { toCsv, fileStamp, slugOf } = require('../../utils/csv')
 const { CRITICITY_LABELS, LOG_ACTIONS } = require('../../utils/constants')
 const { logs: m } = require('../../utils/messages')
 
 const LOGS_PAGE_SIZE = 50
-const TIME_ZONE = 'America/Argentina/Buenos_Aires'
 const DELETED_USER = '(usuario eliminado)'
 
 const actorOf = ({ id: userId, clubId, activeRoleId }) => ({ clubId, userId, roleId: activeRoleId })

@@ -1,5 +1,7 @@
 // CSV para Excel en español: UTF-8 con BOM (para que respete tildes y ñ), separador ';' y fin de línea CRLF.
 // Lo usan la bitácora y el informe de integridad.
+const { TIME_ZONE } = require('./dates')
+
 const BOM = '﻿'
 const SEPARATOR = ';'
 
@@ -18,7 +20,7 @@ function toCsv(headers, rows) {
 // AAAAMMDD-HHmm en la hora de Argentina (para los nombres de archivo)
 function fileStamp(date = new Date()) {
     const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'America/Argentina/Buenos_Aires', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
+        timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
     }).formatToParts(date).map(part => [part.type, part.value]))
     return { minutes: `${parts.year}${parts.month}${parts.day}-${parts.hour}${parts.minute}`, seconds: `${parts.year}${parts.month}${parts.day}-${parts.hour}${parts.minute}${parts.second}` }
 }

@@ -7,6 +7,8 @@ Este documento es el contexto acumulado del proyecto. Está pensado para pegarse
 - Cada regla vive en **un solo lugar**; en el resto del documento se referencia con "ver sección X". Si una regla cambia, se actualiza solo en su lugar de origen.
 - `[A DEFINIR]` marca una contradicción o ambigüedad que necesita una decisión explícita. `[COMPLETAR]` marca datos que faltan cargar. `[PROVISORIO]` marca datos inventados para avanzar, que se reemplazan por los reales más adelante.
 
+**Última actualización (11/11/2026) — deploy de la demo:** la base de datos va en **Railway**. Los emails pasan de Gmail SMTP a la **API HTTP de Brevo**, porque el plan gratuito de Render bloquea la salida por los puertos SMTP. Un servicio externo (cron-job.org) llama a `/health` cada 10 minutos para que el back no se duerma y corran los jobs. El seed y los datos de la demo se cargan desde una compu contra Railway (ver sección 11).
+
 **Última actualización (04/10/2026) — reducción de alcance:** se adelantó la fecha de entrega y se recortó el MVP. Salen del MVP (pasan a Futuro, sección 7): módulo de seguimiento personal de la jugadora, tienda de merch y panel de SuperAdmin (reemplazado por un script de carga inicial). El caso real pasa a ser el club **Valencia** (antes CAPAL). Se definieron dos tipos de cuota: social y deportiva (ver sección 6).
 
 **Última actualización (10/10/2026) — DER lógico final:** el DER lógico definitivo (24 entidades, nombres de tabla/campo en inglés camelCase, igual que el código Sequelize) queda como **imagen adjunta al conocimiento del proyecto**. Incorporó varios ajustes respecto de la primera versión del modelo — ver el detalle en sección 8.
@@ -362,7 +364,7 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 
 **Prioridad 2 si queda tiempo (definido el 21/10/2026):**
 - Bot de consultas (sección 9).
-- Dominio propio verificado para enviar los emails con Resend en lugar de Gmail SMTP (ver sección 11, "Emails").
+- Dominio propio verificado en Brevo, para que los emails no salgan desde una casilla de Gmail y caigan menos en spam (ver sección 11, "Emails").
 
 **Recortados del MVP el 04/10/2026:**
 - Panel de SuperAdmin (Administrador de Plataforma): alta de clubes y asignación del primer Admin, mantenimiento del catálogo maestro de deportes, consulta y corrección de datos de un club como soporte (con registro en bitácora), sin poder ingresar como otro usuario
@@ -459,7 +461,7 @@ Asistente de consultas generales sobre el club y sobre cómo usar la plataforma,
 
 ## 10. Estado actual y próximos pasos
 
-**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**, **recuperación de contraseña y Mi cuenta (3.6.2 y 3.7, 21/10)**, **decisiones D2 a D7, D9 y D11 y emails de la demo (21/10)**, **gestión de roles y permisos (sección 4, 21/10)**, **club y alta de socios, D13 (3.1 y sección 8, 21/10)**, **staff y vínculo familiar (3.4, 3.5 y 3.6, 23/10)**, **ligas y categorías (sección 6, 26/10)**, **notificaciones (sección 6, 31/10; detalle e historial, 01/11)**, **partidos y superposiciones (sección 6, 01/11)**, **citaciones (sección 6, 05/11)**, **inscripciones (3.3, 05/11)**, **cuotas y pagos, D12 (sección 6, 08/11)**, **pago por transferencia y comprobantes de pago (sección 6, 08/11)**, **rutinas y paneles de inicio (sección 6, 08/11)**, **bitácora, integridad y copias de seguridad (sección 11, 09/11)**
+**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**, **recuperación de contraseña y Mi cuenta (3.6.2 y 3.7, 21/10)**, **decisiones D2 a D7, D9 y D11 y emails de la demo (21/10)**, **gestión de roles y permisos (sección 4, 21/10)**, **club y alta de socios, D13 (3.1 y sección 8, 21/10)**, **staff y vínculo familiar (3.4, 3.5 y 3.6, 23/10)**, **ligas y categorías (sección 6, 26/10)**, **notificaciones (sección 6, 31/10; detalle e historial, 01/11)**, **partidos y superposiciones (sección 6, 01/11)**, **citaciones (sección 6, 05/11)**, **inscripciones (3.3, 05/11)**, **cuotas y pagos, D12 (sección 6, 08/11)**, **pago por transferencia y comprobantes de pago (sección 6, 08/11)**, **rutinas y paneles de inicio (sección 6, 08/11)**, **bitácora, integridad y copias de seguridad (sección 11, 09/11)**, **deploy de la demo: Railway, Brevo y servicio que mantiene despierto el back (sección 11, 11/11)**
 
 **Pendiente:**
 1. ~~Modelo DER Lógico completo~~ — cerrado el 04/10/2026, actualizado el 10/10/2026 (ver sección 8)
@@ -480,9 +482,10 @@ Asistente de consultas generales sobre el club y sobre cómo usar la plataforma,
 16. ~~Almacenamiento de imágenes en el deploy de Render~~ — cerrado el 21/10/2026: Cloudinary en producción (D7, ver sección 11)
 17. ~~Valores numéricos de cada estado~~ — cerrado el 18/10/2026 (ver sección 8)
 18. ~~Pruebas~~ — cerrado el 21/10/2026: casos de prueba documentados en `.txt`, sin tests automatizados (D9, ver sección 11)
-19. ~~Envío de emails en la demo~~ — cerrado el 21/10/2026: Gmail SMTP con nodemailer; el dominio propio con Resend pasa a Futuro (ver secciones 7 y 11)
+19. ~~Envío de emails en la demo~~ — cerrado el 21/10/2026 con Gmail SMTP; cambiado el 11/11/2026 a la API de Brevo, porque Render gratis bloquea SMTP (ver secciones 7 y 11)
 20. ~~Día de generación y día de vencimiento de la cuota mensual~~ — cerrado el 08/11/2026: se genera el día 1 y vence el 10 (D12, ver sección 6)
 21. ~~Dónde se guarda el color de acento de cada club~~ — cerrado el 21/10/2026: campo `club.accentColor` (D13, ver sección 8)
+22. ~~Proveedor de la base de datos en la nube~~ — cerrado el 11/11/2026: Railway (ver sección 11)
 
 **Stack técnico:** ver sección 11.
 
@@ -493,7 +496,7 @@ Asistente de consultas generales sobre el club y sobre cómo usar la plataforma,
 El repositorio incluye un `CLAUDE.md` en la raíz con estas mismas convenciones, para trabajar con Claude Code desde la terminal. Claude Code no ve este documento de claude.ai, así que se guarda una copia en `docs/contexto.md` (junto con `docs/DER_logico.jpg`), que hay que reemplazar cada vez que este documento se actualice. Las tareas para la terminal se pasan como prompts en `docs/prompts/` (ej. `PROMPT_01_estructura_base.md`). El avance del proyecto se sigue en `docs/TODO.md` (desarrollo por fases, entregables de la consigna y decisiones pendientes D1–D13); Claude Code lo actualiza al terminar cada tarea, según la regla del `CLAUDE.md`. Referencia de arquitectura: repo HotelDesk, con las mejoras que se detallan abajo.
 
 **Stack:**
-- Backend: Node.js, Express, Sequelize, MySQL 8, JWT, express-validator, multer (imágenes), Cloudinary (imágenes en producción), node-cron (tareas programadas), nodemailer con Gmail SMTP (email; cambió el 21/10/2026, antes Resend). JavaScript con CommonJS.
+- Backend: Node.js, Express, Sequelize, MySQL 8, JWT, express-validator, multer (imágenes), Cloudinary (imágenes en producción), node-cron (tareas programadas), API HTTP de Brevo (email; cambió el 11/11/2026, antes Gmail SMTP y antes Resend). JavaScript con CommonJS.
 - Frontend: React + Vite, Material UI, React Router, axios. JavaScript.
 - npm como gestor de paquetes. Sin TypeScript, sin ESLint/Prettier, sin `.nvmrc`.
 - Aplicación web (no nativa mobile en el MVP).
@@ -509,8 +512,12 @@ El repositorio incluye un `CLAUDE.md` en la raíz con estas mismas convenciones,
 **Frontend:** `api/` (un archivo de llamadas por módulo, las páginas no usan axios directo), `context/` (AuthContext con usuario, roles, rol activo y permisos), `hooks/` (useAuth, usePermission), `routes/` (AppRouter y PermissionRoute), `layouts/`, `components/common/` y `components/<módulo>/`, `pages/<módulo>/`, `utils/constants.js` (mismo mapeo de estados que el backend).
 
 **Decisiones técnicas:**
-- **Base de datos:** MySQL local para desarrollo; base en la nube (con `DATABASE_URL` y SSL) para el deploy de la demo.
-- **Deploy de la demo:** backend en Render; **frontend en Vercel** (21/10/2026), con una regla de reescritura en `client/vercel.json` para que las rutas de React Router funcionen al recargar la página. El front apunta al back con `VITE_API_URL`, y el back usa `FRONTEND_URL` para CORS y para los links de los emails.
+- **Base de datos:** MySQL local para desarrollo; para la demo, MySQL en **Railway** (11/11/2026), con `DATABASE_URL` (la conexión pública del servicio) y SSL.
+- **Deploy de la demo:** backend en Render (plan gratuito); **frontend en Vercel** (21/10/2026), con una regla de reescritura en `client/vercel.json` para que las rutas de React Router funcionen al recargar la página; base en Railway; las dos en la zona este de Estados Unidos (Virginia). El front apunta al back con `VITE_API_URL`, y el back usa `FRONTEND_URL` para CORS y para los links de los emails.
+  - **Back despierto (11/11/2026):** Render gratis se duerme a los 15 minutos sin tráfico y mientras duerme no corre ningún job. Un servicio externo (cron-job.org) llama a `GET /health` cada 10 minutos; `/health` no consulta la base. Las 750 horas gratis por mes de Render alcanzan si no hay otro servicio gratuito en la misma cuenta.
+  - **Zona horaria:** Render corre en UTC; todos los jobs se programan con la zona `America/Argentina/Buenos_Aires`.
+  - **Carga de datos:** el seed y los datos de la demo se corren desde una compu contra Railway, con la misma `ENCRYPTION_KEY` que el back de Render.
+  - Los pasos manuales están en `docs/deploy.md`.
 - **Tablas con `sequelize.sync()`**, sin migraciones (por tiempo). `DB_FORCE_SYNC` / `DB_ALTER_SYNC` bloqueados en producción.
 - **Cambios en el modelo (01/11/2026):** como las bases locales ya tienen datos cargados, cada cambio en el modelo se aplica recreando la base **sin perder los datos**: `npm run db:snapshot` guarda todos los datos en un archivo, se recrea la base con `DB_FORCE_SYNC` y `npm run db:restore` los vuelve a cargar tal cual estaban, con sus dígitos verificadores, y verifica la integridad. Es una herramienta de desarrollo; en producción se usa el módulo de backup. No se usan parches de SQL.
 - **Seed como script aparte** (`npm run seed`), no se ejecuta al arrancar el servidor.
@@ -523,11 +530,12 @@ El repositorio incluye un `CLAUDE.md` en la raíz con estas mismas convenciones,
   - **en producción**, en Cloudinary (plan gratuito), porque el disco de Render no es persistente: se borra en cada reinicio o deploy, y el plan gratuito se duerme después de unos minutos sin uso.
   - Los services no saben dónde se guardó: reciben la URL o la ruta del archivo y la guardan en la base. El front arma la URL con un helper que usa la URL tal cual si es absoluta (Cloudinary) o le antepone `VITE_API_URL` si es una ruta local.
   - Al reemplazar una imagen, se borra la anterior del lugar donde esté.
-- **Emails (21/10/2026):**
-  - Se envían con **nodemailer y Gmail SMTP**, desde una cuenta de Gmail del equipo con contraseña de aplicación (variables `SMTP_*` en el `.env`). Reemplaza a Resend, que sin un dominio propio verificado solo entrega a la casilla de la cuenta.
-  - Límites a tener en cuenta: Gmail permite unos 500 envíos por día y algunos mails pueden caer en spam. Por eso solo algunas notificaciones van por email (ver sección 6).
-  - En desarrollo, si no hay SMTP configurado, el mailer muestra por consola el destinatario, el asunto y los links del email.
-  - El dominio propio con Resend queda en Futuro (sección 7). El mailer se mantiene detrás de `utils/mailer/`, así que cambiar de proveedor solo toca la configuración.
+  - **Comprobantes de transferencia (11/11/2026):** en Cloudinary van como recurso `raw` privado. El back los descarga con un link firmado de corta duración y los reenvía, así el link nunca llega al navegador.
+- **Emails (11/11/2026):**
+  - En la demo se envían con la **API HTTP de Brevo** (plan gratuito, 300 emails por día), desde la casilla de Gmail del equipo verificada como remitente en Brevo (variables `MAIL_PROVIDER`, `BREVO_API_KEY`, `MAIL_FROM` y `MAIL_FROM_NAME`). Reemplaza a Gmail SMTP (21/10/2026), porque el plan gratuito de Render bloquea la salida por los puertos SMTP 25, 465 y 587.
+  - Sin dominio propio, algunos emails pueden caer en spam. Por el límite diario, solo algunas notificaciones van por email (ver sección 6).
+  - En desarrollo, sin proveedor configurado, el mailer muestra por consola el destinatario, el asunto y los links del email.
+  - El dominio propio queda en Futuro (sección 7). El envío sigue detrás de `utils/mailer/`, así que cambiar de proveedor solo toca `config/mail.js`.
 - **Bitácora, integridad y copias de seguridad (09/11/2026):**
   - **Bitácora:** el Admin la consulta con filtros (fechas, criticidad, acción, usuario y texto) y la descarga en CSV (UTF-8 con separador `;` para Excel). Solo ve los registros de su club. La descarga queda registrada.
   - **Integridad:** se verifica el DVH de cada registro del club (y de los catálogos compartidos de deportes y permisos) y el DVV de cada tabla, al iniciar sesión (con un resultado guardado en memoria por 5 minutos), todas las noches a las 02:30 y a pedido del Admin. Si hay un registro alterado, **el club queda bloqueado**: solo entran quienes tienen permiso de integridad o de backup, para reparar o restaurar; el resto ve "Sistema en mantenimiento" y los procesos automáticos del club se pausan. Se avisa por in-app y email solo cuando el estado pasa de correcto a error. **Reparar** (por tabla o todo, como el CU020 de HotelDesk) recalcula los dígitos y acepta los datos actuales; si se sospecha una modificación externa, se restaura un backup. El informe se descarga en CSV.

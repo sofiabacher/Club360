@@ -4,7 +4,7 @@ export const TOKEN_KEY = 'club360_token'
 
 const axiosClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  timeout: 10000
+  timeout: 60000   // En la demo, Render gratis se duerme: la primera respuesta puede tardar cerca de un minuto
 })
 
 export function clearSession() {

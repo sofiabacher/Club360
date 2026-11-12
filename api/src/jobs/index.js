@@ -15,6 +15,7 @@
 //   schedule   expresión de cron (ej. '0 3 1 * *')
 //   run        función async con la tarea
 const cron = require('node-cron')
+const { TIME_ZONE } = require('../utils/dates')
 
 const jobs = [
     require('./autoConfirmCitations.job'),
@@ -32,7 +33,7 @@ function start() {
             } catch (error) {
                 console.error(`Error en el job ${job.name}:`, error.message)
             }
-        }, { timezone: 'America/Argentina/Buenos_Aires' })
+        }, { timezone: TIME_ZONE })   // Render corre en UTC: los horarios son siempre de Argentina
     }
 
     console.log(`Jobs iniciados: ${jobs.length}`)

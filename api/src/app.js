@@ -14,6 +14,7 @@ app.use(express.json())
 app.use('/uploads', (req, res, next) => (isPrivateUploadPath(req.path) ? res.status(404).json({ success: false, message: general.notFound }) : next()))
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
 
+// Lo llama cada 10 minutos un servicio externo para que Render gratis no se duerma: no consulta la base
 app.get('/health', (req, res) => {
     res.json({ success: true, message: 'API de Club360 funcionando' })
 })

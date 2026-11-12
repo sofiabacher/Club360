@@ -4,6 +4,7 @@
 const { body, param, query } = require('express-validator')
 const { FEE_STATES, TRANSACTION_STATES, PAYMENT_METHODS } = require('../../utils/constants')
 const { fees: m } = require('../../utils/messages')
+const { today } = require('../../utils/dates')
 
 const PERIOD_FORMAT = /^\d{4}-(0[1-9]|1[0-2])$/
 const PLAYER_STATUSES = ['ok', 'pending', 'overdue']
@@ -12,15 +13,15 @@ const DATE_FORMAT = /^\d{4}-\d{2}-\d{2}$/
 const idParam = param('id').isInt({ min: 1 }).withMessage(m.idInvalid).bail().toInt()
 const searchQuery = query('search').optional().isString().withMessage(m.searchInvalid).bail().isLength({ max: 100 }).withMessage(m.searchInvalid)
 
-// Vencimiento MM/AA sin vencer: la tarjeta vale hasta el último día de ese mes
+// Vencimiento MM/AA sin vencer: la tarjeta vale hasta el último día de ese mes (comparado con el mes de Argentina)
 function isCardExpiryValid(value) {
     const match = /^(0[1-9]|1[0-2])\/(\d{2})$/.exec(String(value ?? ''))
     if (!match) throw new Error(m.cardExpiryInvalid)
 
     const month = Number(match[1])
     const year = 2000 + Number(match[2])
-    const now = new Date()
-    if (year < now.getFullYear() || (year === now.getFullYear() && month < now.getMonth() + 1)) throw new Error(m.cardExpired)
+    const [currentYear, currentMonth] = today().split('-').map(Number)
+    if (year < currentYear || (year === currentYear && month < currentMonth)) throw new Error(m.cardExpired)
     return true
 }
 

@@ -11,7 +11,7 @@ Plataforma web de gestión para clubes deportivos: socios, cuotas, ligas, catego
 
 ## Stack
 
-- **Backend (`api/`):** Node.js, Express 5, Sequelize 6, MySQL 8, JWT, express-validator, multer, node-cron, Resend.
+- **Backend (`api/`):** Node.js, Express 5, Sequelize 6, MySQL 8, JWT, express-validator, multer, Cloudinary (archivos en producción), node-cron, API HTTP de Brevo (emails).
 - **Frontend (`client/`):** React 19, Vite, Material UI 7, React Router 7, axios.
 
 ## Cómo levantar el proyecto en local
@@ -68,9 +68,18 @@ dígitos verificadores) y al final verifica la integridad. Si avisa que hay DVH 
 una columna, repetir los pasos 2 y 3 con `npm run db:restore -- --recompute-dvh`. Es una herramienta de desarrollo: en la
 demo, las copias de seguridad son del módulo de backup.
 
+## Demo deployada
+
+- **Front (Vercel):** _se completa después del deploy_
+- **API (Render):** _se completa después del deploy_ (`/health` para comprobar que responde)
+
+La base está en Railway, las imágenes y los comprobantes en Cloudinary, y los emails salen por la API de Brevo. Los pasos
+para publicarla (cuentas, variables y carga de datos) están en [`docs/deploy.md`](docs/deploy.md).
+
 ## Documentación
 
 - `CLAUDE.md`: convenciones técnicas del proyecto.
 - `docs/contexto.md`: contexto, reglas de negocio y decisiones de modelado.
 - `docs/DER_logico.jpg`: DER lógico.
 - `docs/TODO.md`: lista de tareas y registro de avance.
+- `docs/deploy.md`: guía de deploy de la demo.

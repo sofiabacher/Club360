@@ -23,8 +23,8 @@ const { notify } = require('../notifications/notifications.service')
 
 const logger = require('../../utils/logger')
 const { createError } = require('../../utils/errors')
-const { today: todayAR, daysBetween, dateTimeParts, getAge } = require('../../utils/dates')
-const { UPLOAD_FOLDERS, toPublicPath, resolveUploadPath, deleteUpload } = require('../../utils/files')
+const { today: todayAR, daysBetween, dateTimeParts, getAge, TIME_ZONE } = require('../../utils/dates')
+const { resolveUploadPath, cloudinaryRefOf, deleteUpload, downloadPrivateFile } = require('../../utils/files')
 const {
     FEE_STATES,
     TRANSACTION_STATES,
@@ -86,7 +86,7 @@ const periodOf = (date) => date.slice(0, 7)
 const noonOf = (date) => new Date(`${date}T12:00:00.000-03:00`)
 
 // '2026-11' → 'noviembre'
-const monthNameOf = (period) => new Intl.DateTimeFormat('es-AR', { month: 'long', timeZone: 'America/Argentina/Buenos_Aires' }).format(noonOf(`${period}-15`))
+const monthNameOf = (period) => new Intl.DateTimeFormat('es-AR', { month: 'long', timeZone: TIME_ZONE }).format(noonOf(`${period}-15`))
 
 const expirationOf = (period) => `${period}-${pad(FEE_DUE_DAY)}`
 
@@ -581,37 +581,17 @@ async function getTransferInfo(user) {
     return { bankInfo: await getBankInfo(user.clubId) }
 }
 
-// Primeros bytes de cada tipo de comprobante: el tipo que declara el navegador no alcanza para confiar en el archivo
-const RECEIPT_SIGNATURES = {
-    '.jpg': Buffer.from([0xFF, 0xD8, 0xFF]),
-    '.png': Buffer.from([0x89, 0x50, 0x4E, 0x47]),
-    '.pdf': Buffer.from('%PDF')
-}
-
+// Tipo de cada comprobante, por su extensión (para devolverlo con receipt-file)
 const RECEIPT_CONTENT_TYPES = { '.jpg': 'image/jpeg', '.png': 'image/png', '.pdf': 'application/pdf' }
-
-async function assertReceiptContent(filePath) {
-    const signature = RECEIPT_SIGNATURES[path.extname(filePath).toLowerCase()]
-    if (!signature) throw createError(uploadMessages.invalidReceiptType, 400)
-
-    const handle = await fs.open(filePath, 'r')
-    try {
-        const { buffer, bytesRead } = await handle.read(Buffer.alloc(signature.length), 0, signature.length, 0)
-        if (bytesRead < signature.length || !buffer.equals(signature)) throw createError(uploadMessages.invalidReceiptType, 400)
-    } finally {
-        await handle.close()
-    }
-}
 
 // Informar una transferencia (fees.payOwn o fees.manageLinked): mismas cuotas que el pago con tarjeta, por el total.
 // Crea un pago Pendiente con el comprobante adjunto y código TRF-; la cuota no cambia hasta que la revisa el club.
 // Avisa PAYMENT_REVIEW_REQUEST a quienes gestionan cuotas. Si algo falla, se borra el archivo subido
 async function reportTransfer(user, feeId, file) {
     if (!file) throw createError(m.receiptRequired, 400)
-    const receiptUrl = toPublicPath(UPLOAD_FOLDERS.RECEIPTS, file.filename)
+    const receiptUrl = file.url   // Ruta local o secure_url de Cloudinary. El middleware upload ya revisó sus primeros bytes
 
     try {
-        await assertReceiptContent(file.path)
         if (!await getBankInfo(user.clubId)) throw createError(m.noBankInfo, 409)
 
         const allowed = await payableMemberIds(user)
@@ -752,13 +732,25 @@ async function findAccessiblePayment(user, paymentId, extraWhere, notFoundMessag
     return payment
 }
 
-// Archivo del comprobante adjunto de una transferencia: { filePath, contentType, filename }
+// Archivo del comprobante adjunto de una transferencia: { filePath o buffer, contentType, filename }.
+//   - en el disco (desarrollo): filePath, para mandarlo con sendFile;
+//   - en Cloudinary (producción, raw privado): buffer, descargado con un link firmado de unos 60 segundos que nunca sale
+//     al navegador. Si Cloudinary responde error, 404 como cuando no hay acceso
 async function getReceiptFile(user, paymentId) {
     const payment = await findAccessiblePayment(user, paymentId, { receiptUrl: { [Op.ne]: null } }, m.receiptNotFound)
 
-    const filePath = resolveUploadPath(payment.receiptUrl)
-    const extension = path.extname(filePath ?? '').toLowerCase()
-    if (!filePath || !RECEIPT_CONTENT_TYPES[extension]) throw createError(m.receiptNotFound, 404)
+    const cloudRef = cloudinaryRefOf(payment.receiptUrl)
+    const filePath = cloudRef ? null : resolveUploadPath(payment.receiptUrl)
+    const extension = cloudRef ? cloudRef.extension : path.extname(filePath ?? '').toLowerCase()
+    if ((!cloudRef && !filePath) || !RECEIPT_CONTENT_TYPES[extension]) throw createError(m.receiptNotFound, 404)
+
+    const file = { contentType: RECEIPT_CONTENT_TYPES[extension], filename: `comprobante-${payment.confirmationCode}${extension}` }
+
+    if (cloudRef) {
+        const buffer = await downloadPrivateFile(payment.receiptUrl)
+        if (!buffer) throw createError(m.receiptNotFound, 404)
+        return { ...file, buffer }
+    }
 
     try {
         await fs.access(filePath)
@@ -766,7 +758,7 @@ async function getReceiptFile(user, paymentId) {
         throw createError(m.receiptNotFound, 404)
     }
 
-    return { filePath, contentType: RECEIPT_CONTENT_TYPES[extension], filename: `comprobante-${payment.confirmationCode}${extension}` }
+    return { ...file, filePath }
 }
 
 // Medio de pago como se muestra en el comprobante. De la tarjeta, solo los últimos 4 dígitos (guardados en note)

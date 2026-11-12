@@ -1,13 +1,18 @@
-// Archivos subidos con multer (middlewares/upload.js). Se guardan en api/uploads/<carpeta>/ y se sirven en /uploads,
-// salvo las carpetas privadas (PRIVATE_UPLOAD_FOLDERS).
-// PENDIENTE: en Render el disco no es persistente (decisión D7).
+// Archivos subidos con multer (middlewares/upload.js). Según el entorno, quedan en:
+//   - desarrollo: api/uploads/<carpeta>/, y se guarda en la base la ruta /uploads/<carpeta>/<archivo>. Se sirven en
+//     /uploads, salvo las carpetas privadas (PRIVATE_UPLOAD_FOLDERS);
+//   - producción: Cloudinary, en club360/<carpeta>, y se guarda la secure_url (el disco de Render no es persistente).
+// Los services no saben dónde quedó: guardan req.file.url y, para borrar, llaman a deleteUpload con lo guardado.
 const path = require('path')
 const fs = require('fs/promises')
 
+const cloudinary = require('../config/cloudinary')
+
 const UPLOADS_DIR = path.join(__dirname, '../../uploads')
 const PUBLIC_PREFIX = '/uploads/'
+const CLOUD_FOLDER = 'club360'
 
-// Carpetas dentro de uploads/. Uso: upload(UPLOAD_FOLDERS.AVATARS).single('photo')
+// Carpetas dentro de uploads/ (y de club360/ en Cloudinary). Uso: upload(UPLOAD_FOLDERS.AVATARS).single('photo')
 const UPLOAD_FOLDERS = {
     AVATARS: 'avatars',
     ROUTINES: 'routines',
@@ -15,7 +20,8 @@ const UPLOAD_FOLDERS = {
 }
 
 // Carpetas que no se sirven por /uploads: sus archivos se descargan con un endpoint que exige sesión y permiso
-// (los comprobantes, con GET /fees/payments/:id/receipt-file). Lo controla isPrivateUploadPath, en app.js
+// (los comprobantes, con GET /fees/payments/:id/receipt-file). Lo controla isPrivateUploadPath, en app.js.
+// En Cloudinary van como recurso raw privado (type: 'private'): la secure_url sola no los abre
 const PRIVATE_UPLOAD_FOLDERS = [UPLOAD_FOLDERS.RECEIPTS]
 
 // Ruta pública que se guarda en la base: /uploads/<carpeta>/<archivo>
@@ -46,9 +52,41 @@ function resolveUploadPath(publicPath) {
     return filePath.startsWith(UPLOADS_DIR + path.sep) ? filePath : null
 }
 
-// Borra del disco un archivo a partir de su ruta pública. Solo borra dentro de uploads/; si no existe, no hace nada
-async function deleteUpload(publicPath) {
-    const filePath = resolveUploadPath(publicPath)   // Evita rutas que se salgan de uploads/ (por ejemplo, con ..)
+// Datos de un archivo de Cloudinary a partir de su URL, o null si no es una URL de Cloudinary:
+// https://res.cloudinary.com/<cloud>/<resource_type>/<type>/v123/club360/<carpeta>/<archivo>
+// public_id va sin la versión; en las imágenes, sin la extensión, y en los raw, con la extensión (así los guarda Cloudinary)
+const CLOUDINARY_URL = /^https:\/\/res\.cloudinary\.com\/[^/]+\/(image|raw)\/(upload|private|authenticated)\/(?:v\d+\/)?(.+)$/
+
+function cloudinaryRefOf(url) {
+    const match = CLOUDINARY_URL.exec(url ?? '')
+    if (!match) return null
+
+    const [, resourceType, type, rest] = match
+    const file = decodeURIComponent(rest)
+    const publicId = resourceType === 'raw' ? file : file.replace(/\.[^./]+$/, '')
+    return { resourceType, type, publicId, extension: path.extname(file).toLowerCase() }
+}
+
+const isCloudinaryUrl = (url) => cloudinaryRefOf(url) !== null
+
+// Borra un archivo subido a partir de lo que se guardó en la base, esté donde esté:
+//   - ruta local (/uploads/...): del disco, solo dentro de uploads/; si ya no existe, no hace nada;
+//   - URL de Cloudinary: con uploader.destroy.
+// Un error al borrar se muestra por consola y no corta la operación. Es la única función que borra archivos subidos
+async function deleteUpload(stored) {
+    if (!stored) return
+
+    const ref = cloudinaryRefOf(stored)
+    if (ref) {
+        try {
+            await cloudinary.uploader.destroy(ref.publicId, { resource_type: ref.resourceType, type: ref.type, invalidate: true })
+        } catch (error) {
+            console.error('No se pudo borrar el archivo de Cloudinary:', error.message ?? error.error?.message)
+        }
+        return
+    }
+
+    const filePath = resolveUploadPath(stored)   // Evita rutas que se salgan de uploads/ (por ejemplo, con ..)
     if (!filePath) return
 
     try {
@@ -58,9 +96,12 @@ async function deleteUpload(publicPath) {
     }
 }
 
-// Borra el archivo que acaba de subir multer (req.file) cuando la request no sigue (por ejemplo, datos inválidos)
+// Borra el archivo que acaba de subir el middleware (req.file) cuando la request no sigue (por ejemplo, datos inválidos)
 async function discardUploadedFile(file) {
-    if (!file?.path) return
+    if (!file) return
+    if (file.url) return deleteUpload(file.url)
+    if (!file.path) return
+
     const filePath = path.resolve(file.path)
     if (!filePath.startsWith(UPLOADS_DIR + path.sep)) return
 
@@ -71,12 +112,43 @@ async function discardUploadedFile(file) {
     }
 }
 
+const PRIVATE_LINK_SECONDS = 60
+const DOWNLOAD_TIMEOUT_MS = 15000
+
+// Contenido de un archivo privado de Cloudinary (un comprobante). Genera un link firmado que vence en unos 60 segundos,
+// lo descarga desde el back y devuelve el Buffer: el link nunca sale al navegador. null si Cloudinary responde error
+async function downloadPrivateFile(url) {
+    const ref = cloudinaryRefOf(url)
+    if (!ref) return null
+
+    try {
+        const link = cloudinary.utils.private_download_url(ref.publicId, '', {
+            resource_type: ref.resourceType,
+            type: ref.type,
+            expires_at: Math.floor(Date.now() / 1000) + PRIVATE_LINK_SECONDS
+        })
+
+        const response = await fetch(link, { signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS) })
+        if (!response.ok) return null
+        return Buffer.from(await response.arrayBuffer())
+
+    } catch (error) {
+        console.error('No se pudo descargar el archivo de Cloudinary:', error.message)
+        return null
+    }
+}
+
 module.exports = {
     UPLOADS_DIR,
-    discardUploadedFile,
+    CLOUD_FOLDER,
     UPLOAD_FOLDERS,
+    PRIVATE_UPLOAD_FOLDERS,
     toPublicPath,
     isPrivateUploadPath,
     resolveUploadPath,
-    deleteUpload
+    cloudinaryRefOf,
+    isCloudinaryUrl,
+    deleteUpload,
+    discardUploadedFile,
+    downloadPrivateFile
 }

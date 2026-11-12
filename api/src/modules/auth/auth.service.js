@@ -20,7 +20,7 @@ const {
     verifyActivationToken
 } = require('../../utils/token')
 const { sendRecoveryEmail, sendPasswordChangedNotice } = require('../../utils/mailer/senders')
-const { UPLOAD_FOLDERS, toPublicPath, deleteUpload } = require('../../utils/files')
+const { deleteUpload } = require('../../utils/files')
 const { getAge, isAdult } = require('../../utils/dates')
 const { USER_STATES, MEMBER_STATES, BASE_ROLES, LOG_ACTIONS, LOGIN_MAX_ATTEMPTS } = require('../../utils/constants')
 const { PERMISSIONS } = require('../../utils/permissions')
@@ -481,11 +481,11 @@ async function updateAccount(actor, { email, phone }) {
     return getAccount(actor)
 }
 
-// Guarda la foto nueva (ya subida por multer) y borra la anterior del disco
+// Guarda la foto nueva (ya subida por el middleware upload: file.url) y borra la anterior, esté donde esté
 async function updatePhoto({ id: userId, clubId, activeRoleId }, file) {
     if (!file) throw createError(auth.photoRequired, 400)
 
-    const photo = toPublicPath(UPLOAD_FOLDERS.AVATARS, file.filename)
+    const photo = file.url
     const user = await User.findByPk(userId)
     const previousPhoto = user.photo
 
