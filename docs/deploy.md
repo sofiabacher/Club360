@@ -1,6 +1,6 @@
 # Club360 — Guía de deploy de la demo
 
-Pasos manuales para publicar la demo: las cuentas, los paneles y la carga de datos. Lo que se resuelve en el código está en el P17 (`docs/prompts/17_deploy.md`); **esta guía se sigue después de integrar el P17 a `main`**.
+Pasos manuales para publicar la demo: las cuentas, los paneles y la carga de datos. Lo que se resuelve en el código está en el P17 (`docs/prompts/PROMPT_17_deploy.md`); **esta guía se sigue después de integrar el P17 a `main`**.
 
 En el repo, esta guía va en `docs/deploy.md`.
 
@@ -138,9 +138,12 @@ El seed y los datos de la demo se corren **desde una compu**, contra Railway (Re
    - `DB_SSL=true`;
    - `ENCRYPTION_KEY` = **la misma que cargaste en Render**;
    - `SEED_ADMIN_*` = los datos reales del usuario Admin de la demo (con un email al que tengan acceso).
+   - `SEED_DEMO_PASSWORD` = la contraseña común de los usuarios de la demo, y `SEED_DEMO_EMAIL` = la casilla del equipo (los usuarios reciben alias `casilla+usuario@gmail.com`).
+   - `SEED_DEMO_REAL_EMAILS` = los emails personales del equipo para los 4 usuarios que los reciben de verdad (`ctorres=...,gromero=...,nibanez=...,vruiz=...`). Ninguno puede ser el mismo que `SEED_ADMIN_EMAIL`.
    - Verificá que `DB_FORCE_SYNC` y `DB_ALTER_SYNC` estén en `false`: **con `true` se borra la base de la demo**.
 2. En `api/`: `npm run seed`.
-3. Si existe el script de datos de la demo, correlo ahora.
+3. `npm run seed:demo`. Anotá el número de socio y el código de vínculo que muestra al final (son para los casos en vivo; la lista de usuarios está en `docs/demo-usuarios.md`).
+   - **Correlo el día de la defensa o el anterior:** las fechas se calculan desde ese día y las citaciones Pendientes vencen a las 24 horas. Para volver a cargarlo después de los ensayos: `npm run seed:demo -- --reset` (borra todo lo del club salvo el seed; la bitácora queda).
 4. **Volvé a dejar el `.env` local como estaba** (la copia del paso 1). Así nadie trabaja sin querer contra la base de la demo.
 5. Entrá a la demo con el Admin y, desde **Integridad**, verificá que todo dé correcto.
 

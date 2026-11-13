@@ -94,6 +94,8 @@ const LOG_ACTIONS = {
     REGISTER_SUCCESS: { message: 'Registro con número de socio', criticity: CRITICITY.MEDIUM },
     REGISTER_FAIL: { message: 'Registro con número de socio fallido', criticity: CRITICITY.MEDIUM },
     ACCESS_DENIED: { message: 'Acceso denegado', criticity: CRITICITY.MEDIUM },
+    // Seed (P18): carga de los datos de la demo (npm run seed:demo)
+    DEMO_DATA_LOADED: { message: 'Datos de la demo cargados', criticity: CRITICITY.MEDIUM },
     // Bitácora, integridad y backup (P16)
     LOGS_EXPORTED: { message: 'Bitácora exportada', criticity: CRITICITY.MEDIUM },
     INTEGRITY_ERROR: { message: 'Error de integridad detectado', criticity: CRITICITY.CRITICAL },

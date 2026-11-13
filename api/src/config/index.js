@@ -87,6 +87,14 @@ module.exports = {
             username: process.env.SEED_ADMIN_USERNAME || 'admin.valencia',
             password: process.env.SEED_ADMIN_PASSWORD,
             birthDate: process.env.SEED_ADMIN_BIRTHDATE || '1990-01-01'
+        },
+
+        // Datos de la demo (npm run seed:demo). password: la de todos los usuarios de la demo (no la del Admin).
+        // email: casilla del equipo para los alias (casilla+usuario@...). realEmails: 'clave=email,clave=email' (texto crudo)
+        demo: {
+            password: process.env.SEED_DEMO_PASSWORD,
+            email: process.env.SEED_DEMO_EMAIL?.trim() || null,
+            realEmails: process.env.SEED_DEMO_REAL_EMAILS?.trim() || ''
         }
     }
 }

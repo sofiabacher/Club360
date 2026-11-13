@@ -987,6 +987,7 @@ async function listPlayers(user, { status, search = '' }) {
 
 module.exports = {
     getOverdueDays,
+    newConfirmationCode,   // Lo usa también el script de datos de la demo (seed/demo.js)
     generateFeesForPeriod,
     generateMonthlyFees,
     generateFees,

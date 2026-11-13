@@ -1,6 +1,7 @@
 // Filas "de un club": cómo se leen, se borran y se insertan las filas de un club, tal cual están en la base.
-// Lo usan integrity (verificación) y backup (copias y restauración). Los scripts db:snapshot y db:restore copian la base
-// completa con las mismas funciones de bajo nivel (readTableRows e insertTableRows).
+// Lo usan integrity (verificación), backup (copias y restauración) y el --reset de los datos de la demo (seed/demo.js).
+// Los scripts db:snapshot y db:restore copian la base completa con las mismas funciones de bajo nivel (readTableRows e
+// insertTableRows).
 //
 // Lectura en crudo (SELECT * como raw: true): el teléfono queda cifrado, las contraseñas hasheadas y los dvh como están.
 // Inserción con queryInterface.bulkInsert: con los ids originales y sin hooks (no se vuelve a cifrar el teléfono ni se
@@ -139,11 +140,21 @@ function clubModelWhere({ by, parent, key }, clubId) {
 }
 
 // Borra las filas de un club en el orden inverso de CLUB_TABLES (primero las que dependen de otras), con el modelo y
-// sin hooks: el DVV de las tablas lo recalcula quien llama, una vez al final. Devuelve { [tabla]: filas borradas }
-async function deleteClubRows(clubId, { transaction } = {}) {
+// sin hooks: el DVV de las tablas lo recalcula quien llama, una vez al final. Devuelve { [tabla]: filas borradas }.
+// keep (opcional): { [tabla]: true | condición } con lo que no se borra: true conserva toda la tabla; una condición de
+// Sequelize conserva las filas que la cumplen (lo usa el --reset de seed/demo.js, que conserva lo que carga el seed)
+async function deleteClubRows(clubId, { transaction, keep = {} } = {}) {
     const deleted = {}
     for (const table of [...CLUB_TABLES].reverse()) {
-        deleted[tableOf(table.Model)] = await table.Model.destroy({ where: clubModelWhere(table, clubId), hooks: false, transaction })
+        const tableName = tableOf(table.Model)
+        const kept = keep[tableName]
+        if (kept === true) {
+            deleted[tableName] = 0
+            continue
+        }
+
+        const where = kept ? { [Op.and]: [clubModelWhere(table, clubId), { [Op.not]: kept }] } : clubModelWhere(table, clubId)
+        deleted[tableName] = await table.Model.destroy({ where, hooks: false, transaction })
     }
     return deleted
 }

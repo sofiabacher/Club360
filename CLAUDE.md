@@ -37,6 +37,7 @@ Plataforma web de gestión para clubes deportivos (proyecto integrador escolar).
 npm run dev      # servidor con recarga automática (node --watch)
 npm start        # servidor
 npm run seed     # carga inicial del club (se corre a mano, no al arrancar)
+npm run seed:demo    # datos de la demo sobre el seed (--reset para borrarlos y volver a cargarlos)
 npm run db:snapshot  # guarda todos los datos de la base en api/backups/ (antes de recrearla)
 npm run db:restore   # vuelve a cargar el último snapshot en una base recién recreada
 
@@ -58,6 +59,7 @@ api/src/
   jobs/                Tareas programadas (node-cron), una por archivo
   utils/               constants, messages, errors, token, crypto, integrity, logger, mailer/
   seed/seed.js         Carga inicial
+  seed/demo.js         Datos de la demo (datos en seed/data/demo.js)
 client/src/
   api/                 axiosClient.js + un <módulo>.api.js por módulo
   context/             AuthContext (usuario, roles, rol activo, permisos)
@@ -96,6 +98,7 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
 - **Bitácora:** las acciones relevantes se registran con `utils/logger.js`, indicando `clubId`, `userId` y `roleId` (el rol activo). Las acciones se definen en `LOG_ACTIONS` de `constants.js`.
 - **Encriptación:** contraseñas con bcrypt (`hashPassword`); datos sensibles reversibles con `encrypt`/`decrypt` de `utils/crypto.js`. El dato cifrado reversible es el **teléfono del usuario**, y lo cifra y descifra el propio modelo `User`: los services lo usan en claro, y **no** se lee `phone` con `raw: true`.
 - **Seed:** la carga inicial se hace solo con `npm run seed`, nunca al arrancar el servidor. Es idempotente (se puede correr varias veces). Los datos del club están en `seed/data/club.js` (provisorios, ver `docs/contexto.md` sección 2.1) y los del usuario Admin en el `.env` (`SEED_ADMIN_*`). Los permisos de un rol base se asignan **solo cuando el rol se crea**: volver a correr el seed no pisa los cambios que hizo el Admin.
+- **Datos de la demo:** se cargan solo con `npm run seed:demo`, después del seed (ver "Datos de la demo").
 - **Configuración:** todo valor de entorno se lee desde `config/index.js`, no con `process.env` en otros archivos. Las URLs no se hardcodean.
 
 ## Convenciones
@@ -163,6 +166,15 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
 - **Zona horaria:** todo `cron.schedule` lleva `timezone: 'America/Argentina/Buenos_Aires'`, y ninguna fecha de negocio depende de la zona del servidor.
 - **Arranque en producción:** sin `DATABASE_URL`, los secretos JWT, `ENCRYPTION_KEY` o `FRONTEND_URL`, el servidor no arranca; sin Cloudinary o sin proveedor de email, arranca y avisa. Nunca se muestran valores de variables.
 - **Datos:** el seed y los datos de la demo se corren desde una compu contra Railway, con la `ENCRYPTION_KEY` del back de Render. `DB_FORCE_SYNC` y `DB_ALTER_SYNC` siempre en `false` contra esa base.
+
+## Datos de la demo (`seed/demo.js`)
+
+- Carga sobre el seed los datos de la demo de Valencia. Si no corrió el seed, corta. Si ya hay datos de la demo, no hace nada: para recargarlos, `--reset`, que pide confirmación y borra todos los datos del club salvo lo del seed (club, `clubSport`, roles base con sus permisos, el Admin del seed y los catálogos). **La bitácora no se borra.**
+- **Fechas relativas** al día en que se corre, en la zona horaria de Argentina (`utils/dates.js`). Las fechas de nacimiento son fijas porque definen los casos. Las citaciones Pendientes vencen 24 horas después de correrlo.
+- **Variables:** `SEED_DEMO_PASSWORD` (obligatoria, contraseña común de todos los usuarios de la demo, validada con la política de contraseñas) y `SEED_DEMO_EMAIL` (opcional: casilla del equipo; cada usuario recibe el alias `casilla+usuario@...`; sin ella, `@demo.example`) y `SEED_DEMO_REAL_EMAILS` (opcional: `clave=email` separados por comas, emails reales del equipo para 4 usuarios de la demo, para probar que los emails llegan). Nunca se escriben contraseñas ni emails reales en el código ni en `docs/demo-usuarios.md`.
+- **Cómo escribe:** con los modelos, en una sola transacción, con `{ transaction }` en todas las operaciones para que los hooks calculen DVH/DVV. Usa las funciones de la aplicación (`generateMemberNumber`, el generador del código de vínculo, `hashPassword`, el cifrado del teléfono del modelo `User`, `assignBaseRole`) y las constantes de estados. **No** llama a `notify()` ni al mailer: las notificaciones in-app de la demo se crean con el modelo, con los tipos y textos de los módulos. No sube archivos.
+- Antes de escribir muestra el host y la base a la que está conectado (sin usuario ni contraseña), y al final las cantidades cargadas, el número de socio y el código de vínculo de los casos en vivo, y cuándo vencen las citaciones Pendientes. Registra `DEMO_DATA_LOADED` en la bitácora.
+- `docs/demo-usuarios.md` tiene los usuarios de la demo, el caso que muestra cada uno y lo que queda listo para hacer en vivo. Si cambian los datos de `seed/data/demo.js`, se actualiza ese archivo.
 
 ## Diseño visual (front)
 

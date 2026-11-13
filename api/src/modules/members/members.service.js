@@ -578,6 +578,7 @@ async function linkFromAccount(actor, { code }) {
 
 module.exports = {
     generateMemberNumber,
+    generateFamilyCode,   // Lo usa también el script de datos de la demo (seed/demo.js)
     listMembers,
     getMember,
     getReceipt,
