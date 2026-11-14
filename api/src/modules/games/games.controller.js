@@ -17,8 +17,8 @@ const options = async (req, res, next) => {
 
 const list = async (req, res, next) => {
     try {
-        const { categoryId, state, from, to, page } = req.query
-        const data = await service.listGames(req.user, { categoryId, state, from, to, page })
+        const { categoryId, state, from, to, withoutResult, page } = req.query
+        const data = await service.listGames(req.user, { categoryId, state, from, to, withoutResult, page })
         res.json({ success: true, data })
 
     } catch (error) {
@@ -61,7 +61,30 @@ const update = async (req, res, next) => {
 
 const markPlayed = async (req, res, next) => {
     try {
-        const data = await service.markPlayed(req.user, req.params.id)
+        const { ownScore, rivalScore, setScores } = req.body
+        const data = await service.markPlayed(req.user, req.params.id, { ownScore, rivalScore, setScores })
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const updateResult = async (req, res, next) => {
+    try {
+        const { ownScore, rivalScore, setScores } = req.body
+        const data = await service.updateResult(req.user, req.params.id, { ownScore, rivalScore, setScores })
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const campaign = async (req, res, next) => {
+    try {
+        const { categoryId, season } = req.query
+        const data = await service.getCampaignForUser(req.user, { categoryId, season })
         res.json({ success: true, data })
 
     } catch (error) {
@@ -144,6 +167,8 @@ module.exports = {
     create,
     update,
     markPlayed,
+    updateResult,
+    campaign,
     cancel,
     assigned,
     conflicts,

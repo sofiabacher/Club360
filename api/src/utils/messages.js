@@ -290,6 +290,15 @@ module.exports = {
         conflictNotYours: 'Solo lo puede resolver una entrenadora de alguna de las dos categorías.',
         chosenGameInvalid: 'Elegí uno de los dos partidos del conflicto.',
 
+        // Resultados (P19)
+        resultInvalid: 'El resultado no es válido: un partido de vóley termina 3-0, 3-1, 3-2, 2-0 o 2-1.',
+        setCountMismatch: (expected, received) => `Cargaste los puntos de ${received} ${received === 1 ? 'set' : 'sets'}, pero el resultado tiene ${expected} sets.`,
+        setPointsOutOfRange: (number) => `Los puntos del set ${number} tienen que estar entre 0 y 99.`,
+        setNoWinner: (number) => `El set ${number} no tiene ganador: tiene que haber al menos 2 puntos de diferencia.`,
+        setsDontMatch: (own, rival) => `Los puntos no coinciden con el resultado: con ${own}-${rival}, el club tiene que ganar ${own} ${own === 1 ? 'set' : 'sets'} y el rival ${rival}.`,
+        resultOnlyPlayed: 'Solo se carga el resultado de un partido jugado.',
+        campaignCategoryNotFound: 'No encontramos la categoría.',
+
         // Validaciones de formato
         idInvalid: 'El identificador no es válido.',
         categoryIdInvalid: 'Elegí la categoría.',
@@ -303,7 +312,11 @@ module.exports = {
         pageInvalid: 'La página no es válida.',
         memberIdInvalid: 'La jugadora no es válida.',
         gameIdsInvalid: 'Indicá los dos partidos del conflicto.',
-        noteInvalid: 'La nota puede tener hasta 300 caracteres.'
+        noteInvalid: 'La nota puede tener hasta 300 caracteres.',
+        scoreInvalid: 'Ingresá los sets ganados por cada equipo.',
+        setScoresInvalid: 'Los puntos de los sets tienen que ser una lista de sets, cada uno con los puntos del club y del rival.',
+        seasonInvalid: 'La temporada no es válida (un año, por ejemplo 2026).',
+        withoutResultInvalid: 'El filtro de partidos sin resultado no es válido.'
     },
 
     citations: {

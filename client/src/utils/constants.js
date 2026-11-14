@@ -77,6 +77,10 @@ export const GAME_STATES = {
     CANCELLED: 3 
 }
 
+// Resultados en sets de un partido de vóley terminado, del lado del ganador (igual que el backend): al mejor de 5
+// (3-0, 3-1, 3-2) o al mejor de 3 (2-0, 2-1). Valen también al revés. No hay empates
+export const VALID_SET_RESULTS = [[3, 0], [3, 1], [3, 2], [2, 0], [2, 1]]
+
 // Niveles de criticidad de la bitácora
 export const CRITICITY = { LOW: 1, MEDIUM: 2, HIGH: 3, CRITICAL: 4 }
 

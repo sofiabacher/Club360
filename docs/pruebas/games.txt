@@ -312,3 +312,204 @@ Resultado esperado: la columna existe (TINYINT(1) NOT NULL DEFAULT 1), las filas
 Resultado obtenido: snapshot de 259 filas; después del restore, las mismas cantidades en las 24 tablas, isHome
   tinyint(1) NOT NULL DEFAULT 1 y DVH/DVV correctos.
 Estado: Aprobado
+
+
+======================================================================
+RESULTADOS DE LOS PARTIDOS Y CAMPAÑA (Prompt 19 · 14/11/2026)
+======================================================================
+
+Los resultados obtenidos salen del script de verificación del P19, corrido contra una copia de la base local
+(club360_p19test: snapshot de club360, base recreada con el modelo nuevo y restore), con la API en un puerto de prueba.
+Usuarios de la demo (docs/demo-usuarios.md): Rep = mferreyra, Camila = ctorres (Jugadora), Gabriela = gromero
+(Familia), Carla = cbenitez (Entrenadora de Sub-16 y Sub-18).
+
+
+--------------------------------------------------
+ID: CP-GAMES-21
+Módulo: games
+Descripción: Columnas del resultado con la base recreada sin perder datos
+Precondiciones: base con datos (la demo del P18).
+Pasos:
+  1. npm run db:snapshot. 2. Recrear la base con el modelo nuevo. 3. npm run db:restore.
+Datos de entrada: —
+Resultado esperado: game tiene ownScore y rivalScore (TINYINT NULL) y setScores (JSON NULL); los partidos que ya
+  estaban quedan con los tres en NULL y la integridad da bien.
+Resultado obtenido: snapshot de 915 filas; después del restore, las 3 columnas (en el MariaDB local, JSON se ve como
+  longtext), 0 partidos con resultado y DVH/DVV correctos.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-22
+Módulo: games
+Descripción: Marcar como Jugado con un resultado válido, con y sin los puntos de cada set
+Precondiciones: Rep logueada; un partido Programado de Sub-16 cuya fecha ya pasó.
+Pasos:
+  1. Partidos → menú del partido → Marcar como jugado. 2. Elegir los sets y, opcionalmente, los puntos. 3. Marcar como
+  jugado.
+Datos de entrada: 2-1 con puntos 25-20, 23-25, 15-12.
+Resultado esperado: el partido queda Jugado con el resultado y el chip Ganado; la bitácora registra "Resultado de
+  partido cargado" (Baja) con el resultado. No se avisa a nadie.
+Resultado obtenido: POST /games/:id/played → 200, outcome W; bitácora GAME_RESULT_SAVED, criticidad Baja, "marcado como
+  jugado, 2-1 (25-20 · 23-25 · 15-12)"; 0 notificaciones nuevas. Sin puntos (0-2): setScores en null (CP-GAMES-26).
+  Falta ver el diálogo en el navegador y en el celular.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-23
+Módulo: games
+Descripción: Marcar como Jugado sin resultado (rechazado)
+Precondiciones: las del caso anterior.
+Pasos:
+  1. Enviar POST /games/:id/played sin sets.
+Datos de entrada: body vacío.
+Resultado esperado: 400 y el partido sigue Programado. En la pantalla, el botón "Marcar como jugado" está deshabilitado
+  hasta elegir los sets.
+Resultado obtenido: 400 (validator: "Ingresá los sets ganados por cada equipo.").
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-24
+Módulo: games
+Descripción: Resultados inválidos (rechazados)
+Precondiciones: las del caso CP-GAMES-22.
+Pasos:
+  1. Cargar cada resultado.
+Datos de entrada: 3-3, 4-0, 4-1, 1-0, 2-2, 0-0.
+Resultado esperado: 400, "El resultado no es válido: un partido de vóley termina 3-0, 3-1, 3-2, 2-0 o 2-1." Los cinco
+  válidos y sus inversos (3-0, 3-1, 3-2, 2-0, 2-1, 0-3, 1-3, 2-3, 0-2, 1-2) se aceptan.
+Resultado obtenido: los 6 inválidos rechazados con ese mensaje (por HTTP el 3-3); los 10 válidos aceptados.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-25
+Módulo: games
+Descripción: Puntos que no coinciden con los sets y set sin 2 puntos de diferencia (rechazados)
+Precondiciones: las del caso CP-GAMES-22.
+Pasos:
+  1. Cargar el resultado con los puntos.
+Datos de entrada: a) 3-1 con 3 sets de puntos; b) 3-1 con 4 sets ganados por el club; c) 3-0 con un set 25-24;
+  d) un set con 100 puntos.
+Resultado esperado: 400 con el motivo: a) "Cargaste los puntos de 3 sets, pero el resultado tiene 4 sets."; b) "Los
+  puntos no coinciden con el resultado: con 3-1, el club tiene que ganar 3 sets y el rival 1."; c) "El set 1 no tiene
+  ganador: tiene que haber al menos 2 puntos de diferencia."; d) "Los puntos del set 1 tienen que estar entre 0 y 99."
+  Se aceptan sets cortos o a 15 (15-13, 10-15) y sets largos (27-25). En la pantalla, el error se ve en vivo debajo de
+  cada fila.
+Resultado obtenido: los cuatro rechazados con esos mensajes (c también por HTTP); los sets cortos y largos, aceptados.
+  Falta ver los errores en vivo en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-26
+Módulo: games
+Descripción: Corregir un resultado (queda en la bitácora con el anterior)
+Precondiciones: el partido del caso CP-GAMES-22, Jugado con 2-1 y puntos.
+Pasos:
+  1. Partidos → menú del partido → Corregir resultado. 2. Cambiar el resultado. 3. Guardar resultado.
+Datos de entrada: 0-2 sin puntos.
+Resultado esperado: el partido muestra 0 – 2 y el chip Perdido; la bitácora registra "Corrección de resultado de
+  partido" (Media) con el anterior y el nuevo.
+Resultado obtenido: PUT /games/:id/result → 200, outcome L, setScores null; bitácora GAME_RESULT_UPDATED, criticidad
+  Media, "antes 2-1 (25-20 · 23-25 · 15-12), ahora 0-2".
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-27
+Módulo: games
+Descripción: Cargar el resultado de un partido Programado o Cancelado (rechazado)
+Precondiciones: Rep logueada; un Programado futuro y un Cancelado.
+Pasos:
+  1. Enviar PUT /games/:id/result a cada uno.
+Datos de entrada: 3-0.
+Resultado esperado: 400, "Solo se carga el resultado de un partido jugado."
+Resultado obtenido: 400 con ese mensaje en los dos.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-28
+Módulo: games
+Descripción: Cargar el resultado de un partido marcado como Jugado antes del P19
+Precondiciones: Jugados sin resultado (los de la demo del P18).
+Pasos:
+  1. Partidos → filtro "Jugados sin resultado". 2. Cargar resultado en uno.
+Datos de entrada: 3-1.
+Resultado esperado: el filtro muestra solo los Jugados sin resultado, con el botón "Cargar resultado"; al guardar, la
+  bitácora registra "Resultado de partido cargado" (no una corrección).
+Resultado obtenido: GET /games?withoutResult=true → solo los Jugados sin resultado (la cantidad coincide con la base);
+  PUT → 200 y GAME_RESULT_SAVED "(cargado después de marcarlo como jugado)".
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-29
+Módulo: games
+Descripción: Campaña con partidos sin resultado (no cuentan y se informa cuántos hay)
+Precondiciones: una categoría de prueba con 4 Jugados con resultado y 1 sin resultado:
+  G1 (local) 3-0 con puntos, G2 (visitante) 1-3 con puntos, G3 (local) 3-2 sin puntos, G4 (visitante) 3-1 con puntos,
+  G5 Jugado sin resultado.
+Pasos:
+  1. GET /games/campaign?categoryId={prueba} como Rep.
+Datos de entrada: —
+Resultado esperado: jugados 4, ganados 3, perdidos 1 (75 %); sets 10-6 (+4); puntos 258-240 de 3 partidos; local 2-0,
+  visitante 1-1; racha G G P G (del más nuevo); último G4 3-1; 1 sin resultado. Otra temporada: sin partidos.
+Resultado obtenido: todos los números coinciden; la temporada 2025 da 0 jugados.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-30
+Módulo: games
+Descripción: Campaña desde cada rol y fuera del alcance
+Precondiciones: datos de la demo.
+Pasos:
+  1. Pedir GET /games/campaign con cada usuario.
+Datos de entrada: Camila (Sub-18 y Mayores), Gabriela (Familia de Sofía y Martina, Sub-16), Carla (Sub-16 y Sub-18).
+Resultado esperado: Camila: Sub-18 → 200; Sub-16 → 404. Gabriela: Sub-16 → 200; Mayores → 404. Carla: Sub-18 → 200;
+  Mayores → 404. La Rep, cualquier categoría de Vóley → 200. /games/mine y /games/linked traen el resumen de la
+  campaña de cada categoría.
+Resultado obtenido: todos con el código esperado; los resúmenes están en las dos respuestas.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-31
+Módulo: games
+Descripción: Panel de inicio del Representante con cada pendiente
+Precondiciones: datos de la demo (Florencia con la inscripción Pendiente, el partido de Mayores de H-21 sin resultado y
+  el conflicto de Camila sin resolver).
+Pasos:
+  1. Entrar como Rep. 2. Aprobar la inscripción de Florencia y volver al inicio. 3. Cargar el resultado del partido de
+  Mayores y volver. 4. Resolver el conflicto de Camila (como Carla o Laura) y volver a entrar como Rep.
+Datos de entrada: —
+Resultado esperado: 1) "Tenés 1 inscripción pendiente.", las tres tarjetas con 1, la campaña de las tres categorías
+  agrupada por liga (Mayores con "Hay 1 partido jugado sin resultado: no cuenta."), los próximos 5 partidos y el botón
+  naranja "Cargar resultado". 2) "Hay 1 partido jugado sin resultado." 3) "Hay 1 conflicto de horario sin resolver.",
+  sin el botón naranja, y Mayores con un partido más en la campaña. 4) "Todo al día."
+Resultado obtenido: por API, los datos de cada bloque dan lo esperado (1 Jugado sin resultado en withoutResult y 1
+  conflicto en unresolvedConflicts); al cargar el resultado (3-0), la campaña de Mayores de Camila pasa de 4 – 2 a 5 – 2
+  y la racha a P G G G G. Falta recorrer el panel en el navegador y en el celular.
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-GAMES-32
+Módulo: games
+Descripción: Confirmación de la base en los scripts contra un host que no es local
+Precondiciones: DATABASE_URL con un host inventado (db.fake-host.example).
+Pasos:
+  1. npm run db:snapshot. 2. npm run db:restore. 3. DB_FORCE_SYNC=true npm run dev. 4. DB_ALTER_SYNC=true.
+Datos de entrada: un nombre de base equivocado, ninguno, y el correcto.
+Resultado esperado: antes de conectarse muestran "Base de datos: host:puerto / base" (sin usuario ni contraseña) y
+  piden escribir el nombre de la base; si no coincide, "Cancelado: no se confirmó el nombre de la base. No se hizo
+  nada." Con el nombre correcto, recién ahí intentan conectarse. Contra localhost no preguntan. En producción,
+  DB_FORCE_SYNC sigue bloqueado.
+Resultado obtenido: los cuatro piden la confirmación y cancelan; con el nombre correcto fallan con ENOTFOUND (el
+  intento de conexión es posterior); con NODE_ENV=production, "DB_FORCE_SYNC y DB_ALTER_SYNC no se pueden activar en
+  producción". Funciona también con npm run dev (node --watch).
+Estado: Aprobado

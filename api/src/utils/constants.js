@@ -164,7 +164,9 @@ const LOG_ACTIONS = {
     // Partidos y conflictos de horario. La cancelación es HIGH: cancela citaciones y avisa a las jugadoras
     GAME_CREATED: { message: 'Alta de partido', criticity: CRITICITY.MEDIUM },
     GAME_UPDATED: { message: 'Modificación de partido', criticity: CRITICITY.MEDIUM },
-    GAME_PLAYED: { message: 'Partido marcado como jugado', criticity: CRITICITY.MEDIUM },
+    GAME_PLAYED: { message: 'Partido marcado como jugado', criticity: CRITICITY.MEDIUM },   // Antes del P19 (sin resultado)
+    GAME_RESULT_SAVED: { message: 'Resultado de partido cargado', criticity: CRITICITY.LOW },
+    GAME_RESULT_UPDATED: { message: 'Corrección de resultado de partido', criticity: CRITICITY.MEDIUM },
     GAME_CANCELLED: { message: 'Cancelación de partido', criticity: CRITICITY.HIGH },
     CONFLICT_RESOLVED: { message: 'Resolución de conflicto de horario', criticity: CRITICITY.MEDIUM },
 
@@ -281,6 +283,13 @@ const NOTIFICATION_TYPES = {
 // El modelo no guarda la duración: se asume 2 horas por partido (decisión del 01/11/2026).
 const GAME_DURATION_MINUTES = 120
 
+// Resultados en sets de un partido de vóley terminado, del lado del ganador: al mejor de 5 (3-0, 3-1, 3-2) o al mejor
+// de 3 (2-0, 2-1). Valen también al revés (el club pierde). No hay empates
+const VALID_SET_RESULTS = [[3, 0], [3, 1], [3, 2], [2, 0], [2, 1]]
+
+// Cuántos resultados entran en la racha de la campaña
+const CAMPAIGN_STREAK_LENGTH = 5
+
 // Citaciones (contexto, sección 6): se generan dentro de una ventana, desde 7 días hasta 48 horas antes del partido, y
 // la jugadora tiene 24 horas desde la citación para responder. Después, el job autoConfirmCitations la confirma sola
 const CITATION_WINDOW_OPEN_DAYS = 7
@@ -360,6 +369,8 @@ module.exports = {
     findAgeGroup,
     NOTIFICATION_TYPES,
     GAME_DURATION_MINUTES,
+    VALID_SET_RESULTS,
+    CAMPAIGN_STREAK_LENGTH,
     CITATION_WINDOW_OPEN_DAYS,
     CITATION_MIN_HOURS,
     CITATION_RESPONSE_HOURS,

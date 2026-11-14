@@ -25,6 +25,7 @@ const list = [
     query('state').optional({ values: 'falsy' }).isIn(Object.values(GAME_STATES).map(String)).withMessage(m.stateInvalid),
     dateQuery('from'),
     dateQuery('to'),
+    query('withoutResult').optional({ values: 'falsy' }).isIn(['true', 'false']).withMessage(m.withoutResultInvalid),
     query('page').optional().isInt({ min: 1 }).withMessage(m.pageInvalid)
 ]
 
@@ -55,6 +56,22 @@ const resolve = [
     body('note').optional({ values: 'falsy' }).isString().withMessage(m.noteInvalid).bail().trim().isLength({ max: 300 }).withMessage(m.noteInvalid)
 ]
 
+// Resultado: sets de cada equipo y, opcional, los puntos de cada set. Que sea un resultado de vóley válido y que los
+// puntos coincidan lo controla validateResult en el service
+const result = [
+    idParam,
+    body('ownScore').isInt({ min: 0, max: 99 }).withMessage(m.scoreInvalid).bail().toInt(),
+    body('rivalScore').isInt({ min: 0, max: 99 }).withMessage(m.scoreInvalid).bail().toInt(),
+    body('setScores').optional({ values: 'null' }).isArray({ min: 1, max: 5 }).withMessage(m.setScoresInvalid),
+    body('setScores.*.own').isInt().withMessage(m.setScoresInvalid).bail().toInt(),
+    body('setScores.*.rival').isInt().withMessage(m.setScoresInvalid).bail().toInt()
+]
+
+const campaign = [
+    query('categoryId').isInt({ min: 1 }).withMessage(m.categoryIdInvalid),
+    query('season').optional({ values: 'falsy' }).matches(/^\d{4}$/).withMessage(m.seasonInvalid)
+]
+
 const linked = [
     query('memberId').optional({ values: 'falsy' }).isInt({ min: 1 }).withMessage(m.memberIdInvalid),
     ...range
@@ -69,5 +86,7 @@ module.exports = {
     checkConflicts,
     cancel,
     resolve,
+    result,
+    campaign,
     linked
 }

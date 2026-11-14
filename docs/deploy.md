@@ -180,3 +180,21 @@ El seed y los datos de la demo se corren **desde una compu**, contra Railway (Re
 | Las imágenes no se suben (503) | Faltan las variables de Cloudinary en Render |
 | La primera carga tarda un minuto | El back estaba dormido: revisá que cron-job.org esté llamando a `/health` |
 | Los jobs no corrieron (cuotas, citaciones) | Lo mismo: el back estuvo dormido en ese horario |
+| Errores `Unknown column` en los logs de Render después de un deploy | Falta aplicar el cambio en el modelo en Railway (sección 11) |
+
+## 11. Cambios en el modelo con la demo publicada
+
+Render **no** crea las columnas nuevas: en producción `sync()` no altera tablas, y `DB_FORCE_SYNC` y `DB_ALTER_SYNC` están bloqueados. Hasta que el cambio se aplique en Railway, el código nuevo falla al consultar esa tabla.
+
+**El orden importa:** la base se actualiza **antes** de que Render tenga el código nuevo. El código viejo funciona con columnas de más; el nuevo no funciona con columnas de menos.
+
+1. **Antes de integrar la rama a `main`** (así Render sigue con el código viejo), en la compu, con el código de la rama y el `.env` apuntando a Railway como en el paso 7 (guardá una copia del `.env`; `DATABASE_URL` pública, `DB_SSL=true` y la **misma `ENCRYPTION_KEY` que Render**):
+   1. `npm run db:snapshot`: guarda los datos de la demo en `api/backups/` (no se sube al repo).
+   2. `DB_FORCE_SYNC=true` y `npm run dev`. Antes de conectarse muestra el host y la base, y como no es local pide escribir el **nombre de la base** para seguir: es la confirmación de que vas a borrar y recrear la base de la demo. Cuando termina de arrancar ("API de Club360 escuchando…"), cortalo con Ctrl+C y volvé `DB_FORCE_SYNC` a `false`.
+   3. `npm run db:restore`: vuelve a cargar el snapshot (también pide el nombre de la base) y al final verifica la integridad.
+   4. **Alternativa** si los datos de la demo no importan (por ejemplo, después de los ensayos): en lugar de restaurar, `npm run seed` y `npm run seed:demo`.
+2. Volvé a dejar el `.env` local como estaba (la copia del paso 1).
+3. **Integrá la rama a `main`:** Render y Vercel se actualizan solos.
+4. Entrá a la demo con el Admin y, desde **Integridad**, verificá que todo dé correcto.
+
+`db:snapshot`, `db:restore` y el arranque con `DB_FORCE_SYNC` o `DB_ALTER_SYNC` piden la confirmación siempre que el host no es `localhost` ni `127.0.0.1`: contra el MySQL local no preguntan nada.

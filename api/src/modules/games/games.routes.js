@@ -19,6 +19,14 @@ router.get('/assigned', isAuth, checkPermission(PERMISSIONS.GAMES_VIEW_ASSIGNED)
 router.get('/mine', isAuth, checkPermission(PERMISSIONS.GAMES_VIEW_OWN), validator.range, validateFields, controller.mine)
 router.get('/linked', isAuth, checkPermission(PERMISSIONS.GAMES_VIEW_LINKED), validator.linked, validateFields, controller.linked)
 
+// Campaña de una categoría: cada permiso con su alcance (lo resuelve el service)
+router.get('/campaign', isAuth, checkPermission([
+    PERMISSIONS.GAMES_MANAGE,
+    PERMISSIONS.GAMES_VIEW_ASSIGNED,
+    PERMISSIONS.GAMES_VIEW_OWN,
+    PERMISSIONS.GAMES_VIEW_LINKED
+]), validator.campaign, validateFields, controller.campaign)
+
 // Conflictos de horario (entrenadoras)
 router.get('/conflicts', ...resolveConflicts, controller.conflicts)
 router.post('/conflicts/resolve', ...resolveConflicts, validator.resolve, validateFields, controller.resolveConflict)
@@ -29,7 +37,8 @@ router.get('/', ...manage, validator.list, validateFields, controller.list)
 router.post('/check-conflicts', ...manage, validator.checkConflicts, validateFields, controller.checkConflicts)
 router.post('/', ...manage, validator.create, validateFields, controller.create)
 router.put('/:id', ...manage, validator.update, validateFields, controller.update)
-router.post('/:id/played', ...manage, validator.byId, validateFields, controller.markPlayed)
+router.post('/:id/played', ...manage, validator.result, validateFields, controller.markPlayed)
+router.put('/:id/result', ...manage, validator.result, validateFields, controller.updateResult)
 router.post('/:id/cancel', ...manage, validator.cancel, validateFields, controller.cancel)
 
 module.exports = router

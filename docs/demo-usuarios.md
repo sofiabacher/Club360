@@ -17,7 +17,7 @@ El número de socio de Rocío y el código de vínculo de Julieta cambian en cad
 
 | Usuario | Nombre | Roles | Categorías | Qué muestra |
 |---|---|---|---|---|
-| `mferreyra` | Mariana Ferreyra | Representante | Todo Vóley | Ligas, categorías y partidos; la inscripción Pendiente de Florencia para aprobar |
+| `mferreyra` | Mariana Ferreyra | Representante | Todo Vóley | Su panel de inicio con los pendientes y la campaña de las tres categorías; la inscripción Pendiente de Florencia para aprobar; el partido de Mayores sin resultado para cargar |
 | `cbenitez` | Carla Benítez | Entrenadora | Sub-16 y Sub-18 | Citar en Sub-18; el rechazo de Pilar; el conflicto de Camila |
 | `lquiroga` | Laura Quiroga | Entrenadora | Mayores | Abril no se puede citar (mora); el conflicto de Camila |
 | `vsosa` | Valeria Sosa | Preparadora física **y** Entrenadora (elige el rol al entrar) | Las tres | Rutinas de lunes, miércoles y viernes de las últimas 3 semanas; la semana siguiente vacía para cargarla |
@@ -59,12 +59,24 @@ Cuatro por categoría, con las cuotas al día. Las de Sub-16 y Sub-18 son menore
 
 | Categoría | Cuándo | Rival | Estado |
 |---|---|---|---|
-| Las tres | H-14 y H-7 | Distinto cada vez | Jugados, con citaciones Confirmadas, alguna Confirmada automáticamente y una Rechazada |
+| Las tres | H-56, H-49, H-35 y H-28 | Distinto cada vez | Jugados con resultado, sin citaciones (para la campaña y la racha) |
+| Mayores | H-21 | Estrella del Oeste | Jugado **sin resultado**: lo carga la Representante en vivo |
+| Las tres | H-14 y H-7 | Distinto cada vez | Jugados con resultado, con citaciones Confirmadas, alguna Confirmada automáticamente y una Rechazada |
 | Mayores | H-3 | Deportivo Lomas | Cancelado |
 | Sub-16 | H+4, 18:30, local (Cancha 1) | Atlético Ribera | Programado, con citaciones |
 | Sub-18 | H+5, 10:00, visitante | Náutico Sur | Programado, sin citaciones |
 | Mayores | H+5, 12:00, local (Cancha Anexo) | Social Parque | Programado, con citaciones |
 | Las tres | H+11 y H+18 | Distinto cada vez | Programados, todavía fuera de la ventana de citación |
+
+### Resultados y campaña
+
+Sub-16 juega al mejor de 3 y las otras dos categorías al mejor de 5. Todos los Jugados tienen los puntos de cada set, salvo el de Sub-16 de H-7 (para mostrar que son opcionales) y el de Mayores de H-21, que no tiene resultado.
+
+| Categoría | Ganados – perdidos | Racha (del más nuevo) | Último partido |
+|---|---|---|---|
+| Sub-16 | 5 – 1 | P G G G G | Perdido 0-2 vs. Náutico Sur (H-7, sin puntos) |
+| Sub-18 | 3 – 3 | G G P P G | Ganado 3-2 vs. Social Parque (H-7) |
+| Mayores | 4 – 2 (y 1 sin resultado) | P G G G P | Perdido 1-3 vs. Unión Vecinal (H-7) |
 
 ## Usuarios con email real
 
@@ -91,6 +103,7 @@ Cuatro por categoría, con las cuotas al día. Las de Sub-16 y Sub-18 son menore
 10. **Desbloquear a Micaela** (Admin).
 11. **Cargar la rutina** de la semana siguiente (Valeria, como Preparadora física), con una imagen.
 12. **Verificar la integridad** y **hacer un backup** (Admin).
+13. **Cargar el resultado del partido de Mayores sin resultado** (Representante) y ver cómo cambia la campaña en el inicio de Camila. Por ejemplo, con un 3-0, Mayores pasa de 4 – 2 a 5 – 2 y la racha a P G G G G.
 
 ## Advertencias
 

@@ -26,7 +26,7 @@ const { isValidPassword } = require('../modules/auth/auth.validator')
 const { assignBaseRole } = require('../modules/access/access.service')
 const { generateMemberNumber, generateFamilyCode } = require('../modules/members/members.service')
 const { newConfirmationCode } = require('../modules/fees/fees.service')
-const { listConflicts } = require('../modules/games/games.service')
+const { listConflicts, validateResult } = require('../modules/games/games.service')
 const { today: todayAR, addDays, getCurrentWeekStart, dateTimeParts, isAdult, TIME_ZONE } = require('../utils/dates')
 const {
     USER_STATES, MEMBER_STATES, INSCRIPTION_STATES, FEE_STATES, TRANSACTION_STATES, PAYMENT_METHODS, CITATION_STATES,
@@ -87,6 +87,26 @@ const fullNameOf = (person) => `${person.name} ${person.lastName}`
 // ---------- Emails ----------
 
 // SEED_DEMO_REAL_EMAILS: 'clave=email,clave=email' → Map. Corta si una clave no existe o un email no tiene formato válido
+// Resultado de un partido de DEMO_GAMES (P19), validado con la misma regla de la aplicación (validateResult):
+// result es la lista de sets [[club, rival], ...] o solo los sets { own, rival }. Sin result, los tres campos en NULL
+function resultOf(plan) {
+    if (!plan.result) return {}
+
+    const result = Array.isArray(plan.result)
+        ? {
+            ownScore: plan.result.filter(([own, rival]) => own > rival).length,
+            rivalScore: plan.result.filter(([own, rival]) => own < rival).length,
+            setScores: plan.result.map(([own, rival]) => ({ own, rival }))
+        }
+        : { ownScore: plan.result.own, rivalScore: plan.result.rival, setScores: null }
+
+    try {
+        return validateResult(result)
+    } catch (error) {
+        throw new Error(`El resultado del partido de ${plan.category} del día ${plan.day} no es válido: ${error.message}`)
+    }
+}
+
 function parseRealEmails(text) {
     const emails = new Map()
     if (!text) return emails
@@ -415,7 +435,8 @@ async function loadDemo({ club, admin, people, transaction }) {
             dateTime,
             address: plan.court ? courtLabel(plan.court) : plan.address,
             isHome: Boolean(plan.court),
-            gameState: state
+            gameState: state,
+            ...resultOf(plan)
         }, { at: createdAt, updatedAt })
         game.categoryName = category.name
         gameOf.set(`${plan.category}:${plan.day}`, game)

@@ -6,12 +6,14 @@ import Typography from '@mui/material/Typography'
 import FamilyHome from '../components/home/FamilyHome.jsx'
 import PlayerHome from '../components/home/PlayerHome.jsx'
 import QuickAccess from '../components/home/QuickAccess.jsx'
+import RepresentativeHome from '../components/home/RepresentativeHome.jsx'
 import useAuth from '../hooks/useAuth.js'
 import usePermission from '../hooks/usePermission.js'
 
 // Inicio. El panel se elige por permisos, nunca por el nombre del rol:
 //   - citations.respond y games.viewOwn → panel de la Jugadora;
 //   - si no, games.viewLinked y fees.manageLinked → panel de la Familia;
+//   - si no, games.manage e inscriptions.approve → panel del Representante;
 //   - si no, el saludo y los accesos rápidos.
 export default function HomePage() {
   const { user, club, activeRole } = useAuth()
@@ -19,6 +21,7 @@ export default function HomePage() {
 
   if (hasPermission('citations.respond') && hasPermission('games.viewOwn')) return <PlayerHome />
   if (hasPermission('games.viewLinked') && hasPermission('fees.manageLinked')) return <FamilyHome />
+  if (hasPermission('games.manage') && hasPermission('inscriptions.approve')) return <RepresentativeHome />
 
   return (
     <Stack spacing={3}>

@@ -20,6 +20,7 @@ import { getMyRoutine } from '../../api/routines.api.js'
 import RejectCitationDialog from '../citations/RejectCitationDialog.jsx'
 import StatusChip from '../common/StatusChip.jsx'
 import SuspensionAlert from '../fees/SuspensionAlert.jsx'
+import { CampaignContent } from '../games/CampaignCard.jsx'
 import { HomeChip } from '../games/GameChips.jsx'
 import MemberCard from '../members/MemberCard.jsx'
 import { DayPills } from '../routines/RoutineWeekView.jsx'
@@ -96,7 +97,8 @@ function CitationStatus({ game, citation, primary, busy, onConfirm, onReject }) 
   )
 }
 
-// Próximo partido de una categoría ("módulos diferenciados" si juega en dos ligas) y los 2 siguientes
+// Próximo partido de una categoría ("módulos diferenciados" si juega en dos ligas), los 2 siguientes y, debajo, la
+// campaña de la categoría en versión compacta (ganados – perdidos, la racha y el último resultado)
 function NextGameCard({ category, citations, primaryCitationId, busyId, onConfirm, onReject }) {
   const games = upcomingGames(category)
   const [next, ...rest] = games
@@ -143,6 +145,13 @@ function NextGameCard({ category, citations, primaryCitationId, busyId, onConfir
               </Stack>
             </>
           )}
+        </>
+      )}
+      {category.campaign && (
+        <>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="overline" component="p" sx={{ color: 'text.secondary', letterSpacing: 1.5 }}>Campaña {category.campaign.season}</Typography>
+          <CampaignContent campaign={category.campaign} compact />
         </>
       )}
       <Link component={RouterLink} to="/my-games" color="secondary" sx={{ display: 'inline-block', mt: 2, fontWeight: 600 }}>Ver fixture</Link>

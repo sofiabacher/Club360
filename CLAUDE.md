@@ -16,6 +16,7 @@ Plataforma web de gestión para clubes deportivos (proyecto integrador escolar).
   - `user.phone` es `VARCHAR(255)` y se guarda cifrado con AES (getter y setter en el modelo).
   - `league` suma `ageScale` (1 o 2) y `category` suma `ageGroup` (código de la escala, ver `AGE_SCALES`).
   - `game` suma `isHome` (`BOOLEAN NOT NULL DEFAULT true`): partido de local o de visitante.
+  - `game` suma `ownScore` y `rivalScore` (`TINYINT` NULL, sets) y `setScores` (JSON NULL, `[{ own, rival }]` por set). Sin resultado, los tres en NULL.
   - `notification` suma `batchId` (`CHAR(36)` NULL): identifica las notificaciones de un mismo aviso general; las del sistema lo tienen en NULL.
   - `routine` suma `dayOfWeek` (`TINYINT NOT NULL DEFAULT 1`, `DAYS_OF_WEEK`, 1 lunes … 7 domingo), con índice único `(categoryId, weekStart, dayOfWeek)`. `weekStart` es siempre lunes.
   - `payment` suma `method` (`TINYINT NOT NULL DEFAULT 1`, `PAYMENT_METHODS`: 1 tarjeta, 2 transferencia, 3 secretaría), `receiptUrl` (`VARCHAR(255)` NULL) y `note` (`VARCHAR(300)` NULL).
@@ -166,6 +167,7 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
 - **Zona horaria:** todo `cron.schedule` lleva `timezone: 'America/Argentina/Buenos_Aires'`, y ninguna fecha de negocio depende de la zona del servidor.
 - **Arranque en producción:** sin `DATABASE_URL`, los secretos JWT, `ENCRYPTION_KEY` o `FRONTEND_URL`, el servidor no arranca; sin Cloudinary o sin proveedor de email, arranca y avisa. Nunca se muestran valores de variables.
 - **Datos:** el seed y los datos de la demo se corren desde una compu contra Railway, con la `ENCRYPTION_KEY` del back de Render. `DB_FORCE_SYNC` y `DB_ALTER_SYNC` siempre en `false` contra esa base.
+- **Cambios en el modelo con la demo publicada:** Render **no** altera tablas. El cambio se aplica en Railway desde una compu **antes** de integrar a `main` (`docs/deploy.md`, sección 11): el código viejo funciona con columnas de más, el nuevo no funciona con columnas de menos. `db:snapshot`, `db:restore` y `DB_FORCE_SYNC` contra un host que no es local piden confirmación escribiendo el nombre de la base.
 
 ## Datos de la demo (`seed/demo.js`)
 
@@ -249,6 +251,8 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 - Cada partido es de una categoría y lo gestiona `games.manage` con el alcance por deporte de `getLeagueScope`. `season` se completa con el año de la fecha. Solo se editan los Programados; Jugado se marca después de la fecha; Cancelado cancela sus citaciones y avisa a las citadas.
 - **Superposición:** dos partidos Programados de una misma jugadora chocan si entre el fin del primero (inicio + `GAME_DURATION_MINUTES`, 120) y el inicio del segundo hay menos minutos que `club.conflictMargin`. Se calcula siempre con `findConflictsForGame` / `listConflicts` de `games.service.js`: **no se guarda**.
 - **Al guardar un partido no se bloquea:** se avisa (`check-conflicts` antes de guardar y `conflicts` en la respuesta) y se notifica `SCHEDULE_CONFLICT` a las entrenadoras.
+- **Resultado:** obligatorio al marcar como Jugado; `validateResult` acepta solo `VALID_SET_RESULTS` (3-0, 3-1, 3-2, 2-0, 2-1 y al revés) y, si vienen puntos, un set por cada set jugado, con ganador por 2 o más y coherente con los sets. Se corrige con `PUT /games/:id/result` (solo Jugados; bitácora con el anterior). No avisa a nadie.
+- **Campaña:** `getCampaign(categoryId, season)`, calculada (no se guarda) con los Jugados con resultado; informa también cuántos Jugados no tienen resultado. Un solo endpoint, `GET /games/campaign`, con el alcance de cada permiso de `games`.
 - **Resolución:** solo en la bitácora (`CONFLICT_RESOLVED`, con `conflictKey = "{memberId}:{idMenor}-{idMayor}"` y el partido elegido en `details`). Se consulta con `getConflictResolutions`.
 
 ## Citaciones (módulo `citations`)
@@ -288,7 +292,7 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 
 ## Panel de inicio (`HomePage`)
 
-- Se elige **por permisos**: `citations.respond` + `games.viewOwn` → `PlayerHome`; si no, `games.viewLinked` + `fees.manageLinked` → `FamilyHome`; si no, los accesos rápidos.
+- Se elige **por permisos**: `citations.respond` + `games.viewOwn` → `PlayerHome`; si no, `games.viewLinked` + `fees.manageLinked` → `FamilyHome`; si no, `games.manage` + `inscriptions.approve` → `RepresentativeHome`; si no, los accesos rápidos.
 - Los paneles usan los endpoints existentes de cada módulo (`/games/mine`, `/citations/mine`, `/fees/mine`, `/routines/mine` y sus `linked`). No hay módulo ni endpoint de "dashboard". Cada bloque carga y falla por separado.
 
 ## Bitácora, integridad y backup (módulos `logs`, `integrity` y `backup`)

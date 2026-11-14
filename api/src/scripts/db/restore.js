@@ -7,7 +7,9 @@
 // los dígitos verificadores ya calculados (con Model.bulkCreate se volvería a cifrar el teléfono y correrían los hooks).
 // Al terminar recalcula el DVV de cada tabla y verifica los DVH.
 //
-// En producción no se usa: las copias de seguridad de la demo son del módulo backup.
+// En producción no se usa: las copias de seguridad de la demo son del módulo backup. Contra la base de la demo se corre
+// solo con la receta de docs/deploy.md (sección 11): antes de conectarse muestra la base y, si no es local, pide escribir
+// su nombre (utils/dbTarget.js).
 //
 // Uso: npm run db:restore                         (el snapshot más reciente de api/backups/)
 //      npm run db:restore -- <archivo>            (un snapshot en particular)
@@ -19,6 +21,7 @@ const sequelize = require('../../config/db')
 const models = require('../../models')
 const { computeRowDVH, computeTableDVV } = require('../../utils/integrity')
 const { insertTableRows } = require('../../utils/clubData')
+const { confirmTarget } = require('../../utils/dbTarget')
 
 const BACKUPS_DIR = path.join(__dirname, '../../../backups')
 
@@ -116,6 +119,7 @@ async function verifyDvh() {
 }
 
 async function restore() {
+    await confirmTarget(sequelize, 'restaurar un snapshot (la base tiene que estar recién recreada)')
     await sequelize.authenticate()
 
     const file = findSnapshot()

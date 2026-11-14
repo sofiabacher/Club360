@@ -80,15 +80,41 @@ const DEMO_DEFAULT_TIMES = { SUB16: '18:30', SUB18: '10:00', MAYORES: '16:00' }
 // day: días desde hoy (H). court: nombre de una cancha de club.extraInfo.courts (local); address: la de visitante.
 // state: 'SCHEDULED' (por defecto), 'PLAYED' o 'CANCELLED'.
 // citations: { key: estado } con los estados de CITATION_STATES ('ALL_PLAYED' cita a toda la categoría, salvo Abril)
+// result (P19): los puntos de cada set del lado del club, [[club, rival], ...] (sets a 25 y el decisivo a 15), o solo los
+// sets { own, rival } sin el detalle. Los Jugados sin result quedan sin resultado (para cargarlo en vivo)
 const DEMO_GAMES = [
+    // Jugados viejos (H-56 a H-21), sin citaciones, para que la campaña y la racha tengan datos.
+    // Sub-16 juega al mejor de 3; Sub-18 y Mayores, al mejor de 5
+    { category: 'SUB16', day: -56, rival: 'Deportivo Lomas', court: 'Cancha 2', state: 'PLAYED', result: [[25, 19], [25, 17]] },
+    { category: 'SUB18', day: -56, rival: 'Atlético Ribera', court: 'Cancha 1', state: 'PLAYED', result: [[25, 21], [20, 25], [22, 25], [23, 25]] },
+    { category: 'MAYORES', day: -56, rival: 'Náutico Sur', court: 'Cancha 1', state: 'PLAYED', result: [[25, 15], [25, 20], [25, 18]] },
+    { category: 'SUB16', day: -49, rival: 'Social Parque', address: 'Av. del Parque 1500, Ciudad de Buenos Aires', state: 'PLAYED', result: [[25, 22], [18, 25], [15, 11]] },
+    { category: 'SUB18', day: -49, rival: 'Náutico Sur', address: 'Costanera Sur 980, Ciudad de Buenos Aires', state: 'PLAYED', result: [[25, 17], [25, 23], [24, 26], [25, 19]] },
+    { category: 'MAYORES', day: -49, rival: 'Social Parque', address: 'Av. del Parque 1500, Ciudad de Buenos Aires', state: 'PLAYED', result: [[20, 25], [22, 25], [18, 25]] },
+    { category: 'SUB16', day: -35, rival: 'Estrella del Oeste', address: 'Av. de los Pinos 2100, Ciudad de Buenos Aires', state: 'PLAYED', result: [[25, 23], [27, 25]] },
+    { category: 'SUB18', day: -35, rival: 'Unión Vecinal', court: 'Cancha 2', state: 'PLAYED', result: [[25, 20], [18, 25], [25, 22], [21, 25], [12, 15]] },
+    { category: 'MAYORES', day: -35, rival: 'Estrella del Oeste', court: 'Cancha 2', state: 'PLAYED', result: [[23, 25], [25, 21], [25, 27], [25, 20], [15, 9]] },
+    { category: 'SUB16', day: -28, rival: 'Atlético Ribera', court: 'Cancha 1', state: 'PLAYED', result: [[23, 25], [25, 20], [15, 13]] },
+    { category: 'SUB18', day: -28, rival: 'Deportivo Lomas', address: 'Av. Lomas 3300, Ciudad de Buenos Aires', state: 'PLAYED', result: [[25, 23], [19, 25], [20, 25], [22, 25]] },
+    { category: 'MAYORES', day: -28, rival: 'Deportivo Lomas', address: 'Av. Lomas 3300, Ciudad de Buenos Aires', state: 'PLAYED', result: [[25, 22], [25, 20], [21, 25], [25, 23]] },
+
+    // Jugado sin resultado (H-21): lo carga en vivo la Representante
+    { category: 'MAYORES', day: -21, rival: 'Estrella del Oeste', address: 'Av. de los Pinos 2100, Ciudad de Buenos Aires', state: 'PLAYED' },
+
     // Jugados (H-14 y H-7), con citaciones de toda la categoría
-    { category: 'SUB16', day: -14, rival: 'Unión Vecinal', court: 'Cancha 1', state: 'PLAYED', citations: 'ALL_PLAYED', autoConfirmed: 'mora.villalba' },
-    { category: 'SUB18', day: -14, rival: 'Estrella del Oeste', address: 'Av. de los Pinos 2100, Ciudad de Buenos Aires', state: 'PLAYED', citations: 'ALL_PLAYED', autoConfirmed: 'renata.luna' },
-    { category: 'MAYORES', day: -14, rival: 'Atlético Ribera', address: 'Calle del Río 455, Ciudad de Buenos Aires', state: 'PLAYED', citations: 'ALL_PLAYED', autoConfirmed: 'lorena.vega' },
+    { category: 'SUB16', day: -14, rival: 'Unión Vecinal', court: 'Cancha 1', state: 'PLAYED', citations: 'ALL_PLAYED', autoConfirmed: 'mora.villalba',
+        result: [[25, 21], [22, 25], [15, 12]] },
+    { category: 'SUB18', day: -14, rival: 'Estrella del Oeste', address: 'Av. de los Pinos 2100, Ciudad de Buenos Aires', state: 'PLAYED', citations: 'ALL_PLAYED', autoConfirmed: 'renata.luna',
+        result: [[25, 18], [25, 22], [25, 20]] },
+    { category: 'MAYORES', day: -14, rival: 'Atlético Ribera', address: 'Calle del Río 455, Ciudad de Buenos Aires', state: 'PLAYED', citations: 'ALL_PLAYED', autoConfirmed: 'lorena.vega',
+        result: [[25, 20], [23, 25], [25, 18], [25, 21]] },
     { category: 'SUB16', day: -7, rival: 'Náutico Sur', address: 'Costanera Sur 980, Ciudad de Buenos Aires', state: 'PLAYED', citations: 'ALL_PLAYED', autoConfirmed: 'lucia.paz',
-        rejected: { key: 'delfina.ortiz', justification: 'Estoy con un esguince de tobillo y no puedo jugar.' } },
-    { category: 'SUB18', day: -7, rival: 'Social Parque', court: 'Cancha 2', state: 'PLAYED', citations: 'ALL_PLAYED', autoConfirmed: 'candela.sanchez' },
-    { category: 'MAYORES', day: -7, rival: 'Unión Vecinal', court: 'Cancha 1', state: 'PLAYED', citations: 'ALL_PLAYED', autoConfirmed: 'carolina.diaz' },
+        rejected: { key: 'delfina.ortiz', justification: 'Estoy con un esguince de tobillo y no puedo jugar.' },
+        result: { own: 0, rival: 2 } },   // Sin el detalle de los puntos (es opcional)
+    { category: 'SUB18', day: -7, rival: 'Social Parque', court: 'Cancha 2', state: 'PLAYED', citations: 'ALL_PLAYED', autoConfirmed: 'candela.sanchez',
+        result: [[25, 23], [20, 25], [25, 22], [23, 25], [15, 11]] },
+    { category: 'MAYORES', day: -7, rival: 'Unión Vecinal', court: 'Cancha 1', state: 'PLAYED', citations: 'ALL_PLAYED', autoConfirmed: 'carolina.diaz',
+        result: [[22, 25], [25, 23], [19, 25], [21, 25]] },
 
     // Cancelado (H-3), con sus citaciones Canceladas
     { category: 'MAYORES', day: -3, rival: 'Deportivo Lomas', address: 'Av. Lomas 3300, Ciudad de Buenos Aires', state: 'CANCELLED',

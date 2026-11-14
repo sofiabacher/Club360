@@ -20,6 +20,7 @@ import { getLinkedGames } from '../../api/games.api.js'
 import EmptyState from '../common/EmptyState.jsx'
 import StatusChip from '../common/StatusChip.jsx'
 import { HomeChip } from '../games/GameChips.jsx'
+import { outcomeChip } from '../../utils/results.js'
 import QuickAccess from './QuickAccess.jsx'
 import {
   citationChipOf, citationForGame, feeStatusOf, hasFeeInReview, hasOverdueFee, initialBlock, nextGameOf, oldestPayableFee
@@ -59,8 +60,31 @@ function SectionSkeleton({ height = 70 }) {
   return <Skeleton variant="rounded" height={height} />
 }
 
-// Tarjeta de una jugadora vinculada: el carnet chico, el próximo partido con el estado de su citación (solo lectura) y
-// la cuota. payFirst: la jugadora con la cuota impaga más vieja lleva el botón naranja "Pagar"
+// Línea de la campaña de una categoría: "Sub-16: 5 – 1 · Último: Perdido 0-2 vs. Náutico Sur"
+function CampaignLine({ item }) {
+  const { campaign } = item
+  if (!campaign) return null
+
+  if (campaign.played === 0) {
+    return <Typography variant="body2" sx={{ color: 'text.secondary' }}>{item.category.name}: todavía sin partidos jugados.</Typography>
+  }
+
+  const last = campaign.lastGame
+  return (
+    <Stack direction="row" sx={{ alignItems: 'baseline', gap: 1, flexWrap: 'wrap' }}>
+      <Typography variant="body2" sx={{ fontWeight: 600, color: 'navy.main' }}>{item.category.name}</Typography>
+      <Typography variant="numeric" sx={{ fontSize: '1.2rem', color: 'navy.main' }}>{campaign.won} – {campaign.lost}</Typography>
+      {last && (
+        <Typography variant="body2" sx={{ color: 'text.secondary', overflowWrap: 'anywhere' }}>
+          · Último: {outcomeChip(last.outcome).label} {last.ownScore}-{last.rivalScore} vs. {last.rival}
+        </Typography>
+      )}
+    </Stack>
+  )
+}
+
+// Tarjeta de una jugadora vinculada: el carnet chico, el próximo partido con el estado de su citación (solo lectura),
+// la campaña de sus categorías (ganados – perdidos y el último resultado) y la cuota. payFirst: la jugadora con la cuota impaga más vieja lleva el botón naranja "Pagar"
 function PlayerCard({ member, account, gamesOf, citationsOf, games, citations, fees, payFirst }) {
   const categories = gamesOf?.categories ?? []
   const next = nextGameOf(categories)
@@ -110,6 +134,15 @@ function PlayerCard({ member, account, gamesOf, citationsOf, games, citations, f
         ) : (
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>No hay partidos programados.</Typography>
         ))}
+
+        {!games.loading && !games.error && categories.some((item) => item.campaign) && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: 1.5 }}>Resultados</Typography>
+            <Stack spacing={0.5}>
+              {categories.map((item) => <CampaignLine key={item.category.id} item={item} />)}
+            </Stack>
+          </Box>
+        )}
 
         <Divider sx={{ my: 2 }} />
 

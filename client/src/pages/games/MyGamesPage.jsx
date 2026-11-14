@@ -27,18 +27,17 @@ export default function MyGamesPage() {
     return <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>
   }
 
-  const hasGames = categories.some((item) => item.games.length > 0)
 
   return (
     <>
       <Box sx={{ mb: 3 }}>
         <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Mis partidos</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>Los próximos partidos de tus categorías.</Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>La campaña y los próximos partidos de tus categorías.</Typography>
       </Box>
 
-      {!hasGames
-        ? <EmptyState icon={SportsVolleyballRounded} title="Sin partidos" description="Todavía no hay partidos en tus categorías." />
-        : <PlayerGamesList categories={categories} />}
+      {categories.length === 0
+        ? <EmptyState icon={SportsVolleyballRounded} title="Sin partidos" description="Todavía no estás en ninguna categoría." />
+        : <PlayerGamesList categories={categories} showCampaign />}
     </>
   )
 }

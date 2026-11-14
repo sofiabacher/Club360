@@ -10,6 +10,7 @@ const { Op } = require('sequelize')
 const sequelize = require('../../config/db')
 const { Game, Category, League, Club, Citation, Member, Staff, User, Log } = require('../../models')
 const { getSportScope } = require('../staff/staff.service')
+const { getEffectivePermissions } = require('../access/access.service')
 const {
     leagueWhere,
     getActivePlayersOfCategory,
@@ -22,7 +23,10 @@ const { notify } = require('../notifications/notifications.service')
 const logger = require('../../utils/logger')
 const { createError } = require('../../utils/errors')
 const { today, dateTimeParts } = require('../../utils/dates')
-const { GAME_STATES, CITATION_STATES, MEMBER_STATES, BASE_ROLES, GAME_DURATION_MINUTES, LOG_ACTIONS } = require('../../utils/constants')
+const {
+    GAME_STATES, CITATION_STATES, MEMBER_STATES, BASE_ROLES, GAME_DURATION_MINUTES, VALID_SET_RESULTS, CAMPAIGN_STREAK_LENGTH, LOG_ACTIONS
+} = require('../../utils/constants')
+const { PERMISSIONS } = require('../../utils/permissions')
 const { games: m } = require('../../utils/messages')
 
 const GAMES_PAGE_SIZE = 20
@@ -48,6 +52,11 @@ const includeActiveCategory = (scope) => ({
     include: [{ model: League, as: 'league', attributes: ['id', 'name', 'clubSportId', 'isActive'], where: { isActive: true, ...(scope && leagueWhere(scope)) } }]
 })
 
+// Resultado del partido para el club: 'W' (ganado), 'L' (perdido) o null (sin resultado)
+const outcomeOf = (game) => (game.ownScore === null || game.ownScore === undefined || game.rivalScore === null || game.rivalScore === undefined
+    ? null
+    : (game.ownScore > game.rivalScore ? 'W' : 'L'))
+
 function formatGame(game) {
     return {
         id: game.id,
@@ -59,7 +68,11 @@ function formatGame(game) {
         address: game.address,
         isHome: game.isHome,
         season: game.season,
-        gameState: game.gameState
+        gameState: game.gameState,
+        ownScore: game.ownScore ?? null,
+        rivalScore: game.rivalScore ?? null,
+        setScores: game.setScores ?? null,
+        outcome: outcomeOf(game)
     }
 }
 
@@ -79,6 +92,49 @@ function shortWhen(dateTime) {
 
 // Temporada: el año de la fecha del partido, en Argentina
 const seasonOf = (dateTime) => String(dateTimeParts(dateTime).year)
+const currentSeason = () => seasonOf(new Date())
+
+// ---------- Resultados ----------
+
+// "3-1 (25-20 · 23-25 · 25-18 · 25-21)" o "sin resultado", para la bitácora
+function resultText({ ownScore, rivalScore, setScores }) {
+    if (ownScore === null || ownScore === undefined) return 'sin resultado'
+    const sets = setScores?.length > 0 ? ` (${setScores.map(set => `${set.own}-${set.rival}`).join(' · ')})` : ''
+    return `${ownScore}-${rivalScore}${sets}`
+}
+
+// Reglas del resultado (contexto, sección 6). Lanza un 400 con el motivo si no se cumplen y devuelve el resultado
+// normalizado { ownScore, rivalScore, setScores } (setScores en null si no vinieron puntos):
+//   - los sets, uno de VALID_SET_RESULTS en cualquiera de los dos sentidos (sin empates);
+//   - los puntos (opcionales): un set por cada set jugado, de 0 a 99 puntos, con un ganador por al menos 2 puntos, y
+//     cada equipo gana tantos sets como dice el resultado. No se valida el mínimo de 25 o 15 puntos
+function validateResult({ ownScore, rivalScore, setScores }) {
+    const own = Number(ownScore)
+    const rival = Number(rivalScore)
+    const valid = VALID_SET_RESULTS.some(([won, lost]) => (own === won && rival === lost) || (own === lost && rival === won))
+    if (!Number.isInteger(own) || !Number.isInteger(rival) || !valid) throw createError(m.resultInvalid, 400)
+
+    if (setScores === null || setScores === undefined || (Array.isArray(setScores) && setScores.length === 0)) {
+        return { ownScore: own, rivalScore: rival, setScores: null }
+    }
+
+    if (!Array.isArray(setScores)) throw createError(m.setScoresInvalid, 400)
+    if (setScores.length !== own + rival) throw createError(m.setCountMismatch(own + rival, setScores.length), 400)
+
+    const sets = setScores.map((set, index) => {
+        const points = { own: Number(set?.own), rival: Number(set?.rival) }
+        if (![points.own, points.rival].every(value => Number.isInteger(value) && value >= 0 && value <= 99)) {
+            throw createError(m.setPointsOutOfRange(index + 1), 400)
+        }
+        if (Math.abs(points.own - points.rival) < 2) throw createError(m.setNoWinner(index + 1), 400)
+        return points
+    })
+
+    const ownSets = sets.filter(set => set.own > set.rival).length
+    if (ownSets !== own || sets.length - ownSets !== rival) throw createError(m.setsDontMatch(own, rival), 400)
+
+    return { ownScore: own, rivalScore: rival, setScores: sets }
+}
 
 // ---------- Superposiciones ----------
 
@@ -413,7 +469,9 @@ async function getOptions(user) {
 }
 
 // Partidos del alcance ordenados por fecha, con cuántas jugadoras tienen conflicto y si tienen citaciones
-async function listGames(user, { categoryId, state, from, to, page = 1 }) {
+// withoutResult: solo los Jugados sin resultado (para cargarlos). unresolvedConflicts: los conflictos sin resolver del
+// alcance (para el panel del Representante, que no tiene games.resolveConflicts)
+async function listGames(user, { categoryId, state, from, to, withoutResult, page = 1 }) {
     page = Number(page) || 1   // Con Express 5 req.query es de solo lectura: el toInt del validator no llega hasta acá
     const scope = await getSportScope(user)
 
@@ -427,7 +485,8 @@ async function listGames(user, { categoryId, state, from, to, page = 1 }) {
             clubId: scope.clubId,
             ...(categoryId && { categoryId: Number(categoryId) }),
             ...(state && { gameState: Number(state) }),
-            ...((from || to) && { dateTime })
+            ...((from || to) && { dateTime }),
+            ...(withoutResult === 'true' && { gameState: GAME_STATES.PLAYED, ownScore: null })
         },
         include: [includeActiveCategory(scope)],
         order: [['dateTime', 'ASC'], ['id', 'ASC']],
@@ -465,7 +524,8 @@ async function listGames(user, { categoryId, state, from, to, page = 1 }) {
         total: count,
         page,
         pageSize: GAMES_PAGE_SIZE,
-        totalPages: Math.max(1, Math.ceil(count / GAMES_PAGE_SIZE))
+        totalPages: Math.max(1, Math.ceil(count / GAMES_PAGE_SIZE)),
+        unresolvedConflicts: conflicts.filter(conflict => !conflict.resolved).length
     }
 }
 
@@ -556,16 +616,41 @@ async function updateGame(actor, gameId, { rival, dateTime, isHome, address }) {
     return { game: formatGame(game), conflicts }
 }
 
-// Jugado: a mano, solo un Programado cuya fecha y hora ya pasaron
-async function markPlayed(actor, gameId) {
+// Jugado: a mano, solo un Programado cuya fecha y hora ya pasaron, con su resultado (obligatorio desde el P19)
+async function markPlayed(actor, gameId, result) {
     const scope = await getSportScope(actor)
     const game = await findScopedGame(scope, gameId)
 
     if (game.gameState !== GAME_STATES.SCHEDULED) throw createError(m.notScheduled, 409)
     if (new Date(game.dateTime) > new Date()) throw createError(m.notPlayedYet, 400)
+    const score = validateResult(result)
 
-    await game.update({ gameState: GAME_STATES.PLAYED })
-    await logger(actorOf(actor), LOG_ACTIONS.GAME_PLAYED, `${game.category.name} vs. ${game.rival} (id ${game.id}), ${whenText(game.dateTime)}`)
+    await game.update({ gameState: GAME_STATES.PLAYED, ...score })
+    await logger(actorOf(actor), LOG_ACTIONS.GAME_RESULT_SAVED,
+        `${game.category.name} vs. ${game.rival} (id ${game.id}), ${whenText(game.dateTime)}: marcado como jugado, ${resultText(score)}`)
+
+    return { game: formatGame(game) }
+}
+
+// Cargar o corregir el resultado de un Jugado. Si ya tenía resultado, es una corrección (GAME_RESULT_UPDATED, con el
+// anterior y el nuevo); si no (los marcados como Jugados antes del P19), se registra como una carga (GAME_RESULT_SAVED).
+// No avisa a nadie
+async function updateResult(actor, gameId, result) {
+    const scope = await getSportScope(actor)
+    const game = await findScopedGame(scope, gameId)
+
+    if (game.gameState !== GAME_STATES.PLAYED) throw createError(m.resultOnlyPlayed, 400)
+    const score = validateResult(result)
+
+    const before = resultText(game)
+    const hadResult = outcomeOf(game) !== null
+
+    await game.update(score)
+
+    const label = `${game.category.name} vs. ${game.rival} (id ${game.id}), ${whenText(game.dateTime)}`
+    await logger(actorOf(actor), hadResult ? LOG_ACTIONS.GAME_RESULT_UPDATED : LOG_ACTIONS.GAME_RESULT_SAVED, hadResult
+        ? `${label}: antes ${before}, ahora ${resultText(score)}`
+        : `${label}: ${resultText(score)} (cargado después de marcarlo como jugado)`)
 
     return { game: formatGame(game) }
 }
@@ -610,6 +695,110 @@ async function cancelGame(actor, gameId, { reason }) {
     return { game: formatGame(game), cancelledCitations: cancelled }
 }
 
+// ---------- Campaña ----------
+
+// Campaña de una categoría en una temporada, calculada con sus partidos Jugados con resultado (no se guarda). Los Jugados
+// sin resultado no cuentan: se informan en withoutResult. clubId es obligatorio (multi-tenant)
+async function getCampaign(categoryId, season = currentSeason(), { clubId, transaction } = {}) {
+    const played = await Game.findAll({
+        where: { clubId, categoryId, season: String(season), gameState: GAME_STATES.PLAYED },
+        order: [['dateTime', 'DESC'], ['id', 'DESC']],
+        transaction
+    })
+
+    const games = played.filter(game => outcomeOf(game) !== null)
+    const won = games.filter(game => outcomeOf(game) === 'W')
+    const withDetail = games.filter(game => Array.isArray(game.setScores) && game.setScores.length > 0)
+    const sum = (items, pick) => items.reduce((total, item) => total + pick(item), 0)
+    const record = (items) => ({ won: items.filter(game => outcomeOf(game) === 'W').length, lost: items.filter(game => outcomeOf(game) === 'L').length })
+
+    const setsFor = sum(games, game => game.ownScore)
+    const setsAgainst = sum(games, game => game.rivalScore)
+    const last = games[0]
+
+    return {
+        season: String(season),
+        games: {
+            played: games.length,
+            won: won.length,
+            lost: games.length - won.length,
+            winPercentage: games.length > 0 ? Math.round((won.length / games.length) * 100) : null
+        },
+        sets: { for: setsFor, against: setsAgainst, difference: setsFor - setsAgainst },
+        points: {
+            for: sum(withDetail, game => sum(game.setScores, set => set.own)),
+            against: sum(withDetail, game => sum(game.setScores, set => set.rival)),
+            gamesWithDetail: withDetail.length
+        },
+        home: record(games.filter(game => game.isHome)),
+        away: record(games.filter(game => !game.isHome)),
+        streak: games.slice(0, CAMPAIGN_STREAK_LENGTH).map(outcomeOf),
+        lastGame: last
+            ? { id: last.id, dateTime: last.dateTime, rival: last.rival, isHome: last.isHome, ownScore: last.ownScore, rivalScore: last.rivalScore, setScores: last.setScores ?? null, outcome: outcomeOf(last) }
+            : null,
+        withoutResult: played.length - games.length
+    }
+}
+
+// Resumen corto para /games/mine y /games/linked (paneles de inicio, sin otra llamada)
+async function getCampaignSummary(clubId, categoryId) {
+    const { season, games, streak, lastGame, withoutResult } = await getCampaign(categoryId, currentSeason(), { clubId })
+    return { season, ...games, streak, lastGame, withoutResult }
+}
+
+// Categorías de las que el usuario puede ver la campaña, según sus permisos de games (se suman los alcances):
+// games.manage → las de su alcance por deporte (getSportScope); viewAssigned → las del staff; viewOwn → las de la
+// jugadora; viewLinked → las de sus jugadoras vinculadas
+async function campaignCategoryIds(user) {
+    const permissions = await getEffectivePermissions(user.id, user.activeRoleId)
+    const ids = new Set()
+
+    if (permissions.includes(PERMISSIONS.GAMES_MANAGE)) {
+        const scope = await getSportScope(user)
+        const categories = await Category.findAll({
+            where: { clubId: scope.clubId },
+            attributes: ['id'],
+            include: [{ model: League, as: 'league', attributes: [], where: leagueWhere(scope) }]
+        })
+        categories.forEach(category => ids.add(category.id))
+    }
+
+    if (permissions.includes(PERMISSIONS.GAMES_VIEW_ASSIGNED)) {
+        const staff = await staffOf(user)
+        if (staff) (await getCategoriesOfStaff(user.clubId, staff.id)).forEach(category => ids.add(category.id))
+    }
+
+    const members = [
+        ...(permissions.includes(PERMISSIONS.GAMES_VIEW_OWN) ? await Member.findAll({ where: { userId: user.id, clubId: user.clubId } }) : []),
+        ...(permissions.includes(PERMISSIONS.GAMES_VIEW_LINKED) ? await Member.findAll({ where: { clubId: user.clubId, adultUserId: user.id, linkStatus: true } }) : [])
+    ]
+    for (const member of members.filter(item => item.memberStateId !== MEMBER_STATES.INACTIVE)) {
+        (await getCategoriesOfMember(user.clubId, member.id)).forEach(category => ids.add(category.id))
+    }
+
+    return ids
+}
+
+// GET /games/campaign: la campaña de una categoría del alcance del usuario (sin season, la del año actual). Fuera del
+// alcance, 404
+async function getCampaignForUser(user, { categoryId, season }) {
+    const id = Number(categoryId)
+    if (!(await campaignCategoryIds(user)).has(id)) throw createError(m.campaignCategoryNotFound, 404)
+
+    const category = await Category.findOne({
+        where: { id, clubId: user.clubId },
+        attributes: ['id', 'name'],
+        include: [{ model: League, as: 'league', attributes: ['id', 'name'] }]
+    })
+    if (!category) throw createError(m.campaignCategoryNotFound, 404)
+
+    return {
+        category: { id: category.id, name: category.name },
+        league: { id: category.league.id, name: category.league.name },
+        ...await getCampaign(id, season || currentSeason(), { clubId: user.clubId })
+    }
+}
+
 // ---------- Staff: partidos asignados y conflictos ----------
 
 async function staffOf(user) {
@@ -633,13 +822,16 @@ async function gamesOfCategories(clubId, categoryIds, { from, to }) {
     return games.map(formatGame)
 }
 
-// Partidos de las categorías del staff logueado
+// Partidos de las categorías del staff logueado, y esas categorías con su liga (para la campaña de cada una)
 async function listAssigned(user, { from, to }) {
     const staff = await staffOf(user)
-    if (!staff) return { items: [] }
+    if (!staff) return { items: [], categories: [] }
 
     const categories = await getCategoriesOfStaff(user.clubId, staff.id)
-    return { items: await gamesOfCategories(user.clubId, categories.map(category => category.id), { from, to }) }
+    return {
+        items: await gamesOfCategories(user.clubId, categories.map(category => category.id), { from, to }),
+        categories: categories.map(category => ({ id: category.id, name: category.name, league: { id: category.league.id, name: category.league.name } }))
+    }
 }
 
 // Conflictos actuales en las categorías de la entrenadora logueada, pendientes y resueltos
@@ -719,14 +911,16 @@ async function gamesByCategoryOf(clubId, member, { from, to }) {
     if (member.memberStateId === MEMBER_STATES.INACTIVE) return []
 
     const categories = await getCategoriesOfMember(clubId, member.id)
-    const [games, notPlaying] = await Promise.all([
+    const [games, notPlaying, campaigns] = await Promise.all([
         gamesOfCategories(clubId, categories.map(category => category.id), { from, to }),
-        getNotPlayingGames(clubId, member.id)
+        getNotPlayingGames(clubId, member.id),
+        Promise.all(categories.map(category => getCampaignSummary(clubId, category.id)))
     ])
 
-    return categories.map(category => ({
+    return categories.map((category, index) => ({
         category: { id: category.id, name: category.name, ageGroup: category.ageGroup.label },
         league: { id: category.league.id, name: category.league.name, sport: category.league.sport },
+        campaign: campaigns[index],
         games: games
             .filter(game => game.categoryId === category.id)
             .map(game => ({ ...game, conflict: conflictMarkOf(notPlaying, game.id) }))
@@ -772,8 +966,12 @@ module.exports = {
     checkConflicts,
     createGame,
     updateGame,
+    validateResult,
     markPlayed,
+    updateResult,
     cancelGame,
+    getCampaign,
+    getCampaignForUser,
     listAssigned,
     listMyConflicts,
     resolveConflict,

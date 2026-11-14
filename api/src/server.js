@@ -8,6 +8,7 @@ const sequelize = require('./config/db')
 const jobs = require('./jobs')
 const mailTransport = require('./config/mail')
 const config = require('./config')
+const { confirmTarget } = require('./utils/dbTarget')
 
 const { app: appConfig } = config
 
@@ -37,12 +38,15 @@ async function start() {
     try {
         checkEnvironment()
 
+        // En producción (Render) no se pueden activar. Desde una compu (NODE_ENV no es production) se pide confirmar la
+        // base si no es local, antes de conectarse: así no se recrea la base de la demo (Railway) sin darse cuenta
+        if (appConfig.forceSync || appConfig.alterSync) {
+            if (appConfig.isProd) throw new Error('DB_FORCE_SYNC y DB_ALTER_SYNC no se pueden activar en producción')
+            await confirmTarget(sequelize, appConfig.forceSync ? 'BORRAR Y RECREAR todas las tablas (DB_FORCE_SYNC)' : 'modificar las tablas (DB_ALTER_SYNC)')
+        }
+
         await sequelize.authenticate()
         console.log('Conexión a la base de datos establecida')
-
-        if (appConfig.isProd && (appConfig.forceSync || appConfig.alterSync)) {
-            throw new Error('DB_FORCE_SYNC y DB_ALTER_SYNC no se pueden activar en producción')
-        }
 
         await sequelize.sync({ force: appConfig.forceSync, alter: appConfig.alterSync })
         console.log('Tablas sincronizadas')

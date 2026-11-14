@@ -6,6 +6,7 @@
 // cual están en la base: el teléfono cifrado, los hashes de las contraseñas, los dvh y las fechas. Se leen las columnas
 // que tiene la base y no las del modelo, así el snapshot funciona aunque el modelo ya tenga una columna nueva que la base
 // todavía no. A diferencia de un backup, copia la base completa: todos los clubes, los catálogos, la bitácora y dvv.
+// Antes de conectarse muestra la base y, si no es local (la demo en Railway), pide escribir su nombre (utils/dbTarget.js).
 // Uso: npm run db:snapshot
 const fs = require('fs')
 const path = require('path')
@@ -13,6 +14,7 @@ const path = require('path')
 const sequelize = require('../../config/db')
 const models = require('../../models')
 const { readTableRows } = require('../../utils/clubData')
+const { confirmTarget } = require('../../utils/dbTarget')
 
 const BACKUPS_DIR = path.join(__dirname, '../../../backups')
 
@@ -23,6 +25,7 @@ function timestamp(date = new Date()) {
 }
 
 async function snapshot() {
+    await confirmTarget(sequelize, 'guardar un snapshot de toda la base')
     await sequelize.authenticate()
 
     const tables = {}

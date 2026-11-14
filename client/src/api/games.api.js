@@ -7,11 +7,19 @@ import axiosClient from './axiosClient.js'
 // data: { categories: [{ id, name, league: { id, name } }], courts: [{ name, address, label }], conflictMargin }
 export const getGameOptions = () => axiosClient.get('/games/options').then((res) => res.data)
 
-// data: { items: [{ id, categoryId, category, league, rival, dateTime, address, isHome, season, gameState, conflictCount,
-//         citationCount }], total, page, pageSize, totalPages }
-export const getGames = ({ categoryId, state, from, to, page }) =>
+// data: { items: [{ id, categoryId, category, league, rival, dateTime, address, isHome, season, gameState, ownScore,
+//         rivalScore, setScores, outcome, conflictCount, citationCount }], total, page, pageSize, totalPages, unresolvedConflicts }
+// withoutResult: solo los Jugados sin resultado
+export const getGames = ({ categoryId, state, from, to, withoutResult, page }) =>
   axiosClient.get('/games', {
-    params: { categoryId: categoryId || undefined, state: state || undefined, from: from || undefined, to: to || undefined, page }
+    params: {
+      categoryId: categoryId || undefined,
+      state: state || undefined,
+      from: from || undefined,
+      to: to || undefined,
+      withoutResult: withoutResult ? 'true' : undefined,
+      page
+    }
   }).then((res) => res.data)
 
 // payload: { categoryId, dateTime, gameId? }. data: { conflicts }, sin guardar nada
@@ -23,14 +31,23 @@ export const createGame = (payload) => axiosClient.post('/games', payload).then(
 // payload: { rival, dateTime, isHome, address }. data: { game, conflicts }
 export const updateGame = (id, payload) => axiosClient.put(`/games/${id}`, payload).then((res) => res.data)
 
-export const markGamePlayed = (id) => axiosClient.post(`/games/${id}/played`).then((res) => res.data)
+// result: { ownScore, rivalScore, setScores? } (setScores: [{ own, rival }] por set). data: { game }
+export const markGamePlayed = (id, result) => axiosClient.post(`/games/${id}/played`, result).then((res) => res.data)
+
+// Cargar o corregir el resultado de un partido Jugado. data: { game }
+export const saveGameResult = (id, result) => axiosClient.put(`/games/${id}/result`, result).then((res) => res.data)
+
+// data: { category, league, season, games: { played, won, lost, winPercentage }, sets: { for, against, difference },
+//         points: { for, against, gamesWithDetail }, home, away, streak: ['W' | 'L'], lastGame, withoutResult }
+export const getCampaign = (categoryId, season) =>
+  axiosClient.get('/games/campaign', { params: { categoryId, season: season || undefined } }).then((res) => res.data)
 
 // data: { game, cancelledCitations }
 export const cancelGame = (id, reason) => axiosClient.post(`/games/${id}/cancel`, { reason }).then((res) => res.data)
 
 // ---------- Staff ----------
 
-// data: { items: [partidos] } de las categorías del staff logueado, por defecto desde hoy
+// data: { items: [partidos], categories: [{ id, name, league }] } de las categorías del staff logueado, por defecto desde hoy
 export const getAssignedGames = ({ from, to } = {}) =>
   axiosClient.get('/games/assigned', { params: { from: from || undefined, to: to || undefined } }).then((res) => res.data)
 
@@ -42,8 +59,9 @@ export const resolveConflict = (payload) => axiosClient.post('/games/conflicts/r
 
 // ---------- Jugadora y Familia ----------
 
-// data: { categories: [{ category, league, games }] }
+// data: { categories: [{ category, league, campaign, games }] }. campaign: el resumen de la temporada
+// { season, played, won, lost, winPercentage, streak, lastGame, withoutResult }
 export const getMyGames = () => axiosClient.get('/games/mine').then((res) => res.data)
 
-// data: { players: [{ member: { id, name }, categories: [{ category, league, games }] }] }
+// data: { players: [{ member: { id, name }, categories: [{ category, league, campaign, games }] }] }
 export const getLinkedGames = () => axiosClient.get('/games/linked').then((res) => res.data)

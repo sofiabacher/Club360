@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -23,18 +24,23 @@ import AddRounded from '@mui/icons-material/AddRounded'
 import EventRounded from '@mui/icons-material/EventRounded'
 import MoreVertRounded from '@mui/icons-material/MoreVertRounded'
 
-import { cancelGame, getGameOptions, getGames, markGamePlayed } from '../../api/games.api.js'
+import { cancelGame, getGameOptions, getGames } from '../../api/games.api.js'
 import EmptyState from '../../components/common/EmptyState.jsx'
 import GameFormDialog from '../../components/games/GameFormDialog.jsx'
 import GameListItem from '../../components/games/GameListItem.jsx'
+import GameResultForm from '../../components/games/GameResultForm.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { GAME_STATES } from '../../utils/constants.js'
 import { formatDayHeader } from '../../utils/format.js'
+
+// Filtro de los Jugados sin resultado (no es un estado: se manda como withoutResult)
+const NO_RESULT = 'noResult'
 
 const STATE_OPTIONS = [
   { value: '', label: 'Todos' },
   { value: GAME_STATES.SCHEDULED, label: 'Programados' },
   { value: GAME_STATES.PLAYED, label: 'Jugados' },
+  { value: NO_RESULT, label: 'Jugados sin resultado' },
   { value: GAME_STATES.CANCELLED, label: 'Cancelados' }
 ]
 
@@ -54,10 +60,15 @@ function groupByDay(games) {
   return [...groups].map(([day, items]) => ({ day, games: items }))
 }
 
-// Fixture del Representante (games.manage): partidos del alcance con filtros, alta, edición, jugado y cancelación
+// Fixture del Representante (games.manage): partidos del alcance con filtros, alta, edición, jugado con su resultado,
+// corrección del resultado y cancelación. Con ?withoutResult=true (desde el panel de inicio) abre con los Jugados sin
+// resultado
 export default function GamesPage() {
+  const [searchParams] = useSearchParams()
   const [options, setOptions] = useState(null)
-  const [query, setQuery] = useState({ categoryId: '', state: '', from: todayKey(), to: '', page: 1 })
+  const [query, setQuery] = useState(() => (searchParams.get('withoutResult') === 'true'
+    ? { categoryId: '', state: NO_RESULT, from: '', to: '', page: 1 }
+    : { categoryId: '', state: '', from: todayKey(), to: '', page: 1 }))
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -65,6 +76,7 @@ export default function GamesPage() {
   const [form, setForm] = useState({ open: false, game: null })
   const [menu, setMenu] = useState(null)   // { anchor, game }
   const [cancelling, setCancelling] = useState(null)   // { game, reason }
+  const [resultForm, setResultForm] = useState(null)   // { game, mode: 'played' | 'result' }
   const [running, setRunning] = useState(false)
   const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' })   // Snackbar
   const showNotice = (severity, message) => setNotice({ open: true, severity, message })
@@ -78,7 +90,8 @@ export default function GamesPage() {
 
   const load = useCallback(() => {
     setLoading(true)
-    getGames(query)
+    const { state, ...rest } = query
+    getGames({ ...rest, state: state === NO_RESULT ? '' : state, withoutResult: state === NO_RESULT })
       .then(({ data }) => {
         setResult(data)
         setError('')
@@ -91,7 +104,13 @@ export default function GamesPage() {
     load()
   }, [load])
 
-  const setFilter = (field) => (event) => setQuery((current) => ({ ...current, [field]: event.target.value, page: 1 }))
+  // Los Jugados sin resultado son del pasado: al elegir ese filtro se quita el "Desde hoy"
+  const setFilter = (field) => (event) => setQuery((current) => ({
+    ...current,
+    [field]: event.target.value,
+    ...(field === 'state' && event.target.value === NO_RESULT && current.from === todayKey() && { from: '' }),
+    page: 1
+  }))
 
   const handleSaved = ({ conflicts }) => {
     setForm({ open: false, game: null })
@@ -102,15 +121,15 @@ export default function GamesPage() {
     load()
   }
 
-  const handlePlayed = async (game) => {
+  const openResult = (game, mode) => {
     setMenu(null)
-    try {
-      await markGamePlayed(game.id)
-      showNotice('success', 'Marcamos el partido como jugado.')
-      load()
-    } catch (err) {
-      showNotice('error', getErrorMessage(err))
-    }
+    setResultForm({ game, mode })
+  }
+
+  const handleResultSaved = () => {
+    showNotice('success', resultForm.mode === 'played' ? 'Marcamos el partido como jugado y guardamos el resultado.' : 'Guardamos el resultado.')
+    setResultForm(null)
+    load()
   }
 
   const handleCancel = async () => {
@@ -173,7 +192,9 @@ export default function GamesPage() {
         <EmptyState
           icon={EventRounded}
           title="Sin partidos"
-          description={filtered ? 'No hay partidos con esos filtros.' : 'Todavía no hay partidos programados. Cargá el primero con "Nuevo partido".'}
+          description={query.state === NO_RESULT
+            ? 'Todos los partidos jugados tienen su resultado.'
+            : filtered ? 'No hay partidos con esos filtros.' : 'Todavía no hay partidos programados. Cargá el primero con "Nuevo partido".'}
         />
       )}
 
@@ -188,7 +209,8 @@ export default function GamesPage() {
                     <GameListItem
                       key={game.id}
                       game={game}
-                      action={game.gameState === GAME_STATES.SCHEDULED && (
+                      onLoadResult={(item) => openResult(item, 'result')}
+                      action={(game.gameState === GAME_STATES.SCHEDULED || game.outcome) && (
                         <IconButton aria-label={`Acciones del partido vs. ${game.rival}`} onClick={(event) => setMenu({ anchor: event.currentTarget, game })}>
                           <MoreVertRounded />
                         </IconButton>
@@ -209,9 +231,12 @@ export default function GamesPage() {
       )}
 
       <Menu anchorEl={menu?.anchor} open={Boolean(menu)} onClose={() => setMenu(null)}>
-        {menu && [
+        {menu && menu.game.gameState === GAME_STATES.PLAYED && (
+          <MenuItem onClick={() => openResult(menu.game, 'result')}>Corregir resultado</MenuItem>
+        )}
+        {menu && menu.game.gameState === GAME_STATES.SCHEDULED && [
           <MenuItem key="edit" onClick={() => { setForm({ open: true, game: menu.game }); setMenu(null) }}>Editar</MenuItem>,
-          isPast(menu.game) && <MenuItem key="played" onClick={() => handlePlayed(menu.game)}>Marcar como jugado</MenuItem>,
+          isPast(menu.game) && <MenuItem key="played" onClick={() => openResult(menu.game, 'played')}>Marcar como jugado</MenuItem>,
           <MenuItem key="cancel" onClick={() => { setCancelling({ game: menu.game, reason: '' }); setMenu(null) }} sx={{ color: 'error.main' }}>Cancelar partido</MenuItem>
         ].filter(Boolean)}
       </Menu>
@@ -225,6 +250,14 @@ export default function GamesPage() {
           onSaved={handleSaved}
         />
       )}
+
+      <GameResultForm
+        open={Boolean(resultForm)}
+        game={resultForm?.game}
+        mode={resultForm?.mode}
+        onClose={() => setResultForm(null)}
+        onSaved={handleResultSaved}
+      />
 
       <Dialog open={Boolean(cancelling)} onClose={running ? undefined : () => setCancelling(null)} fullWidth maxWidth="xs">
         {cancelling && (

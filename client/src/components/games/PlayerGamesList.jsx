@@ -8,7 +8,9 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import PlaceRounded from '@mui/icons-material/PlaceRounded'
 
+import { CategoryCampaign } from './CampaignCard.jsx'
 import { GameStateChip, HomeChip } from './GameChips.jsx'
+import GameResult from './GameResult.jsx'
 import { GAME_STATES } from '../../utils/constants.js'
 import { formatGameDate, formatShortDateTime, getMapsUrl } from '../../utils/format.js'
 
@@ -40,6 +42,7 @@ function PlayerGame({ game }) {
         {game.gameState !== GAME_STATES.SCHEDULED && <GameStateChip gameState={game.gameState} />}
         {notPlaying && <Chip label="No lo jugás" size="small" sx={{ fontWeight: 600 }} />}
       </Stack>
+      <GameResult game={game} size="small" />
       {notPlaying && (
         <Typography variant="body2" sx={{ mt: 1, color: 'navy.main' }}>
           Por superposición de horario, jugás {game.conflict.chosenGame.categoryName} vs. {game.conflict.chosenGame.rival} ({formatShortDateTime(game.conflict.chosenGame.dateTime)}).
@@ -50,8 +53,9 @@ function PlayerGame({ game }) {
 }
 
 // Partidos de una jugadora: un módulo por liga y, adentro, una sección por categoría (contexto: si juega en dos ligas,
-// se ven separadas). categories: [{ category, league, games }]
-export default function PlayerGamesList({ categories }) {
+// se ven separadas). categories: [{ category, league, games }]. showCampaign: arriba de los partidos de cada categoría, su
+// campaña completa (fixture de la Jugadora)
+export default function PlayerGamesList({ categories, showCampaign = false }) {
   const leagues = new Map()
   for (const item of categories) {
     leagues.set(item.league.id, { league: item.league, items: [...(leagues.get(item.league.id)?.items ?? []), item] })
@@ -71,6 +75,7 @@ export default function PlayerGamesList({ categories }) {
                   <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'navy.main' }}>{category.name}</Typography>
                   {category.ageGroup && <Chip label={category.ageGroup} size="small" variant="outlined" color="secondary" />}
                 </Stack>
+                {showCampaign && <Box sx={{ mt: 1.5, mb: 1 }}><CategoryCampaign categoryId={category.id} /></Box>}
                 {games.length === 0 ? (
                   <Typography variant="body2" sx={{ color: 'text.secondary', py: 1 }}>No hay partidos próximos en esta categoría.</Typography>
                 ) : (

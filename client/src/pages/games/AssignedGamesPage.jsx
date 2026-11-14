@@ -12,6 +12,7 @@ import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import Divider from '@mui/material/Divider'
 import FormControlLabel from '@mui/material/FormControlLabel'
+import Grid from '@mui/material/Grid'
 import Radio from '@mui/material/Radio'
 import RadioGroup from '@mui/material/RadioGroup'
 import Snackbar from '@mui/material/Snackbar'
@@ -25,6 +26,7 @@ import EventRounded from '@mui/icons-material/EventRounded'
 
 import { getAssignedGames, getConflicts, resolveConflict } from '../../api/games.api.js'
 import EmptyState from '../../components/common/EmptyState.jsx'
+import { CategoryCampaign } from '../../components/games/CampaignCard.jsx'
 import ConflictCard from '../../components/games/ConflictCard.jsx'
 import GameListItem from '../../components/games/GameListItem.jsx'
 import usePermission from '../../hooks/usePermission.js'
@@ -43,7 +45,8 @@ function groupByDay(games) {
   return [...groups].map(([day, items]) => ({ day, games: items }))
 }
 
-// Partidos del staff (games.viewAssigned): los próximos partidos de sus categorías y, con games.resolveConflicts,
+// Partidos del staff (games.viewAssigned): la campaña de cada una de sus categorías, los próximos partidos y, con
+// games.resolveConflicts,
 // los conflictos de horario de sus jugadoras para resolverlos con la otra entrenadora
 export default function AssignedGamesPage() {
   const { hasPermission } = usePermission()
@@ -51,6 +54,7 @@ export default function AssignedGamesPage() {
 
   const [tab, setTab] = useState(TABS.GAMES)
   const [games, setGames] = useState(null)
+  const [categories, setCategories] = useState([])
   const [conflictData, setConflictData] = useState(null)   // { conflictMargin, conflicts }
   const [error, setError] = useState('')
   const [resolving, setResolving] = useState(null)   // { conflict, chosenGameId, note }
@@ -67,7 +71,10 @@ export default function AssignedGamesPage() {
 
   useEffect(() => {
     getAssignedGames()
-      .then(({ data }) => setGames(data.items))
+      .then(({ data }) => {
+        setGames(data.items)
+        setCategories(data.categories ?? [])
+      })
       .catch((err) => setError(getErrorMessage(err)))
     loadConflicts()
   }, [loadConflicts])
@@ -107,6 +114,15 @@ export default function AssignedGamesPage() {
 
       {tab === TABS.GAMES && (
         <>
+          {categories.length > 0 && (
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              {categories.map((category) => (
+                <Grid key={category.id} size={{ xs: 12, md: categories.length > 1 ? 6 : 12 }}>
+                  <CategoryCampaign categoryId={category.id} />
+                </Grid>
+              ))}
+            </Grid>
+          )}
           {!games && !error && (
             <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>
           )}
