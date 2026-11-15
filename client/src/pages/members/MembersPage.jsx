@@ -6,11 +6,10 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardActionArea from '@mui/material/CardActionArea'
 import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
 import InputAdornment from '@mui/material/InputAdornment'
+import Paper from '@mui/material/Paper'
 import MenuItem from '@mui/material/MenuItem'
 import Pagination from '@mui/material/Pagination'
-import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
@@ -29,6 +28,9 @@ import { getMembers } from '../../api/members.api.js'
 import MemberStatusChips from '../../components/members/MemberStatusChips.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { MEMBER_STATES } from '../../utils/constants.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import EmptyState from '../../components/common/EmptyState.jsx'
+import GroupsRounded from '@mui/icons-material/GroupsRounded'
 
 const STATE_OPTIONS = [
   { value: '', label: 'Todos' },
@@ -112,10 +114,10 @@ export default function MembersPage() {
           }}
         />
         <Stack direction="row" spacing={2}>
-          <TextField select label="Estado" value={query.state} onChange={setFilter('state')} size="small" sx={{ minWidth: 150, flexGrow: 1 }}>
+          <TextField select label="Estado" value={query.state} onChange={setFilter('state')} size="small" sx={{ minWidth: { xs: 0, sm: 150 }, flex: 1 }}>
             {STATE_OPTIONS.map((option) => <MenuItem key={option.label} value={option.value}>{option.label}</MenuItem>)}
           </TextField>
-          <TextField select label="Registro" value={query.registration} onChange={setFilter('registration')} size="small" sx={{ minWidth: 200, flexGrow: 1 }}>
+          <TextField select label="Registro" value={query.registration} onChange={setFilter('registration')} size="small" sx={{ minWidth: { xs: 0, sm: 200 }, flex: 1 }}>
             {REGISTRATION_OPTIONS.map((option) => <MenuItem key={option.label} value={option.value}>{option.label}</MenuItem>)}
           </TextField>
         </Stack>
@@ -124,15 +126,11 @@ export default function MembersPage() {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       {!result && loading && (
-        <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
-          <CircularProgress color="secondary" />
-        </Box>
+        <LoadingSkeleton />
       )}
 
       {result && members.length === 0 && (
-        <Paper variant="outlined" sx={{ p: 4, textAlign: 'center', color: 'text.secondary' }}>
-          {filtered ? 'No encontramos socios con esa búsqueda.' : 'Todavía no hay socios. Empezá con "Nuevo socio".'}
-        </Paper>
+        <EmptyState icon={GroupsRounded} title="Sin socios" description={filtered ? 'No encontramos socios con esa búsqueda.' : 'Todavía no hay socios. Empezá con "Nuevo socio".'} />
       )}
 
       {members.length > 0 && (isDesktop ? (

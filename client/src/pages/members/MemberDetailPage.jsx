@@ -6,7 +6,6 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -28,6 +27,7 @@ import MemberStatusChips from '../../components/members/MemberStatusChips.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { MEMBER_STATES, USER_STATES } from '../../utils/constants.js'
 import { formatDate } from '../../utils/format.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Acciones que cambian el estado: cada una pide confirmación antes
 const ACTIONS = {
@@ -111,9 +111,7 @@ export default function MemberDetailPage() {
 
   if (!member) {
     return (
-      <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
-        <CircularProgress color="secondary" />
-      </Box>
+      <LoadingSkeleton />
     )
   }
 

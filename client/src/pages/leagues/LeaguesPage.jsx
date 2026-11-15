@@ -6,7 +6,6 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -37,6 +36,7 @@ import EmptyState from '../../components/common/EmptyState.jsx'
 import CategoryFormDialog from '../../components/leagues/CategoryFormDialog.jsx'
 import LeagueFormDialog from '../../components/leagues/LeagueFormDialog.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`
 
@@ -125,9 +125,7 @@ export default function LeaguesPage() {
 
   if (!data) {
     return (
-      <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
-        <CircularProgress color="secondary" />
-      </Box>
+      <LoadingSkeleton />
     )
   }
 

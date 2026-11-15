@@ -3,7 +3,6 @@ import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
 import Divider from '@mui/material/Divider'
 import Grid from '@mui/material/Grid'
 import List from '@mui/material/List'
@@ -23,6 +22,7 @@ import RoutineEditor from './RoutineEditor.jsx'
 import RoutineWeekView, { defaultDayOf } from './RoutineWeekView.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { formatDayMonth, formatGameDate } from '../../utils/format.js'
+import LoadingSkeleton from '../common/LoadingSkeleton.jsx'
 
 const categoryLabel = (category) => `${category.name} · ${category.league.name}`
 
@@ -136,7 +136,7 @@ export default function RoutinesWorkspace({ canEdit, title, description }) {
 
   if (error && !week) return <Alert severity="error">{error}</Alert>
 
-  if (!categories) return <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>
+  if (!categories) return <LoadingSkeleton />
 
   const header = (
     <Box sx={{ mb: 3 }}>
@@ -167,7 +167,7 @@ export default function RoutinesWorkspace({ canEdit, title, description }) {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       {!week ? (
-        <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>
+        <LoadingSkeleton />
       ) : (
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 8 }}>

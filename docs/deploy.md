@@ -120,7 +120,7 @@ Anotá cada valor que se genera (contraseñas, claves, URLs) en un lugar privado
    | Output Directory | `dist` (el que propone) |
 
 3. **Variable de entorno:** `VITE_API_URL` = `https://club360-api.onrender.com` (sin `/` al final).
-4. **Deploy.** Anotá la URL de producción que muestra Vercel (la del proyecto, no la de cada deploy).
+4. **Deploy.** Anotá la URL de producción que muestra Vercel (la del proyecto, no la de cada deploy). La de la demo quedó `https://club360-ten.vercel.app`.
 
 > Las variables `VITE_*` se leen al compilar: si cambiás `VITE_API_URL`, hay que volver a deployar (**Deployments → Redeploy**).
 

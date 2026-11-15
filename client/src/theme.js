@@ -1,4 +1,5 @@
 import { createTheme } from '@mui/material/styles'
+import { esES } from '@mui/material/locale'
 
 import '@fontsource/poppins/400.css'
 import '@fontsource/poppins/500.css'
@@ -21,6 +22,20 @@ const base = createTheme({
     error: { main: '#A32929' },
     background: { default: '#F6F7FB', paper: '#FFFFFF' },
     text: { primary: '#0F1B3D', secondary: '#555A68' }
+  },
+
+  // La tipografía va en el primer createTheme: el segundo ya recibe las variantes calculadas y no les cambiaría la fuente
+  typography: {
+    fontFamily: FONT_FAMILY,
+    h1: { fontWeight: 700 },
+    h2: { fontWeight: 700 },
+    h3: { fontWeight: 700 },
+    h4: { fontWeight: 700 },
+    h5: { fontWeight: 600 },
+    h6: { fontWeight: 600 },
+    button: { textTransform: 'none', fontWeight: 600 },
+    // Solo para números destacados: resultados, fecha y hora de un partido, número de socio
+    numeric: { fontFamily: NUMERIC_FONT_FAMILY, fontWeight: 700, lineHeight: 1.1 }
   }
 })
 
@@ -44,19 +59,6 @@ const theme = createTheme(base, {
     neutral: { bg: '#EEF0F4', fg: '#4B5563' }    // Neutro, gris (ej. criticidad Baja de la bitácora)
   },
 
-  typography: {
-    fontFamily: FONT_FAMILY,
-    h1: { fontWeight: 700 },
-    h2: { fontWeight: 700 },
-    h3: { fontWeight: 700 },
-    h4: { fontWeight: 700 },
-    h5: { fontWeight: 600 },
-    h6: { fontWeight: 600 },
-    button: { textTransform: 'none', fontWeight: 600 },
-    // Solo para números destacados: resultados, fecha y hora de un partido, número de socio
-    numeric: { fontFamily: NUMERIC_FONT_FAMILY, fontWeight: 700, lineHeight: 1.1 }
-  },
-
   shape: { borderRadius: 12 },
 
   components: {
@@ -77,6 +79,6 @@ const theme = createTheme(base, {
       }
     }
   }
-})
+}, esES)   // Textos propios de MUI en español (paginación, cerrar, sin opciones...)
 
 export default theme

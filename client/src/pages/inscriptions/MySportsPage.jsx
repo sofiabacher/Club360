@@ -5,7 +5,6 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -23,6 +22,7 @@ import useAuth from '../../hooks/useAuth.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { INSCRIPTION_STATES, MEMBER_STATES } from '../../utils/constants.js'
 import { formatDate, formatMoney } from '../../utils/format.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Chip de la inscripción: Pendiente, Aprobada o Rechazada. Sin inscripción (o Cancelada), sin chip
 const STATE_CHIPS = {
@@ -151,7 +151,7 @@ export default function MySportsPage() {
   if (error) return <Alert severity="error">{error}</Alert>
 
   if (!data) {
-    return <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>
+    return <LoadingSkeleton />
   }
 
   const running = confirming && busyId === confirming.sport.clubSportId

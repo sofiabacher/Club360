@@ -7,7 +7,6 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Checkbox from '@mui/material/Checkbox'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -29,6 +28,7 @@ import { HomeChip } from '../../components/games/GameChips.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { CITATION_MIN_HOURS, CITATION_STATES, GAME_STATES } from '../../utils/constants.js'
 import { formatDeadline, formatGameDate } from '../../utils/format.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Estados que la entrenadora puede cancelar, antes del partido
 const CANCELLABLE_STATES = [CITATION_STATES.PENDING, CITATION_STATES.CONFIRMED, CITATION_STATES.AUTO_CONFIRMED]
@@ -148,7 +148,7 @@ export default function GameCitationsPage() {
   if (error) return <Alert severity="error">{error}</Alert>
 
   if (!data) {
-    return <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>
+    return <LoadingSkeleton />
   }
 
   const { game, players } = data

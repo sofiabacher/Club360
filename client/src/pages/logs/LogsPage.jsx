@@ -6,7 +6,6 @@ import ButtonBase from '@mui/material/ButtonBase'
 import Card from '@mui/material/Card'
 import CardActionArea from '@mui/material/CardActionArea'
 import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -41,6 +40,7 @@ import { getErrorMessage } from '../../utils/apiErrors.js'
 import { CRITICITY_CHIPS, CRITICITY_LABELS } from '../../utils/constants.js'
 import { saveBlob } from '../../utils/download.js'
 import { formatDate, formatTime } from '../../utils/format.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 const emptyFilters = { from: '', to: '', criticity: '', action: '', userId: '', search: '', page: 1 }
 
@@ -211,7 +211,7 @@ export default function LogsPage() {
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      {!result && loading && <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>}
+      {!result && loading && <LoadingSkeleton />}
 
       {result && logs.length === 0 && (
         <EmptyState icon={HistoryRounded} title="Sin registros" description="No hay registros para este filtro." />

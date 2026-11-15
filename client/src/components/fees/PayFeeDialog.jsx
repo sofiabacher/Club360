@@ -30,7 +30,7 @@ import UploadFileRounded from '@mui/icons-material/UploadFileRounded'
 import { getTransferInfo, payFee, reportTransfer } from '../../api/fees.api.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { TRANSACTION_STATES } from '../../utils/constants.js'
-import { formatMoney, formatPeriod } from '../../utils/format.js'
+import { formatMoney, formatPeriod, formatFileSize } from '../../utils/format.js'
 
 const TABS = { CARD: 'card', TRANSFER: 'transfer' }
 
@@ -80,8 +80,6 @@ function receiptError(file) {
   if (file.size > RECEIPT_MAX_SIZE) return 'El archivo no puede pesar más de 5 MB.'
   return null
 }
-
-const formatSize = (bytes) => (bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} MB`)
 
 // Un dato bancario con botón para copiarlo
 function BankRow({ label, value, onCopy }) {
@@ -197,7 +195,7 @@ function TransferForm({ fee, file, setFile, fileError, setFileError, error }) {
             <InsertDriveFileRounded sx={{ color: 'secondary.main' }} />
             <Box sx={{ flexGrow: 1, minWidth: 0 }}>
               <Typography variant="body2" sx={{ fontWeight: 500, color: 'navy.main' }} noWrap>{file.name}</Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>{formatSize(file.size)}</Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>{formatFileSize(file.size)}</Typography>
             </Box>
             <IconButton onClick={() => setFile(null)} aria-label="Quitar el archivo" size="small">
               <CloseRounded fontSize="small" />

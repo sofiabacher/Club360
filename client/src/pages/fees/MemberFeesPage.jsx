@@ -3,7 +3,6 @@ import { Link as RouterLink, useParams } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import CircularProgress from '@mui/material/CircularProgress'
 import Snackbar from '@mui/material/Snackbar'
 import Typography from '@mui/material/Typography'
 import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded'
@@ -12,6 +11,7 @@ import { getMemberFees } from '../../api/fees.api.js'
 import FeeAccount from '../../components/fees/FeeAccount.jsx'
 import RegisterPaymentDialog from '../../components/fees/RegisterPaymentDialog.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Estado de cuenta de un socio para el Admin (fees.manage): la misma vista que "Mis cuotas", con el pago en secretaría
 export default function MemberFeesPage() {
@@ -38,7 +38,7 @@ export default function MemberFeesPage() {
   if (error) return <Alert severity="error">{error}</Alert>
 
   if (!account) {
-    return <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>
+    return <LoadingSkeleton />
   }
 
   return (

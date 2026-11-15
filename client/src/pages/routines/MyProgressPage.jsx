@@ -19,6 +19,7 @@ import PeriodSelector from '../../components/routines/PeriodSelector.jsx'
 import ProgressOverview from '../../components/routines/ProgressOverview.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { GOAL_STATES } from '../../utils/constants.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Hoy como 'AAAA-MM-DD' (hora de la computadora)
 const todayKey = () => {
@@ -110,7 +111,7 @@ export default function MyProgressPage() {
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      {!progress && loading && <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>}
+      {!progress && loading && <LoadingSkeleton />}
 
       {noData && (
         <EmptyState

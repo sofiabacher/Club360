@@ -3,7 +3,6 @@ import { Link as RouterLink, useParams } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import CircularProgress from '@mui/material/CircularProgress'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
@@ -15,6 +14,7 @@ import { getMemberReceipt } from '../../api/members.api.js'
 import MemberCard from '../../components/members/MemberCard.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { formatDate } from '../../utils/format.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Comprobante imprimible del alta: carnet, instrucciones de primer ingreso y, si es menor, el código de vínculo.
 // Al imprimir se esconden el menú, la barra superior (DashboardLayout) y los botones.
@@ -33,9 +33,7 @@ export default function MemberReceiptPage() {
 
   if (!receipt) {
     return (
-      <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
-        <CircularProgress color="secondary" />
-      </Box>
+      <LoadingSkeleton />
     )
   }
 

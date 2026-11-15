@@ -3,7 +3,6 @@ import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
-import CircularProgress from '@mui/material/CircularProgress'
 import Divider from '@mui/material/Divider'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import InputAdornment from '@mui/material/InputAdornment'
@@ -16,6 +15,7 @@ import Typography from '@mui/material/Typography'
 import { getClubSports, updateClubSport } from '../../api/clubs.api.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { formatMoney } from '../../utils/format.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Borrador de cada fila: lo que se está editando antes de guardar
 const toDraft = (sport) => ({ isActive: sport.isActive, priceFee: sport.priceFee === null ? '' : String(sport.priceFee) })
@@ -100,9 +100,7 @@ export default function ClubSportsPage() {
 
   if (!sports) {
     return (
-      <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
-        <CircularProgress color="secondary" />
-      </Box>
+      <LoadingSkeleton />
     )
   }
 

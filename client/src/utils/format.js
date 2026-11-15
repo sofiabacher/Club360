@@ -16,6 +16,11 @@ export function formatMoney(value) {
   return moneyFormat.format(value)
 }
 
+// Tamaño de un archivo: 52000 → '51 KB', 2400000 → '2,3 MB'
+export function formatFileSize(bytes) {
+  return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} MB`
+}
+
 // Link de WhatsApp a partir de un número argentino como '11 5000-0000' → 'https://wa.me/5491150000000'.
 // Se sacan los símbolos y el 0 del código de área; si ya trae el 54 (o el 549), no se repite.
 export function getWhatsAppUrl(number) {

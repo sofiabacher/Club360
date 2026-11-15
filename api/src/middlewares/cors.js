@@ -1,6 +1,7 @@
-const { cors } = require('../config')
+const { app, cors } = require('../config')
 
-const allowedOrigins = [...new Set([cors.origin, 'http://localhost:5173'])]
+// FRONTEND_URL siempre; el Vite local (localhost:5173) solo en desarrollo
+const allowedOrigins = [...new Set([cors.origin, ...(app.isDev ? ['http://localhost:5173'] : [])])]
 
 module.exports = (req, res, next) => {
     const origin = req.headers.origin

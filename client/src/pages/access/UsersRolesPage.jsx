@@ -5,10 +5,9 @@ import Card from '@mui/material/Card'
 import CardActionArea from '@mui/material/CardActionArea'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import InputAdornment from '@mui/material/InputAdornment'
-import Pagination from '@mui/material/Pagination'
 import Paper from '@mui/material/Paper'
+import Pagination from '@mui/material/Pagination'
 import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
@@ -28,6 +27,9 @@ import UserAccessDrawer from '../../components/access/UserAccessDrawer.jsx'
 import StatusChip from '../../components/common/StatusChip.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { USER_STATES } from '../../utils/constants.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import EmptyState from '../../components/common/EmptyState.jsx'
+import ManageAccountsRounded from '@mui/icons-material/ManageAccountsRounded'
 
 // Estado del usuario en StatusChip (los DELETED no llegan a esta lista)
 const USER_STATE_CHIPS = {
@@ -125,15 +127,11 @@ export default function UsersRolesPage() {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       {!result && loading && (
-        <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
-          <CircularProgress color="secondary" />
-        </Box>
+        <LoadingSkeleton />
       )}
 
       {result && users.length === 0 && (
-        <Paper variant="outlined" sx={{ p: 4, textAlign: 'center', color: 'text.secondary' }}>
-          {query.search ? `No encontramos usuarios para "${query.search}".` : 'Todavía no hay usuarios en el club.'}
-        </Paper>
+        <EmptyState icon={ManageAccountsRounded} title="Sin usuarios" description={query.search ? `No encontramos usuarios para "${query.search}".` : 'Todavía no hay usuarios en el club.'} />
       )}
 
       {users.length > 0 && (isDesktop ? (

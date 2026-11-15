@@ -6,7 +6,6 @@ import Card from '@mui/material/Card'
 import CardActions from '@mui/material/CardActions'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -25,6 +24,7 @@ import { deleteRole, getPermissions, getRoles } from '../../api/access.api.js'
 import RoleFormDialog from '../../components/access/RoleFormDialog.jsx'
 import useAuth from '../../hooks/useAuth.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 const plural = (count, singular, pluralForm) => `${count} ${count === 1 ? singular : pluralForm}`
 
@@ -120,9 +120,7 @@ export default function RolesPage() {
 
   if (!roles) {
     return (
-      <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
-        <CircularProgress color="secondary" />
-      </Box>
+      <LoadingSkeleton />
     )
   }
 

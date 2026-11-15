@@ -5,7 +5,6 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
 import Collapse from '@mui/material/Collapse'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
@@ -34,6 +33,7 @@ import StatusChip from '../../components/common/StatusChip.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { saveBlob } from '../../utils/download.js'
 import { formatDateTimeLong } from '../../utils/format.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 const hasErrors = (table) => table.errors.length > 0 || !table.dvvOk
 
@@ -134,7 +134,7 @@ export default function IntegrityPage() {
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      {!report && verifying && <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>}
+      {!report && verifying && <LoadingSkeleton />}
 
       {report && (
         <Stack spacing={3} sx={{ opacity: verifying ? 0.6 : 1 }}>

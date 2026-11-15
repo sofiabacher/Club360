@@ -4,7 +4,6 @@ import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
 import Grid from '@mui/material/Grid'
 import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
@@ -24,6 +23,7 @@ import AccentStripe from '../../components/common/AccentStripe.jsx'
 import CourtBackground from '../../components/common/CourtBackground.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { formatMoney, getWhatsAppUrl } from '../../utils/format.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Encabezado de la página: versión baja de CourtBackground con el nombre del club y su franja de acento
 function ClubHeader({ name, accentColor }) {
@@ -82,9 +82,7 @@ export default function ClubInfoPage() {
 
   if (!info) {
     return (
-      <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
-        <CircularProgress color="secondary" />
-      </Box>
+      <LoadingSkeleton />
     )
   }
 

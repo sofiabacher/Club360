@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 
 import PermissionRoute from './PermissionRoute.jsx'
 import PublicRoute from './PublicRoute.jsx'
@@ -13,6 +13,7 @@ import SelectRolePage from '../pages/auth/SelectRolePage.jsx'
 import HomePage from '../pages/HomePage.jsx'
 import AccountPage from '../pages/account/AccountPage.jsx'
 import ComingSoonPage from '../pages/ComingSoonPage.jsx'
+import NotFoundPage from '../pages/NotFoundPage.jsx'
 import RolesPage from '../pages/access/RolesPage.jsx'
 import UsersRolesPage from '../pages/access/UsersRolesPage.jsx'
 import ClubInfoPage from '../pages/clubs/ClubInfoPage.jsx'
@@ -173,9 +174,10 @@ export default function AppRouter() {
             />
           )
         })}
-      </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Una dirección que no existe: sin sesión, el PermissionRoute del layout manda al login */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
     </Routes>
   )
 }

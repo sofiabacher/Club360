@@ -6,7 +6,6 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -36,6 +35,7 @@ import StaffStatusChip from '../../components/staff/StaffStatusChip.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { USER_STATES } from '../../utils/constants.js'
 import { formatDate } from '../../utils/format.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Aviso después de reactivar: si volvió sin haber activado nunca su cuenta, se le manda una activación nueva
 function reactivatedNotice({ activation }) {
@@ -175,9 +175,7 @@ export default function StaffDetailPage() {
 
   if (!staff) {
     return (
-      <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
-        <CircularProgress color="secondary" />
-      </Box>
+      <LoadingSkeleton />
     )
   }
 

@@ -3,7 +3,6 @@ import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import MenuItem from '@mui/material/MenuItem'
 import Pagination from '@mui/material/Pagination'
@@ -22,6 +21,7 @@ import { getGamesHistory } from '../../api/games.api.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { CITATION_STATES, GAME_STATES } from '../../utils/constants.js'
 import { formatGameDate } from '../../utils/format.js'
+import LoadingSkeleton from '../common/LoadingSkeleton.jsx'
 
 // Chip de la citación de la jugadora en un partido ya pasado. Sin citación, "No citada"
 function citationChip(citation) {
@@ -127,7 +127,7 @@ export default function GameHistory({ kind, memberId }) {
   const setFilter = (field) => (value) => setFilters((current) => ({ ...current, [field]: value, page: 1 }))
 
   if (error && !data) return <Alert severity="error">{error}</Alert>
-  if (!data) return <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>
+  if (!data) return <LoadingSkeleton />
 
   if (data.categories.length === 0) {
     return <EmptyState icon={HistoryRounded} title="Sin partidos jugados" description="Todavía no hay categorías con partidos." />

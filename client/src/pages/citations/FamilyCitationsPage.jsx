@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
-import CircularProgress from '@mui/material/CircularProgress'
 import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
@@ -11,6 +10,7 @@ import { getLinkedCitations } from '../../api/citations.api.js'
 import CitationSections from '../../components/citations/CitationSections.jsx'
 import EmptyState from '../../components/common/EmptyState.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Citaciones de las jugadoras vinculadas al adulto (citations.viewLinked), de solo lectura: la citación la responde
 // siempre la jugadora. Con más de una jugadora, un selector arriba
@@ -33,7 +33,7 @@ export default function FamilyCitationsPage() {
   if (error) return <Alert severity="error">{error}</Alert>
 
   if (!players) {
-    return <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>
+    return <LoadingSkeleton />
   }
 
   if (players.length === 0) {

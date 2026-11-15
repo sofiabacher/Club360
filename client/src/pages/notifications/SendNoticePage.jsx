@@ -7,7 +7,6 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Checkbox from '@mui/material/Checkbox'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -29,6 +28,7 @@ import ManageHistoryRounded from '@mui/icons-material/ManageHistoryRounded'
 
 import { getSendOptions, previewNotice, sendNotice } from '../../api/notifications.api.js'
 import { getErrorMessage, getFieldErrors } from '../../utils/apiErrors.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 const TITLE_MAX = 150
 const MESSAGE_MAX = 2000
@@ -162,9 +162,7 @@ export default function SendNoticePage() {
 
   if (!options) {
     return (
-      <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
-        <CircularProgress color="secondary" />
-      </Box>
+      <LoadingSkeleton />
     )
   }
 

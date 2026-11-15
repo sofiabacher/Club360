@@ -6,7 +6,6 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -37,11 +36,10 @@ import useAuth from '../../hooks/useAuth.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { BACKUP_TYPE_LABELS, TABLE_LABELS } from '../../utils/constants.js'
 import { saveBlob } from '../../utils/download.js'
-import { formatDateTimeLong } from '../../utils/format.js'
+import { formatDateTimeLong, formatFileSize } from '../../utils/format.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024   // 20 MB
-
-const formatSize = (bytes) => (bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} MB`)
 
 const TypeChip = ({ type }) => <Chip label={BACKUP_TYPE_LABELS[type] ?? 'Desconocido'} size="small" variant="outlined" color={type === 'MANUAL' ? 'secondary' : 'default'} />
 
@@ -70,7 +68,7 @@ function RestoreDialog({ target, onClose, onRestored }) {
       <DialogTitle>¿Restaurar este backup?</DialogTitle>
       <DialogContent>
         {target.file ? (
-          <Typography sx={{ mb: 1 }}>Archivo subido: <strong>{target.file.name}</strong> ({formatSize(target.file.size)}). Antes de restaurar se valida que sea de este club y que no esté modificado.</Typography>
+          <Typography sx={{ mb: 1 }}>Archivo subido: <strong>{target.file.name}</strong> ({formatFileSize(target.file.size)}). Antes de restaurar se valida que sea de este club y que no esté modificado.</Typography>
         ) : (
           <>
             <Stack direction="row" sx={{ gap: 1, alignItems: 'center', flexWrap: 'wrap', mb: 1 }}>
@@ -206,7 +204,7 @@ export default function BackupPage() {
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      {!items && !error && <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>}
+      {!items && !error && <LoadingSkeleton />}
 
       {items && items.length === 0 && (
         <EmptyState icon={BackupRounded} title="Sin backups" description="Todavía no hay backups guardados en el servidor." />
@@ -230,7 +228,7 @@ export default function BackupPage() {
                 <TableRow key={backup.fileName} hover>
                   <TableCell>{formatDateTimeLong(backup.createdAt)}</TableCell>
                   <TableCell><TypeChip type={backup.type} /></TableCell>
-                  <TableCell align="right">{formatSize(backup.size)}</TableCell>
+                  <TableCell align="right">{formatFileSize(backup.size)}</TableCell>
                   <TableCell align="right">{backup.totalRows ?? '—'}</TableCell>
                   <TableCell>{createdByText(backup)}</TableCell>
                   <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
@@ -252,7 +250,7 @@ export default function BackupPage() {
                   <TypeChip type={backup.type} />
                 </Stack>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {formatSize(backup.size)} · {backup.totalRows ?? '—'} filas · {createdByText(backup)}
+                  {formatFileSize(backup.size)} · {backup.totalRows ?? '—'} filas · {createdByText(backup)}
                 </Typography>
               </CardContent>
               <Divider />

@@ -67,8 +67,6 @@ function cloudinaryRefOf(url) {
     return { resourceType, type, publicId, extension: path.extname(file).toLowerCase() }
 }
 
-const isCloudinaryUrl = (url) => cloudinaryRefOf(url) !== null
-
 // Borra un archivo subido a partir de lo que se guardó en la base, esté donde esté:
 //   - ruta local (/uploads/...): del disco, solo dentro de uploads/; si ya no existe, no hace nada;
 //   - URL de Cloudinary: con uploader.destroy.
@@ -147,7 +145,6 @@ module.exports = {
     isPrivateUploadPath,
     resolveUploadPath,
     cloudinaryRefOf,
-    isCloudinaryUrl,
     deleteUpload,
     discardUploadedFile,
     downloadPrivateFile

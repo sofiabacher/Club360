@@ -4,7 +4,6 @@ import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import Divider from '@mui/material/Divider'
 import Grid from '@mui/material/Grid'
 import Stack from '@mui/material/Stack'
@@ -15,6 +14,7 @@ import { getMyCategories } from '../../api/leagues.api.js'
 import EmptyState from '../../components/common/EmptyState.jsx'
 import PlayerStatusChips from '../../components/leagues/PlayerStatusChips.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Categorías asignadas a la Entrenadora o la Preparadora física logueada, con sus jugadoras y el resto del staff.
 // Pantalla de leagues.viewAssigned
@@ -32,9 +32,7 @@ export default function MyCategoriesPage() {
 
   if (!data) {
     return (
-      <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
-        <CircularProgress color="secondary" />
-      </Box>
+      <LoadingSkeleton />
     )
   }
 

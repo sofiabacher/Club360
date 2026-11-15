@@ -7,11 +7,10 @@ import Card from '@mui/material/Card'
 import CardActionArea from '@mui/material/CardActionArea'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import InputAdornment from '@mui/material/InputAdornment'
+import Paper from '@mui/material/Paper'
 import MenuItem from '@mui/material/MenuItem'
 import Pagination from '@mui/material/Pagination'
-import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
@@ -29,6 +28,9 @@ import SearchRounded from '@mui/icons-material/SearchRounded'
 import { getStaffList, getStaffOptions } from '../../api/staff.api.js'
 import StaffStatusChip from '../../components/staff/StaffStatusChip.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import EmptyState from '../../components/common/EmptyState.jsx'
+import BadgeRounded from '@mui/icons-material/BadgeRounded'
 
 const STATE_OPTIONS = [
   { value: '', label: 'Todos' },
@@ -119,11 +121,11 @@ export default function StaffPage() {
           }}
         />
         <Stack direction="row" spacing={2}>
-          <TextField select label="Rol" value={query.role} onChange={setFilter('role')} size="small" sx={{ minWidth: 170, flexGrow: 1 }}>
+          <TextField select label="Rol" value={query.role} onChange={setFilter('role')} size="small" sx={{ minWidth: { xs: 0, sm: 170 }, flex: 1 }}>
             <MenuItem value="">Todos</MenuItem>
             {roleOptions.map((role) => <MenuItem key={role} value={role}>{role}</MenuItem>)}
           </TextField>
-          <TextField select label="Estado" value={query.state} onChange={setFilter('state')} size="small" sx={{ minWidth: 200, flexGrow: 1 }}>
+          <TextField select label="Estado" value={query.state} onChange={setFilter('state')} size="small" sx={{ minWidth: { xs: 0, sm: 200 }, flex: 1 }}>
             {STATE_OPTIONS.map((option) => <MenuItem key={option.label} value={option.value}>{option.label}</MenuItem>)}
           </TextField>
         </Stack>
@@ -132,15 +134,11 @@ export default function StaffPage() {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       {!result && loading && (
-        <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
-          <CircularProgress color="secondary" />
-        </Box>
+        <LoadingSkeleton />
       )}
 
       {result && people.length === 0 && (
-        <Paper variant="outlined" sx={{ p: 4, textAlign: 'center', color: 'text.secondary' }}>
-          {filtered ? 'No encontramos a nadie con esa búsqueda.' : 'Todavía no hay staff. Empezá con "Nuevo integrante del staff".'}
-        </Paper>
+        <EmptyState icon={BadgeRounded} title="Sin staff" description={filtered ? 'No encontramos a nadie con esa búsqueda.' : 'Todavía no hay staff. Empezá con "Nuevo integrante del staff".'} />
       )}
 
       {people.length > 0 && (isDesktop ? (

@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import CircularProgress from '@mui/material/CircularProgress'
 import Divider from '@mui/material/Divider'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
@@ -19,6 +18,7 @@ import { getPaymentVoucher } from '../../api/fees.api.js'
 import AccentStripe from '../../components/common/AccentStripe.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { formatDateTimeLong, formatMoney, formatPeriod } from '../../utils/format.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Al imprimir, los fondos de color se mantienen (el navegador los saca por defecto)
 const keepColors = { printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }
@@ -64,7 +64,7 @@ export default function PaymentVoucherPage() {
   }
 
   if (!voucher) {
-    return <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>
+    return <LoadingSkeleton />
   }
 
   return (

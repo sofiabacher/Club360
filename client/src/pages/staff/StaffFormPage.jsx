@@ -6,7 +6,6 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -22,6 +21,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import { createStaff, getStaff, getStaffOptions, updateStaff } from '../../api/staff.api.js'
 import StaffRolesPicker from '../../components/staff/StaffRolesPicker.jsx'
 import { getErrorMessage, getFieldErrors } from '../../utils/apiErrors.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 const emptyForm = { name: '', lastName: '', dni: '', birthDate: null, email: '', phone: '', username: '', roles: [], clubSportId: '' }
 
@@ -160,9 +160,7 @@ export default function StaffFormPage() {
 
   if (!options) {
     return (
-      <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
-        <CircularProgress color="secondary" />
-      </Box>
+      <LoadingSkeleton />
     )
   }
 

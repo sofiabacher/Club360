@@ -5,7 +5,6 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -29,6 +28,7 @@ import StatusChip from '../../components/common/StatusChip.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { INSCRIPTION_STATES, MEMBER_STATES } from '../../utils/constants.js'
 import { formatDate } from '../../utils/format.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 const TABS = { PENDING: String(INSCRIPTION_STATES.PENDING), HISTORY: 'history' }
 
@@ -200,9 +200,7 @@ export default function InscriptionsPage() {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       {!result && loading && (
-        <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
-          <CircularProgress color="secondary" />
-        </Box>
+        <LoadingSkeleton />
       )}
 
       {result && items.length === 0 && (

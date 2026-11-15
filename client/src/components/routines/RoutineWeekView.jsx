@@ -72,7 +72,7 @@ export function DayPills({ days, today, selectedDay, onSelect, size = 'medium', 
                   fontWeight: 700,
                   lineHeight: 1,
                   bgcolor: theme.status[logInfo.status].fg,
-                  color: '#FFFFFF',
+                  color: 'common.white',
                   border: 2,
                   borderColor: 'background.paper'
                 })}

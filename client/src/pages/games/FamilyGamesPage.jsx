@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
-import CircularProgress from '@mui/material/CircularProgress'
 import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
@@ -13,6 +12,7 @@ import GameHistory from '../../components/games/GameHistory.jsx'
 import GamesTabs, { useGamesTab } from '../../components/games/GamesTabs.jsx'
 import PlayerGamesList from '../../components/games/PlayerGamesList.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 const TABS = [{ value: 'proximos', label: 'Próximos' }, { value: 'jugados', label: 'Jugados' }]
 
@@ -36,7 +36,7 @@ export default function FamilyGamesPage() {
   if (error) return <Alert severity="error">{error}</Alert>
 
   if (!players) {
-    return <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>
+    return <LoadingSkeleton />
   }
 
   if (players.length === 0) {

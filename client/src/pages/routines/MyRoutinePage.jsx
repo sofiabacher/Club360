@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
-import CircularProgress from '@mui/material/CircularProgress'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
@@ -12,6 +11,7 @@ import EmptyState from '../../components/common/EmptyState.jsx'
 import RoutineLogPanel from '../../components/routines/RoutineLogPanel.jsx'
 import RoutineWeekView, { RoutineDayCard, defaultDayOf } from '../../components/routines/RoutineWeekView.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Mi rutina (routines.viewOwn): la semana actual con el día de hoy elegido. Si está en más de una categoría, una
 // pestaña por categoría con el nombre de la liga. Se puede ir a semanas pasadas y futuras. Con routines.trackOwn, debajo
@@ -38,7 +38,7 @@ export default function MyRoutinePage() {
   }, [weekStart])
 
   if (error && !data) return <Alert severity="error">{error}</Alert>
-  if (!data) return <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>
+  if (!data) return <LoadingSkeleton />
 
   const header = (
     <Box sx={{ mb: 3 }}>

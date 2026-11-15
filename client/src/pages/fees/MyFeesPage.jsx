@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
-import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
 
 import { getMyFees } from '../../api/fees.api.js'
@@ -9,6 +8,7 @@ import FeeAccount from '../../components/fees/FeeAccount.jsx'
 import PayFeeDialog from '../../components/fees/PayFeeDialog.jsx'
 import useAuth from '../../hooks/useAuth.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Mis cuotas (fees.viewOwn): estado de cuenta del socio logueado. Pagar solo con fees.payOwn (mayores); los menores ven
 // que el pago lo hace su adulto responsable
@@ -37,7 +37,7 @@ export default function MyFeesPage() {
   if (error) return <Alert severity="error">{error}</Alert>
 
   if (!account) {
-    return <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>
+    return <LoadingSkeleton />
   }
 
   return (

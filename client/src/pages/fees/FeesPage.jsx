@@ -6,16 +6,15 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardActionArea from '@mui/material/CardActionArea'
 import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import InputAdornment from '@mui/material/InputAdornment'
+import Paper from '@mui/material/Paper'
 import MenuItem from '@mui/material/MenuItem'
 import Pagination from '@mui/material/Pagination'
-import Paper from '@mui/material/Paper'
 import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
@@ -38,6 +37,9 @@ import RegisterPaymentDialog from '../../components/fees/RegisterPaymentDialog.j
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { FEE_STATES } from '../../utils/constants.js'
 import { formatDayMonth, formatMoney, formatPeriod } from '../../utils/format.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import EmptyState from '../../components/common/EmptyState.jsx'
+import PaymentsRounded from '@mui/icons-material/PaymentsRounded'
 
 const STATE_OPTIONS = [
   { value: '', label: 'Todos' },
@@ -156,7 +158,7 @@ export default function FeesPage() {
             Ver historial de pagos{result?.pendingReview ? ` · ${result.pendingReview} ${result.pendingReview === 1 ? 'transferencia' : 'transferencias'} por revisar` : ''}
           </Button>
         </Box>
-        <Stack direction="row" sx={{ gap: 2, alignItems: 'center' }}>
+        <Stack direction="row" sx={{ gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
           <TextField
             type="month"
             label="Período"
@@ -166,7 +168,7 @@ export default function FeesPage() {
             sx={{ minWidth: 170, flexGrow: { xs: 1, sm: 0 } }}
             slotProps={{ inputLabel: { shrink: true }, htmlInput: { max: currentPeriod() } }}
           />
-          <Button variant="contained" color="primary" onClick={() => setConfirmGenerate(true)} disabled={isFuture} sx={{ flexShrink: 0 }}>
+          <Button variant="contained" color="primary" onClick={() => setConfirmGenerate(true)} disabled={isFuture} sx={{ flexShrink: 0, flexGrow: { xs: 1, sm: 0 } }}>
             Generar cuotas de {month.split(' ')[0].toLowerCase()}
           </Button>
         </Stack>
@@ -198,13 +200,11 @@ export default function FeesPage() {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       {!result && loading && (
-        <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>
+        <LoadingSkeleton />
       )}
 
       {result && fees.length === 0 && (
-        <Paper variant="outlined" sx={{ p: 4, textAlign: 'center', color: 'text.secondary' }}>
-          {query.search || query.state ? 'No encontramos cuotas con esa búsqueda.' : `Todavía no hay cuotas de ${month.toLowerCase()}.`}
-        </Paper>
+        <EmptyState icon={PaymentsRounded} title="Sin cuotas" description={query.search || query.state ? 'No encontramos cuotas con esa búsqueda.' : `Todavía no hay cuotas de ${month.toLowerCase()}.`} />
       )}
 
       {fees.length > 0 && (isDesktop ? (

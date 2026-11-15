@@ -3,7 +3,6 @@ import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
 import InputAdornment from '@mui/material/InputAdornment'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
@@ -17,6 +16,7 @@ import EmptyState from '../../components/common/EmptyState.jsx'
 import StatusChip from '../../components/common/StatusChip.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { MEMBER_STATES } from '../../utils/constants.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 const STATUS_CHIPS = {
   ok: { status: 'ok', label: 'Al día' },
@@ -86,7 +86,7 @@ export default function PlayersFeesPage() {
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      {!result && loading && <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>}
+      {!result && loading && <LoadingSkeleton />}
 
       {result && players.length === 0 && (
         query.search || query.status

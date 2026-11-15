@@ -6,7 +6,6 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardActionArea from '@mui/material/CardActionArea'
 import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
 import MenuItem from '@mui/material/MenuItem'
 import Pagination from '@mui/material/Pagination'
 import Stack from '@mui/material/Stack'
@@ -20,6 +19,7 @@ import EmptyState from '../../components/common/EmptyState.jsx'
 import SentNoticeDrawer, { ReadProgress } from '../../components/notifications/SentNoticeDrawer.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { formatDateTimeLong } from '../../utils/format.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Historial de avisos enviados: una tarjeta por envío con cuántos lo leyeron. El Admin (notifications.sendAll) ve todos
 // los del club, con un filtro por remitente; el resto, solo los suyos. Tocar una tarjeta abre el detalle.
@@ -82,9 +82,7 @@ export default function SentNoticesPage() {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       {!result && loading && (
-        <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
-          <CircularProgress color="secondary" />
-        </Box>
+        <LoadingSkeleton />
       )}
 
       {result && items.length === 0 && (

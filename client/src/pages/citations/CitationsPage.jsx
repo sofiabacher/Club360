@@ -6,7 +6,6 @@ import Card from '@mui/material/Card'
 import CardActionArea from '@mui/material/CardActionArea'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import AssignmentIndRounded from '@mui/icons-material/AssignmentIndRounded'
@@ -19,6 +18,7 @@ import { HomeChip } from '../../components/games/GameChips.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { CITATION_MIN_HOURS, CITATION_WINDOW_OPEN_DAYS } from '../../utils/constants.js'
 import { formatGameDate, formatShortDateTime } from '../../utils/format.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Chip de la ventana para citar: todavía no abrió (con la fecha) o ya cerró. Abierta, sin chip
 function WindowChip({ game }) {
@@ -44,7 +44,7 @@ export default function CitationsPage() {
   if (error) return <Alert severity="error">{error}</Alert>
 
   if (!games) {
-    return <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>
+    return <LoadingSkeleton />
   }
 
   return (

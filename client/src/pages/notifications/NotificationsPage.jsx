@@ -4,7 +4,6 @@ import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
-import CircularProgress from '@mui/material/CircularProgress'
 import Divider from '@mui/material/Divider'
 import List from '@mui/material/List'
 import Pagination from '@mui/material/Pagination'
@@ -22,6 +21,7 @@ import NotificationItem from '../../components/notifications/NotificationItem.js
 import useAuth from '../../hooks/useAuth.js'
 import useOpenNotification, { NOTIFICATIONS_CHANGED, emitNotificationsChanged } from '../../hooks/useOpenNotification.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 const TABS = { ALL: 'all', UNREAD: 'unread' }
 
@@ -103,9 +103,7 @@ export default function NotificationsPage() {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       {!result && loading && (
-        <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
-          <CircularProgress color="secondary" />
-        </Box>
+        <LoadingSkeleton />
       )}
 
       {result && items.length === 0 && (

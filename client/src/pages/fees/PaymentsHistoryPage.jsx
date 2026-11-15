@@ -8,7 +8,6 @@ import Card from '@mui/material/Card'
 import CardActionArea from '@mui/material/CardActionArea'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import Divider from '@mui/material/Divider'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
@@ -45,6 +44,7 @@ import { PAYMENT_CHIPS, PAYMENT_METHOD_LABELS } from '../../components/fees/paym
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { PAYMENT_METHODS, TRANSACTION_STATES } from '../../utils/constants.js'
 import { formatDate, formatMoney, formatPeriod, formatShortDateTime } from '../../utils/format.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 const TABS = { REVIEW: 'review', ALL: 'all' }
 
@@ -306,7 +306,7 @@ export default function PaymentsHistoryPage() {
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      {!result && loading && <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>}
+      {!result && loading && <LoadingSkeleton />}
 
       {result && payments.length === 0 && (
         hasFilters

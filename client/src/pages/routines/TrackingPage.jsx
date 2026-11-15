@@ -5,7 +5,6 @@ import ButtonBase from '@mui/material/ButtonBase'
 import Card from '@mui/material/Card'
 import CardActionArea from '@mui/material/CardActionArea'
 import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
@@ -33,6 +32,7 @@ import { getErrorMessage } from '../../utils/apiErrors.js'
 import { DAYS_OF_WEEK } from '../../utils/constants.js'
 import { formatDayMonth } from '../../utils/format.js'
 import { LOG_STATUS_INFO, effortText, percentText } from '../../utils/tracking.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 const dayShort = (dayOfWeek) => DAYS_OF_WEEK.find((day) => day.value === dayOfWeek)?.short ?? ''
 
@@ -103,7 +103,7 @@ function MemberDrawer({ memberId, name, onClose }) {
         <PeriodSelector value={weeks} onChange={setWeeks} />
 
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
-        {!data && !error && <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>}
+        {!data && !error && <LoadingSkeleton />}
 
         {data && (
           <Stack spacing={3} sx={{ mt: 2 }}>
@@ -150,7 +150,7 @@ export default function TrackingPage() {
   )
 
   if (error && !data) return <>{header}<Alert severity="error">{error}</Alert></>
-  if (!data) return <>{header}<Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box></>
+  if (!data) return <>{header}<LoadingSkeleton /></>
 
   if (data.categories.length === 0) {
     return <>{header}<EmptyState icon={InsightsRounded} title="Sin categorías" description="Todavía no tenés categorías asignadas." /></>

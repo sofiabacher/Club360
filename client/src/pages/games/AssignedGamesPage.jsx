@@ -4,7 +4,6 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -33,6 +32,7 @@ import usePermission from '../../hooks/usePermission.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { formatDayHeader } from '../../utils/format.js'
 import { gameSummary } from '../../utils/games.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Pestañas (la elegida va en la URL: ?tab=jugados o ?tab=conflictos)
 const TABS = { GAMES: 'proximos', HISTORY: 'jugados', CONFLICTS: 'conflictos' }
@@ -130,7 +130,7 @@ export default function AssignedGamesPage() {
             </Grid>
           )}
           {!games && !error && (
-            <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>
+            <LoadingSkeleton />
           )}
           {games && games.length === 0 && (
             <EmptyState icon={EventRounded} title="Sin partidos" description="No hay partidos próximos en tus categorías." />
@@ -155,7 +155,7 @@ export default function AssignedGamesPage() {
       {tab === TABS.CONFLICTS && (
         <>
           {!conflictData && !error && (
-            <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>
+            <LoadingSkeleton />
           )}
           {conflictData && conflictData.conflicts.length === 0 && (
             <EmptyState icon={EventAvailableRounded} title="Sin conflictos" description="No hay conflictos de horario en tus categorías." />

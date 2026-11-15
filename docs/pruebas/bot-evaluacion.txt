@@ -1,7 +1,7 @@
 EVALUACIÓN DEL BOT DE CONSULTAS (P21)
 ======================================================================
 
-Fecha: 15/11/2026 15:50 (hora de Argentina). Generado con npm run bot:eval.
+Fecha: 15/11/2026 18:19 (hora de Argentina). Generado con npm run bot:eval.
 Umbrales: BOT_THRESHOLD = 0.45 (responde), BOT_SUGGEST_THRESHOLD = 0.25 (sugiere) y BOT_AMBIGUITY_MARGIN = 0.1 (una palabra ambigua).
 Conocimiento: 33 intenciones, 552 patrones.
 Set de prueba: 175 preguntas (160 de intenciones y 15 fuera de tema), distintas de los patrones.
@@ -99,3 +99,4 @@ HISTORIAL DE CORRIDAS
 ----------------------------------------------------------------------
 - 15/11/2026 15:43 · umbrales 0.5 / 0.25 · precisión 78,3 % (137/175) · top-1 76,6 % · fuera de tema sin respuesta 7/15
 - 15/11/2026 15:50 · umbrales 0.45 / 0.25 · precisión 92,0 % (161/175) · top-1 88,0 % · fuera de tema sin respuesta 15/15
+- 15/11/2026 18:19 · umbrales 0.45 / 0.25 · precisión 92,0 % (161/175) · top-1 88,0 % · fuera de tema sin respuesta 15/15

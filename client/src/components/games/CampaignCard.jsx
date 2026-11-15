@@ -29,7 +29,7 @@ export function StreakDots({ streak, size = 26 }) {
             fontSize: size * 0.48,
             fontWeight: 700,
             bgcolor: item === 'W' ? theme.status.ok.fg : theme.status.overdue.fg,
-            color: '#FFFFFF'
+            color: 'common.white'
           })}
         >
           {item === 'W' ? 'G' : 'P'}

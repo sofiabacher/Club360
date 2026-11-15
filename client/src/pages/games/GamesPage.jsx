@@ -5,7 +5,6 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -32,6 +31,7 @@ import GameResultForm from '../../components/games/GameResultForm.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { GAME_STATES } from '../../utils/constants.js'
 import { formatDayHeader } from '../../utils/format.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Filtro de los Jugados sin resultado (no es un estado: se manda como withoutResult)
 const NO_RESULT = 'noResult'
@@ -183,9 +183,7 @@ export default function GamesPage() {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       {!result && loading && (
-        <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
-          <CircularProgress color="secondary" />
-        </Box>
+        <LoadingSkeleton />
       )}
 
       {result && games.length === 0 && (

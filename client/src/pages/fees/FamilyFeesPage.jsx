@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
-import CircularProgress from '@mui/material/CircularProgress'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
@@ -14,6 +13,7 @@ import EmptyState from '../../components/common/EmptyState.jsx'
 import FeeAccount from '../../components/fees/FeeAccount.jsx'
 import PayFeeDialog from '../../components/fees/PayFeeDialog.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 // Estado de cuenta de la Familia (fees.manageLinked): las cuotas de cada jugadora vinculada, con el pago simulado.
 // Con más de una jugadora, un selector. ?memberId= elige una al entrar (el botón "Pagar" del inicio)
@@ -43,7 +43,7 @@ export default function FamilyFeesPage() {
   if (error) return <Alert severity="error">{error}</Alert>
 
   if (!accounts) {
-    return <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}><CircularProgress color="secondary" /></Box>
+    return <LoadingSkeleton />
   }
 
   const account = accounts.find((item) => item.member.id === selectedId) ?? accounts[0]

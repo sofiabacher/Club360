@@ -4,7 +4,6 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
 import Grid from '@mui/material/Grid'
 import IconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
@@ -19,6 +18,7 @@ import { getClubSettings, updateClubSettings } from '../../api/clubs.api.js'
 import AccentStripe from '../../components/common/AccentStripe.jsx'
 import useAuth from '../../hooks/useAuth.js'
 import { getErrorMessage, getFieldErrors } from '../../utils/apiErrors.js'
+import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/
 
@@ -199,9 +199,7 @@ export default function ClubSettingsPage() {
 
   if (!form) {
     return (
-      <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
-        <CircularProgress color="secondary" />
-      </Box>
+      <LoadingSkeleton />
     )
   }
 
