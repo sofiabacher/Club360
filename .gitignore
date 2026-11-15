@@ -16,8 +16,9 @@ api/uploads/*
 api/backups/*
 !api/backups/.gitkeep
 
-# Bot de consultas (fuera del repo hasta decidir si entra en el trabajo)
-bot/
+# Bot de consultas: el servicio aparte que planteaba la guía original (Python) iba en una carpeta bot/ en la raíz, fuera
+# del repo. Desde el P21 el bot es el módulo api/src/modules/bot y el widget client/src/components/bot, que sí van al repo
+/bot/
 
 # Logs
 *.log

@@ -14,6 +14,7 @@ import { useTheme } from '@mui/material/styles'
 import MenuRounded from '@mui/icons-material/MenuRounded'
 
 import { getIntegrityStatus } from '../api/integrity.api.js'
+import ChatBot from '../components/bot/ChatBot.jsx'
 import Sidebar from '../components/layout/Sidebar.jsx'
 import NotificationBell from '../components/notifications/NotificationBell.jsx'
 import UserMenu from '../components/layout/UserMenu.jsx'
@@ -26,11 +27,12 @@ const DRAWER_WIDTH = 240
 // Layout de todas las pantallas con sesión: menú lateral Marino (fijo en escritorio, desplegable en el celular),
 // barra superior blanca con el título de la sección, la campana y el avatar, y el contenido sobre el fondo de trabajo.
 // Al imprimir (por ejemplo, el comprobante del alta de un socio) se esconden el menú y la barra: queda solo el contenido.
+// Con bot.use, el asistente de consultas (ChatBot): aparece y desaparece al cambiar de rol, y empieza de cero con cada rol.
 export default function DashboardLayout() {
   const theme = useTheme()
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'))
   const location = useLocation()
-  const { club, permissions } = useAuth()
+  const { club, permissions, activeRole } = useAuth()
   const { hasPermission } = usePermission()
 
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -116,6 +118,8 @@ export default function DashboardLayout() {
           </Box>
         </Box>
       </Box>
+
+      {hasPermission('bot.use') && <ChatBot key={activeRole?.id ?? 'sin-rol'} />}
 
       <Snackbar
         open={Boolean(error)}

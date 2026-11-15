@@ -9,6 +9,7 @@ const jobs = require('./jobs')
 const mailTransport = require('./config/mail')
 const config = require('./config')
 const { confirmTarget } = require('./utils/dbTarget')
+const { initBot } = require('./modules/bot/bot.service')
 
 const { app: appConfig } = config
 
@@ -37,6 +38,10 @@ function checkEnvironment() {
 async function start() {
     try {
         checkEnvironment()
+
+        // Conocimiento del bot: si no valida, el servidor no arranca (y dice qué falla)
+        const bot = initBot()
+        console.log(`Bot de consultas: ${bot.intents} intenciones, ${bot.patterns} patrones`)
 
         // En producción (Render) no se pueden activar. Desde una compu (NODE_ENV no es production) se pide confirmar la
         // base si no es local, antes de conectarse: así no se recrea la base de la demo (Railway) sin darse cuenta

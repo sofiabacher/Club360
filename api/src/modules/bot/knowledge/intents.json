@@ -1,0 +1,1171 @@
+{
+  "categories": [
+    {
+      "id": "empezar",
+      "order": 1,
+      "label": "Empezar"
+    },
+    {
+      "id": "cuotas",
+      "order": 2,
+      "label": "Cuotas y pagos"
+    },
+    {
+      "id": "deportes",
+      "order": 3,
+      "label": "Deportes"
+    },
+    {
+      "id": "partidos",
+      "order": 4,
+      "label": "Ligas y partidos"
+    },
+    {
+      "id": "citaciones",
+      "order": 5,
+      "label": "Citaciones"
+    },
+    {
+      "id": "rutinas",
+      "order": 6,
+      "label": "Rutinas y seguimiento"
+    },
+    {
+      "id": "notificaciones",
+      "order": 7,
+      "label": "Notificaciones"
+    },
+    {
+      "id": "familia",
+      "order": 8,
+      "label": "Familia"
+    },
+    {
+      "id": "club",
+      "order": 9,
+      "label": "El club"
+    }
+  ],
+  "screenPriority": {
+    "my-fees": "cuotas",
+    "family/fees": "cuotas",
+    "fees": "cuotas",
+    "my-games": "partidos",
+    "family/games": "partidos",
+    "my-citations": "citaciones",
+    "family/citations": "citaciones",
+    "my-routine": "rutinas",
+    "my-progress": "rutinas",
+    "my-sports": "deportes",
+    "notifications": "notificaciones",
+    "account": "empezar",
+    "club": "club",
+    "family": "familia"
+  },
+  "intents": [
+    {
+      "tag": "empezar_hacerme_socio",
+      "category": "empezar",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Cómo se hace socia otra persona?",
+      "patterns": [
+        "como se hace socia otra persona",
+        "quiero hacerme socio del club",
+        "mi hermana quiere ser socia",
+        "como se asocia alguien al club",
+        "como hago para asociar a un amigo",
+        "alta de un socio nuevo",
+        "como doy de alta a otra persona",
+        "donde me registro con el numero de socio",
+        "primer ingreso a la plataforma",
+        "cómo te hacés socio",
+        "registrarse con el número de socio",
+        "como se registra un socio nuevo",
+        "mi amiga se quiere asociar",
+        "hacerse socia",
+        "asociarse al club",
+        "quiero que mi prima sea socia",
+        "ya tengo el numero de socio que hago"
+      ],
+      "response": "Para hacerse socia, la persona se acerca al club: el Admin la da de alta y le entrega su número de socio. Con ese número y su fecha de nacimiento entra en \"Registrate con tu número de socio\", desde el inicio de sesión, y crea su usuario y su contraseña.",
+      "followUps": [
+        "empezar_codigo_vinculo"
+      ]
+    },
+    {
+      "tag": "empezar_codigo_vinculo",
+      "category": "empezar",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Qué es el código de vínculo familiar?",
+      "patterns": [
+        "que es el codigo de vinculo",
+        "codigo de vinculo familiar",
+        "donde encuentro el codigo de vinculo",
+        "como vinculo a mi hijo menor con el codigo",
+        "como me vinculo con mi hija",
+        "codigo para el adulto responsable",
+        "vincularme como familia",
+        "no encuentro el codigo de vinculacion",
+        "cómo uso el código de vínculo",
+        "mi papa se quiere vincular a mi cuenta",
+        "vincular la cuenta de un menor",
+        "codigo de vinclo",
+        "donde esta el codigo para mi mama",
+        "el código del comprobante de alta para qué sirve",
+        "como se vincula el adulto responsable",
+        "mi papa quiere vincularse a mi cuenta",
+        "mi abuela quiere ser mi adulto responsable"
+      ],
+      "response": "Cada socio menor tiene un código de un solo uso para su adulto responsable. Viene en el comprobante del alta y se ve en Mi cuenta del menor mientras no se usó. El adulto lo ingresa en \"Vincularme como Familia\", desde el inicio de sesión, o desde Mi cuenta si ya tiene usuario.",
+      "followUps": [
+        "familia_varios_hijos",
+        "empezar_mayoria_edad"
+      ]
+    },
+    {
+      "tag": "empezar_mayoria_edad",
+      "category": "empezar",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Qué cambia al cumplir 18?",
+      "patterns": [
+        "que pasa cuando cumplo 18",
+        "cumpli 18 años",
+        "mayoria de edad",
+        "ya soy mayor de edad",
+        "como me desvinculo de mi papa",
+        "desvincularme del adulto responsable",
+        "puedo pagar sola al cumplir 18",
+        "cuando cumpla dieciocho que cambia",
+        "quitar el vinculo familiar",
+        "ya tengo 18 puedo pagar yo",
+        "dejar de estar vinculada a mi mama",
+        "qué cambia al cumplir los 18",
+        "soy mayor y quiero desvincularme",
+        "desvincular a mi adulto",
+        "sacar a mi mama de mi cuenta"
+      ],
+      "response": "Al cumplir 18 se detecta solo, por tu fecha de nacimiento. Desde ese momento podés desvincularte de tu adulto responsable desde Mi cuenta (\"Desvincularme\") y pagar tus propias cuotas.",
+      "followUps": [
+        "cuotas_como_pagar"
+      ]
+    },
+    {
+      "tag": "cuenta_mis_datos",
+      "category": "empezar",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Cómo cambio mis datos?",
+      "patterns": [
+        "como cambio mi email",
+        "cambiar la contraseña",
+        "quiero cambiar mi foto de perfil",
+        "como modifico mis datos",
+        "cambiar mi telefono",
+        "mi nombre esta mal escrito",
+        "como cambio mi dni",
+        "editar mi perfil",
+        "donde actualizo mi mail",
+        "cambiar mi nombre de usuario",
+        "corregir mi fecha de nacimiento",
+        "modificar mis datos personales",
+        "cambiar la contrasena",
+        "actualizar mi numero de celular",
+        "cómo cambiás tu correo",
+        "modificar el correo de mi cuenta",
+        "poner una foto en mi perfil",
+        "poner otra contraseña",
+        "cargar una foto mia"
+      ],
+      "response": "En Mi cuenta (en el menú de tu usuario, arriba a la derecha) podés cambiar tu email, tu teléfono, tu foto y tu contraseña. El nombre, el apellido, el DNI, la fecha de nacimiento y el usuario los cambia el club: pedíselo en la secretaría.",
+      "followUps": [
+        "club_contacto"
+      ]
+    },
+    {
+      "tag": "cuotas_como_pagar",
+      "category": "cuotas",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Cómo pago la cuota?",
+      "patterns": [
+        "como pago la cuota",
+        "pagar la cuota",
+        "donde pago",
+        "quiero pagar la cuota del mes",
+        "como se paga la cuota",
+        "puedo pagar con tarjeta",
+        "formas de pago",
+        "medios de pago",
+        "como abono la cuota",
+        "puedo pagar en efectivo en el club",
+        "pagar la cuota de mi hija",
+        "como pago la cuota de mi hijo",
+        "cuotas",
+        "pagos",
+        "cómo pagás la cuota",
+        "pagar con tarjeta de credito",
+        "como pagar",
+        "pagar en persona en la secretaria"
+      ],
+      "response": "Desde Mis cuotas (si sos Familia, desde Estado de cuenta), con \"Pagar\": se paga el total, con tarjeta (es un pago simulado) o por transferencia. También podés pagar en la secretaría del club. Si la socia es menor, paga su adulto responsable.",
+      "followUps": [
+        "cuotas_transferencia",
+        "cuotas_comprobante",
+        "cuotas_vencimiento"
+      ]
+    },
+    {
+      "tag": "cuotas_transferencia",
+      "category": "cuotas",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Cómo pago por transferencia?",
+      "patterns": [
+        "como pago por transferencia",
+        "pagar con transferencia bancaria",
+        "cual es el cbu del club",
+        "alias del club para transferir",
+        "subir el comprobante de la transferencia",
+        "adjuntar el comprobante del banco",
+        "ya transferi y ahora que hago",
+        "datos bancarios del club",
+        "hice una transferencia",
+        "cuanto tarda en aprobarse la transferencia",
+        "trasferencia",
+        "puedo transferir la cuota",
+        "donde cargo el comprobante de la transferencia",
+        "transferencia en revision",
+        "me rechazaron la transferencia",
+        "cuenta bancaria del club para transferir"
+      ],
+      "response": "Al pagar, elegí \"Transferencia\": vas a ver los datos bancarios del club y el monto exacto. Transferí y adjuntá el comprobante (JPG, PNG o PDF). El club lo revisa y te avisa; mientras está en revisión, esa cuota no suma días de atraso.",
+      "followUps": [
+        "cuotas_comprobante"
+      ]
+    },
+    {
+      "tag": "cuotas_comprobante",
+      "category": "cuotas",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Dónde veo el comprobante de pago?",
+      "patterns": [
+        "comprobante de pago",
+        "donde esta el recibo",
+        "necesito el recibo de la cuota",
+        "como imprimo el comprobante",
+        "factura de la cuota",
+        "descargar el comprobante",
+        "constancia de pago",
+        "guardar el pago en pdf",
+        "me dan recibo cuando pago",
+        "recibo de pago de mi hija",
+        "imprimir el recibo",
+        "quiero el ticket del pago",
+        "comprobante",
+        "dónde está mi comprobante de pago",
+        "recivo de la cuota",
+        "bajar el comprobante en pdf"
+      ],
+      "response": "Todo pago aprobado tiene su comprobante de pago. Lo encontrás en Mis cuotas (o en Estado de cuenta, si sos Familia), en la lista de Pagos: tocá \"Ver comprobante de pago\" para imprimirlo o guardarlo en PDF.",
+      "followUps": [
+        "cuotas_como_pagar"
+      ]
+    },
+    {
+      "tag": "cuotas_vencimiento",
+      "category": "cuotas",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Cuándo vence la cuota?",
+      "patterns": [
+        "cuando vence la cuota",
+        "fecha de vencimiento de la cuota",
+        "hasta cuando puedo pagar",
+        "que dia se paga la cuota",
+        "cuando se genera la cuota",
+        "vencimiento de la cuota",
+        "de que se compone la cuota",
+        "que incluye la cuota",
+        "cuota social y cuota deportiva",
+        "por que pago dos cuotas",
+        "cuando vence",
+        "hasta que dia tengo para pagar",
+        "que es la cuota deportiva",
+        "cuándo vencen las cuotas",
+        "vensimiento",
+        "cuando llega la cuota del mes",
+        "fecha limite para pagar la cuota"
+      ],
+      "response": "La cuota de cada mes se genera el día 1 y vence el día 10. Incluye la cuota social y una cuota deportiva por cada deporte en el que estás inscripta. Los montos los fija el club.",
+      "followUps": [
+        "cuotas_atraso",
+        "cuotas_como_pagar"
+      ]
+    },
+    {
+      "tag": "cuotas_atraso",
+      "category": "cuotas",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Qué pasa si me atraso?",
+      "patterns": [
+        "que pasa si no pago",
+        "me atrase con la cuota",
+        "cuota vencida",
+        "mora",
+        "me suspendieron",
+        "estoy suspendida por deuda",
+        "que pasa si debo varias cuotas",
+        "pierdo la condicion de socia",
+        "atraso en el pago",
+        "puedo jugar si debo la cuota",
+        "como salgo de la suspension",
+        "cuantos dias de atraso antes de la suspension",
+        "no pague la cuota del mes pasado",
+        "suspencion",
+        "qué pasa si te atrasás con la cuota"
+      ],
+      "response": "Te avisamos cuando la cuota vence y después cada 30 días de atraso. Si pasás el plazo que fija el club, la socia queda suspendida y no se la puede citar a partidos. Se recupera sola en cuanto paga.",
+      "followUps": [
+        "cuotas_como_pagar"
+      ]
+    },
+    {
+      "tag": "deporte_inscripcion",
+      "category": "deportes",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora"
+      ],
+      "label": "¿Cómo me inscribo en un deporte?",
+      "patterns": [
+        "como me inscribo a voley",
+        "quiero jugar al voley",
+        "inscripcion a un deporte",
+        "anotarme en un deporte",
+        "como hago para ser jugadora",
+        "inscribirme",
+        "quiero empezar a entrenar en el club",
+        "como me anoto en el equipo",
+        "solicitar la inscripcion",
+        "me rechazaron la inscripcion",
+        "como entro a un equipo",
+        "inscripsion deporte",
+        "como sumarme a un deporte",
+        "cómo te inscribís a un deporte",
+        "pedir inscripcion al voley",
+        "pedir entrar a un equipo"
+      ],
+      "response": "Entrá en Deportes y tocá \"Inscribirme\" en el deporte que quieras. El Representante del deporte revisa la solicitud y, si la aprueba, pasás a ser Jugadora. Para pedirla tenés que ser socia activa: si estás suspendida por mora, primero regularizá las cuotas.",
+      "followUps": [
+        "deporte_baja",
+        "cuotas_vencimiento"
+      ]
+    },
+    {
+      "tag": "deporte_baja",
+      "category": "deportes",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora"
+      ],
+      "label": "¿Cómo me doy de baja de un deporte?",
+      "patterns": [
+        "como me doy de baja de un deporte",
+        "quiero dejar el voley",
+        "quiero dejar de jugar",
+        "darme de baja del deporte",
+        "baja del voley",
+        "ya no quiero entrenar mas",
+        "salir del equipo",
+        "dejar de pagar la cuota deportiva",
+        "como renuncio al equipo",
+        "abandonar el deporte",
+        "me quiero borrar del voley",
+        "que pasa si dejo el deporte",
+        "darme de vaja",
+        "cómo dejás un deporte",
+        "cancelar la inscripcion al voley",
+        "irme del equipo de voley",
+        "no quiero seguir jugando al voley",
+        "me voy del equipo"
+      ],
+      "response": "Entrá en Deportes y tocá \"Darme de baja\". Es inmediata: salís de tus categorías de ese deporte, se cancelan tus citaciones a partidos futuros y la cuota deportiva deja de generarse desde el mes siguiente. Las cuotas ya generadas se siguen debiendo.",
+      "followUps": [
+        "deporte_inscripcion"
+      ]
+    },
+    {
+      "tag": "liga_que_es",
+      "category": "partidos",
+      "button": true,
+      "groups": [
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Qué son las ligas y las categorías?",
+      "patterns": [
+        "que es una liga",
+        "que son las categorias",
+        "en que categoria juego",
+        "por que estoy en sub 16",
+        "como se arman las categorias",
+        "diferencia entre liga y categoria",
+        "puedo jugar en dos categorias",
+        "quien me asigna la categoria",
+        "que es sub 18",
+        "categorias por edad",
+        "me pueden cambiar de categoria",
+        "en que liga juega mi hija",
+        "que significa mayores",
+        "ligas",
+        "qué son las ligas",
+        "quien define en que categoria estoy",
+        "jugar en dos ligas a la vez",
+        "como se organizan las ligas del club",
+        "quien elige la categoria de cada jugadora",
+        "una jugadora puede estar en varias ligas"
+      ],
+      "response": "Las ligas son las competencias en las que juega el club, y las categorías, los grupos por edad dentro de cada liga (por ejemplo, Sub-16 o Mayores). El Representante del deporte las arma y asigna a las jugadoras; una jugadora puede estar en más de una.",
+      "followUps": [
+        "fixture_donde_ver"
+      ]
+    },
+    {
+      "tag": "fixture_donde_ver",
+      "category": "partidos",
+      "button": true,
+      "groups": [
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Dónde veo el fixture?",
+      "patterns": [
+        "donde veo el fixture",
+        "fixture",
+        "proximos partidos",
+        "cuando es el proximo partido",
+        "contra quien jugamos",
+        "calendario de partidos",
+        "donde estan los partidos",
+        "a que hora es el partido",
+        "donde juega mi hija el sabado",
+        "ver los partidos",
+        "partidos de la semana",
+        "fixtur",
+        "dónde está el fixture de mi categoría",
+        "cuando juega el equipo",
+        "en que cancha jugamos el partido"
+      ],
+      "response": "En Mis partidos (si sos Familia, en Partidos), en la pestaña \"Próximos\". Si jugás en dos ligas, los partidos aparecen separados por categoría. Los que ya se jugaron están en la pestaña \"Jugados\".",
+      "followUps": [
+        "partidos_resultados",
+        "fixture_conflicto"
+      ]
+    },
+    {
+      "tag": "fixture_conflicto",
+      "category": "partidos",
+      "button": true,
+      "groups": [
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Qué pasa si tengo dos partidos a la vez?",
+      "patterns": [
+        "tengo dos partidos el mismo dia",
+        "partidos superpuestos",
+        "conflicto de horario",
+        "dos partidos a la misma hora",
+        "juego en dos categorias y se pisan los partidos",
+        "que es no jugas este partido",
+        "por que dice que no juego este partido",
+        "choque de horarios",
+        "superposicion de partidos",
+        "quien decide en que partido juego",
+        "no puedo estar en los dos partidos",
+        "se superponen mis partidos",
+        "conflito horario",
+        "qué pasa si tenés dos partidos juntos",
+        "mi hija tiene dos partidos al mismo tiempo"
+      ],
+      "response": "Si dos partidos de una jugadora en distintas categorías se superponen, las entrenadoras eligen en cuál juega. En el otro vas a ver \"No jugás este partido\" y, si estabas citada, esa citación se cancela.",
+      "followUps": [
+        "fixture_donde_ver"
+      ]
+    },
+    {
+      "tag": "partidos_resultados",
+      "category": "partidos",
+      "button": true,
+      "groups": [
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Dónde veo los resultados?",
+      "patterns": [
+        "donde veo los resultados",
+        "resultados de los partidos",
+        "como salimos el sabado",
+        "ganamos o perdimos",
+        "campaña del equipo",
+        "cuantos partidos ganamos",
+        "tabla de posiciones",
+        "racha del equipo",
+        "partidos jugados",
+        "historial de partidos",
+        "resultado del ultimo partido",
+        "como va el equipo en la temporada",
+        "resultados",
+        "estadisticas del equipo",
+        "como salio el partido"
+      ],
+      "response": "En Mis partidos (si sos Familia, en Partidos), pestaña \"Jugados\": el resultado de cada partido y, arriba, la campaña de la categoría con los ganados, los perdidos y la racha.",
+      "followUps": [
+        "fixture_donde_ver"
+      ]
+    },
+    {
+      "tag": "citacion_que_es",
+      "category": "citaciones",
+      "button": true,
+      "groups": [
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Qué es una citación?",
+      "patterns": [
+        "que significa una citacion",
+        "que quiere decir que me citen",
+        "como me entero si me citan",
+        "con cuanto tiempo de anticipacion citan para un partido",
+        "con cuanta anticipacion citan",
+        "quien cita a las jugadoras",
+        "convocatoria al partido",
+        "que es la convocatoria",
+        "cuando me avisan si juego",
+        "como se si estoy convocada",
+        "citasion que significa",
+        "cuando me van a citar",
+        "cuántos días antes citan",
+        "como funcionan las citaciones",
+        "que significa estar citada",
+        "quien manda las citaciones",
+        "como me avisan cuando me citan",
+        "que significa quedar convocada",
+        "quien convoca a las jugadoras del equipo",
+        "que significa ser convocada a un partido"
+      ],
+      "response": "Es la convocatoria a un partido. La entrenadora cita desde 7 días hasta 48 horas antes del partido, y te llega como notificación y por email.",
+      "followUps": [
+        "citacion_responder"
+      ]
+    },
+    {
+      "tag": "citacion_responder",
+      "category": "citaciones",
+      "button": true,
+      "groups": [
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Cómo confirmo o rechazo una citación?",
+      "patterns": [
+        "como confirmo una citacion",
+        "como rechazo la citacion",
+        "cuanto tiempo tengo para responder la citacion",
+        "no puedo ir al partido",
+        "como aviso que no voy",
+        "confirmar asistencia al partido",
+        "rechazar la convocatoria",
+        "que pasa si no respondo la citacion",
+        "mi hija tiene que confirmar la citacion",
+        "plazo para contestar la citacion",
+        "me olvide de confirmar",
+        "justificacion para no ir",
+        "confirmo citacion",
+        "cómo respondés una citación",
+        "quien responde la citacion de mi hija",
+        "confirmar que voy a ir al partido",
+        "si no contesto la citacion que pasa",
+        "y si me olvido de confirmar que pasa",
+        "responder que no voy a la citacion"
+      ],
+      "response": "Desde el inicio o desde Mis citaciones: tenés 24 horas desde que te citan para confirmar o rechazar. Si la rechazás, tenés que escribir el motivo, y si no respondés a tiempo, queda confirmada sola. La responde siempre la jugadora, aunque sea menor.",
+      "followUps": [
+        "citacion_que_es"
+      ]
+    },
+    {
+      "tag": "rutina_donde_ver",
+      "category": "rutinas",
+      "button": true,
+      "groups": [
+        "jugadora"
+      ],
+      "label": "¿Dónde veo la rutina?",
+      "patterns": [
+        "donde veo la rutina",
+        "donde estan las rutinas",
+        "como veo los ejercicios de la preparadora",
+        "rutinas de semanas anteriores",
+        "video de la rutina",
+        "imagen de la rutina",
+        "historial de rutinas",
+        "en que seccion estan las rutinas",
+        "como funcionan las rutinas",
+        "rutinas",
+        "ver la rutina de la semana pasada",
+        "donde encuentro la rutina",
+        "rutna",
+        "dónde están los ejercicios",
+        "plan de entrenamiento fisico",
+        "rutinas que carga la preparadora fisica"
+      ],
+      "response": "En Mi rutina: hay una rutina por cada día de entrenamiento, con la explicación y, a veces, una imagen o un video. Podés moverte entre semanas para ver las anteriores.",
+      "followUps": [
+        "seguimiento_registro",
+        "seguimiento_progreso"
+      ]
+    },
+    {
+      "tag": "seguimiento_registro",
+      "category": "rutinas",
+      "button": true,
+      "groups": [
+        "jugadora"
+      ],
+      "label": "¿Cómo registro cómo me fue?",
+      "patterns": [
+        "como registro la rutina",
+        "marcar la rutina como hecha",
+        "ya hice la rutina",
+        "como cargo que entrene",
+        "registrar el entrenamiento",
+        "anotar el esfuerzo",
+        "complete la rutina",
+        "no pude hacer la rutina",
+        "hice la mitad de la rutina",
+        "como te fue",
+        "cargar el esfuerzo del 1 al 5",
+        "me olvide de registrar la rutina",
+        "registrar la rutina de ayer",
+        "marcar completada",
+        "cómo anoto que hice los ejercicios",
+        "anotar cuanto me costo el entrenamiento"
+      ],
+      "response": "En Mi rutina, debajo de la rutina del día, está \"¿Cómo te fue?\": elegí Completada, Parcial o No la hice, el esfuerzo del 1 al 5 y, si querés, una nota. Podés registrarla desde ese día hasta 7 días después.",
+      "followUps": [
+        "seguimiento_progreso",
+        "seguimiento_objetivos"
+      ]
+    },
+    {
+      "tag": "seguimiento_objetivos",
+      "category": "rutinas",
+      "button": true,
+      "groups": [
+        "jugadora"
+      ],
+      "label": "¿Cómo cargo un objetivo?",
+      "patterns": [
+        "como cargo un objetivo",
+        "objetivos personales",
+        "quiero ponerme una meta",
+        "nuevo objetivo",
+        "marcar un objetivo como cumplido",
+        "abandonar un objetivo",
+        "reabrir un objetivo",
+        "metas",
+        "como agrego una meta",
+        "objetivo vencido",
+        "borrar un objetivo",
+        "mis objetivos del mes",
+        "fijar objetivos",
+        "obgetivo",
+        "cómo pongo una meta personal"
+      ],
+      "response": "En Mi progreso, con \"Nuevo objetivo\": escribís el objetivo y la fecha límite. Después lo marcás como Cumplido o lo abandonás, y si te equivocaste lo podés reabrir. Podés tener hasta 10 en curso.",
+      "followUps": [
+        "seguimiento_progreso"
+      ]
+    },
+    {
+      "tag": "seguimiento_progreso",
+      "category": "rutinas",
+      "button": true,
+      "groups": [
+        "jugadora"
+      ],
+      "label": "¿Dónde veo mi progreso?",
+      "patterns": [
+        "donde veo mi progreso",
+        "como voy con las rutinas",
+        "graficos de mi rendimiento",
+        "cumplimiento de las rutinas",
+        "mi racha de rutinas",
+        "estadisticas de entrenamiento",
+        "quien ve mis registros",
+        "la preparadora ve lo que cargo",
+        "esfuerzo promedio",
+        "progreso",
+        "evolucion del entrenamiento",
+        "es privado mi seguimiento",
+        "progreso semanal",
+        "progreso de las ultimas semanas",
+        "cómo vengo con los entrenamientos",
+        "la preparadora fisica ve mis registros",
+        "cuantas rutinas cumpli seguidas",
+        "graficos semanales del cumplimiento"
+      ],
+      "response": "En Mi progreso ves tu cumplimiento de las rutinas, el esfuerzo promedio y tu racha, con gráficos por semana (de 4, 8 o 12 semanas). Tu preparadora física también puede ver tus registros y tus objetivos.",
+      "followUps": [
+        "seguimiento_objetivos",
+        "seguimiento_registro"
+      ]
+    },
+    {
+      "tag": "notificaciones",
+      "category": "notificaciones",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Cómo me llegan los avisos?",
+      "patterns": [
+        "como me entero de las novedades",
+        "notificaciones",
+        "donde veo los avisos",
+        "no me llegan los mails",
+        "no me llegan los correos con los avisos",
+        "la campanita",
+        "avisos del club",
+        "como me avisan",
+        "que avisos llegan por email",
+        "donde estan las notificaciones",
+        "no recibo emails",
+        "avisos por mail",
+        "notificasiones",
+        "mensajes del club",
+        "cómo te enterás de los avisos",
+        "para que sirve la campana"
+      ],
+      "response": "Todas las notificaciones están en la campana, arriba. Algunas llegan también por email: citación nueva, partido cancelado, cuota vencida y avisos de mora, suspensión, y los avisos generales si el club elige mandarlos.",
+      "followUps": [
+        "club_contacto"
+      ]
+    },
+    {
+      "tag": "familia_varios_hijos",
+      "category": "familia",
+      "button": true,
+      "groups": [
+        "familia"
+      ],
+      "label": "¿Puedo vincularme a varios hijos?",
+      "patterns": [
+        "tengo dos hijos en el club",
+        "puedo vincular a mis dos hijas",
+        "vincular otro hijo",
+        "varios hijos",
+        "hermanas en el club",
+        "como agrego a mi otra hija",
+        "soy socio y tambien papa",
+        "cambiar de rol",
+        "tengo dos roles",
+        "soy familia y socio",
+        "como paso a ver lo de mi otro hijo",
+        "otro codigo para mi segundo hijo",
+        "vincularme a mas de un menor",
+        "cómo vinculás a otra hija",
+        "pasar de un rol a otro",
+        "vincular a mi otra hija menor",
+        "sumar a otro hijo menor"
+      ],
+      "response": "Sí: podés vincularte a varios socios menores, cada uno con su propio código (desde Mi cuenta, \"Vincular a otra socia menor\"). Si además sos socio por tu cuenta, elegís con qué rol entrar y lo cambiás desde \"Cambiar de rol\", en el menú de tu usuario.",
+      "followUps": [
+        "familia_que_veo",
+        "empezar_codigo_vinculo"
+      ]
+    },
+    {
+      "tag": "familia_que_veo",
+      "category": "familia",
+      "button": true,
+      "groups": [
+        "familia"
+      ],
+      "label": "¿Qué puedo ver como Familia?",
+      "patterns": [
+        "que puedo ver como familia",
+        "que ve el adulto responsable",
+        "veo las rutinas de mi hija",
+        "que hace el rol familia",
+        "puedo ver el progreso de mi hija",
+        "como padre que veo",
+        "permisos de familia",
+        "que puedo hacer como madre",
+        "veo los partidos de mi hija",
+        "puedo pagar las cuotas de mi hijo",
+        "rol familia",
+        "para que sirve ser familia",
+        "acceso de los padres",
+        "qué ves siendo familia",
+        "puedo responder por mi hija",
+        "la madre puede confirmar la citacion de la hija"
+      ],
+      "response": "Ves los partidos (próximos y jugados) y las citaciones de tus jugadoras, en solo lectura, y su Estado de cuenta para pagar las cuotas. Las citaciones las responde cada jugadora, y su seguimiento personal no lo ves.",
+      "followUps": [
+        "familia_varios_hijos",
+        "cuotas_como_pagar"
+      ]
+    },
+    {
+      "tag": "club_contacto",
+      "category": "club",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Cómo contacto al club?",
+      "patterns": [
+        "telefono del club",
+        "como contacto al club",
+        "whatsapp del club",
+        "mail del club",
+        "quiero hablar con alguien del club",
+        "numero de la secretaria",
+        "contacto",
+        "como me comunico con el club",
+        "email de contacto",
+        "necesito hablar con la secretaria",
+        "a quien llamo",
+        "atencion al socio",
+        "contactar",
+        "telefono",
+        "cómo te comunicás con el club",
+        "correo electronico del club",
+        "hablar con la secretaria del club"
+      ],
+      "response": "Podés comunicarte con {club_nombre}: {club_contacto}",
+      "followUps": [
+        "club_horarios",
+        "club_direccion"
+      ]
+    },
+    {
+      "tag": "club_horarios",
+      "category": "club",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Cuáles son los horarios?",
+      "patterns": [
+        "horarios del club",
+        "a que hora abre la secretaria",
+        "horario de entrenamiento",
+        "cuando se entrena",
+        "que dias entrenamos",
+        "horario de atencion",
+        "hasta que hora esta abierto",
+        "abre los sabados",
+        "horarios",
+        "a que hora es el entrenamiento de voley",
+        "dias de practica",
+        "horario de la secretaria",
+        "cuando puedo ir a pagar al club",
+        "orario",
+        "qué días se entrena",
+        "abren el sabado",
+        "esta abierto el domingo"
+      ],
+      "response": "{club_horarios}",
+      "followUps": [
+        "club_direccion",
+        "club_contacto"
+      ]
+    },
+    {
+      "tag": "club_direccion",
+      "category": "club",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia"
+      ],
+      "label": "¿Dónde queda el club?",
+      "patterns": [
+        "donde queda el club",
+        "direccion del club",
+        "como llego al club",
+        "donde estan las canchas",
+        "direccion de la cancha anexo",
+        "ubicacion del club",
+        "donde entrenamos",
+        "en que calle esta el club",
+        "donde es la sede",
+        "direccion",
+        "canchas del club",
+        "como llego a la cancha",
+        "donde queda el gimnasio",
+        "direcion",
+        "dónde está la sede"
+      ],
+      "response": "La sede está en {club_direccion}. Canchas: {club_canchas}",
+      "followUps": [
+        "club_horarios",
+        "club_contacto"
+      ]
+    },
+    {
+      "tag": "personal_cuotas",
+      "category": "cuotas",
+      "button": false,
+      "label": "¿Cuánto debo?",
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia"
+      ],
+      "patterns": [
+        "cuanto debo",
+        "cuanto tengo que pagar",
+        "cuanto debe mi hija",
+        "tengo deuda",
+        "estoy al dia con la cuota",
+        "debo algo",
+        "cuanto sale mi cuota",
+        "cuanto es la cuota",
+        "cuanto cuesta la cuota",
+        "cuantas cuotas debo",
+        "pague la cuota de este mes",
+        "se acredito mi pago",
+        "monto de la cuota",
+        "valor de la cuota",
+        "precio de la cuota",
+        "cuánto debés",
+        "debo cuotas atrasadas"
+      ],
+      "response": "Eso lo ves en tu estado de cuenta, en Mis cuotas.",
+      "responsesByGroup": {
+        "familia": "Eso lo ves en el estado de cuenta de tu jugadora, en Estado de cuenta."
+      },
+      "followUps": [
+        "cuotas_como_pagar"
+      ]
+    },
+    {
+      "tag": "personal_citacion",
+      "category": "citaciones",
+      "button": false,
+      "label": "¿Me citaron?",
+      "groups": [
+        "jugadora",
+        "familia"
+      ],
+      "patterns": [
+        "me citaron",
+        "estoy citada para el sabado",
+        "me convocaron",
+        "tengo citacion",
+        "me citaron para el partido",
+        "citaron a mi hija",
+        "juego el sabado",
+        "estoy convocada",
+        "tengo que ir al partido",
+        "voy al partido del domingo",
+        "me llamaron para jugar",
+        "estoy en la lista del partido",
+        "quedo citada mi hija",
+        "me citaron o no",
+        "tengo alguna citación pendiente"
+      ],
+      "response": "Tus citaciones las ves en el inicio y en Mis citaciones.",
+      "responsesByGroup": {
+        "familia": "Las citaciones de tu jugadora las ves en el inicio y en Citaciones."
+      },
+      "followUps": [
+        "citacion_responder"
+      ]
+    },
+    {
+      "tag": "personal_rutina",
+      "category": "rutinas",
+      "button": false,
+      "label": "¿Qué rutina me toca?",
+      "groups": [
+        "jugadora"
+      ],
+      "patterns": [
+        "que rutina me toca hoy",
+        "tengo rutina hoy",
+        "que tengo que hacer mañana de rutina",
+        "mi rutina de hoy",
+        "me cargaron rutina",
+        "cual es mi rutina",
+        "tengo entrenamiento hoy",
+        "hay rutina para mi",
+        "que me toca entrenar",
+        "mi plan de hoy",
+        "cual es mi ejercicio de hoy",
+        "tengo que hacer rutina el viernes",
+        "me toca rutina",
+        "que ejercicios tengo hoy",
+        "qué rutina tengo mañana"
+      ],
+      "response": "Tu rutina la ves en Mi rutina.",
+      "followUps": [
+        "seguimiento_registro"
+      ]
+    },
+    {
+      "tag": "saludo",
+      "category": null,
+      "button": false,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia"
+      ],
+      "patterns": [
+        "hola",
+        "buenas",
+        "buen dia",
+        "buenas tardes",
+        "buenas noches",
+        "que tal",
+        "hola como estas",
+        "holaa",
+        "hola bot",
+        "hey",
+        "como andas",
+        "saludos",
+        "buenas que tal",
+        "ola",
+        "hola que tal",
+        "holi",
+        "holaaa"
+      ],
+      "responses": [
+        "¡Hola! ¿En qué te ayudo? Elegí un tema o escribime tu consulta.",
+        "¡Buenas! Contame qué necesitás o elegí un tema del menú."
+      ]
+    },
+    {
+      "tag": "despedida",
+      "category": null,
+      "button": false,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia"
+      ],
+      "patterns": [
+        "chau",
+        "gracias",
+        "muchas gracias",
+        "adios",
+        "hasta luego",
+        "nos vemos",
+        "listo gracias",
+        "eso era todo",
+        "gracias por la ayuda",
+        "chao",
+        "perfecto gracias",
+        "genial gracias",
+        "buenisimo",
+        "graciass",
+        "me sirvio gracias",
+        "hasta la proxima",
+        "nos vemos mañana"
+      ],
+      "responses": [
+        "¡De nada! Si necesitás algo más, acá estoy.",
+        "¡Que tengas un buen día! Cuando quieras, volvé a preguntar."
+      ]
+    },
+    {
+      "tag": "fuera_de_tema",
+      "category": null,
+      "button": false,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia"
+      ],
+      "patterns": [
+        "receta de milanesas",
+        "como hago una torta",
+        "va a llover mañana",
+        "que temperatura hace hoy",
+        "quien gano el partido de river",
+        "resultado de boca",
+        "ayudame con la tarea de matematica",
+        "cuanto es dos mas dos",
+        "contame un chiste",
+        "cual es la capital de francia",
+        "recomendame una serie",
+        "como se juega al futbol",
+        "quien es el presidente",
+        "traduci esto al ingles",
+        "que hora es",
+        "dame una receta de pizza",
+        "como resuelvo una ecuacion",
+        "como funciona un celular por dentro",
+        "quien gano el ultimo mundial de futbol",
+        "como entreno para una maraton"
+      ],
+      "response": ""
+    }
+  ]
+}

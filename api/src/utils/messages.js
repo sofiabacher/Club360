@@ -444,6 +444,27 @@ module.exports = {
         memberIdInvalid: 'La jugadora no es válida.'
     },
 
+    bot: {
+        otherProfile: 'Esa consulta corresponde a otro perfil de usuario.',
+        blocked: 'Por tu seguridad, no compartas datos personales en el chat.',
+        suggestions: 'No estoy seguro de haber entendido. ¿Quisiste decir…?',
+        fallback: (contact) => `No tengo una respuesta para eso. Podés consultarlo directamente en el club: ${contact} También podés elegir un tema del menú.`,
+        missingData: 'Todavía no tengo ese dato cargado; consultalo directamente en el club.',
+        greeting: (name, club) => `¡Hola, ${name}! Soy el asistente de ${club}. Elegí un tema o escribime tu consulta.`,
+        rateLimited: 'Esperá un momento antes de seguir escribiendo.',
+        backToMenu: 'Volver al menú',
+        contactClub: 'Contactar al club',
+        feedbackSaved: '¡Gracias!',
+
+        // Validaciones de formato
+        typeInvalid: 'El tipo de mensaje tiene que ser text o button.',
+        messageInvalid: 'Escribí tu consulta (hasta 300 caracteres).',
+        intentInvalid: 'Elegí una opción.',
+        screenInvalid: 'La pantalla no es válida.',
+        interactionIdInvalid: 'La consulta no es válida.',
+        usefulInvalid: 'Indicá si la respuesta te sirvió.'
+    },
+
     logs: {
         nothingToExport: 'No hay registros para exportar.',
 

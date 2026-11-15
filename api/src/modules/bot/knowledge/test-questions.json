@@ -1,0 +1,705 @@
+{
+  "description": "Set de prueba del bot (P21): preguntas distintas de los patrones de intents.json, para medir la precisión con npm run bot:eval. No se suman al entrenamiento.",
+  "questions": [
+    {
+      "text": "como hace mi hermano para ser socio",
+      "intent": "empezar_hacerme_socio"
+    },
+    {
+      "text": "una amiga quiere asociarse que tiene que hacer",
+      "intent": "empezar_hacerme_socio"
+    },
+    {
+      "text": "como se da de alta un socio",
+      "intent": "empezar_hacerme_socio"
+    },
+    {
+      "text": "me dieron el numero de socio y ahora como entro",
+      "intent": "empezar_hacerme_socio"
+    },
+    {
+      "text": "pasos para asociarse",
+      "intent": "empezar_hacerme_socio"
+    },
+    {
+      "text": "donde saco el codigo para vincular a mi papa",
+      "intent": "empezar_codigo_vinculo"
+    },
+    {
+      "text": "para que sirve el codigo de vinculo",
+      "intent": "empezar_codigo_vinculo"
+    },
+    {
+      "text": "mi mama quiere vincularse conmigo como hace",
+      "intent": "empezar_codigo_vinculo"
+    },
+    {
+      "text": "perdi el codigo de vinculo familiar",
+      "intent": "empezar_codigo_vinculo"
+    },
+    {
+      "text": "codigo vinculo",
+      "intent": "empezar_codigo_vinculo"
+    },
+    {
+      "text": "ya cumpli los 18 que puedo hacer",
+      "intent": "empezar_mayoria_edad"
+    },
+    {
+      "text": "como me saco a mi papa de la cuenta ahora que soy mayor",
+      "intent": "empezar_mayoria_edad"
+    },
+    {
+      "text": "al ser mayor de edad pago yo",
+      "intent": "empezar_mayoria_edad"
+    },
+    {
+      "text": "desvinculacion del adulto",
+      "intent": "empezar_mayoria_edad"
+    },
+    {
+      "text": "que cambia con la mayoria de edad",
+      "intent": "empezar_mayoria_edad"
+    },
+    {
+      "text": "como cambio el mail de mi cuenta",
+      "intent": "cuenta_mis_datos"
+    },
+    {
+      "text": "olvide mi contraseña quiero ponerle otra",
+      "intent": "cuenta_mis_datos"
+    },
+    {
+      "text": "puedo subir una foto",
+      "intent": "cuenta_mis_datos"
+    },
+    {
+      "text": "esta mal mi fecha de nacimiento",
+      "intent": "cuenta_mis_datos"
+    },
+    {
+      "text": "cambiar mi celular en el perfil",
+      "intent": "cuenta_mis_datos"
+    },
+    {
+      "text": "de que forma puedo pagar",
+      "intent": "cuotas_como_pagar"
+    },
+    {
+      "text": "se puede pagar en la secretaria",
+      "intent": "cuotas_como_pagar"
+    },
+    {
+      "text": "como abono",
+      "intent": "cuotas_como_pagar"
+    },
+    {
+      "text": "pagar cuota con tarjeta de debito",
+      "intent": "cuotas_como_pagar"
+    },
+    {
+      "text": "como le pago la cuota a mi nena",
+      "intent": "cuotas_como_pagar"
+    },
+    {
+      "text": "a que cuenta transfiero",
+      "intent": "cuotas_transferencia"
+    },
+    {
+      "text": "transferi la cuota donde subo el comprobante",
+      "intent": "cuotas_transferencia"
+    },
+    {
+      "text": "datos para transferir",
+      "intent": "cuotas_transferencia"
+    },
+    {
+      "text": "cuanto demora la revision de la transferencia",
+      "intent": "cuotas_transferencia"
+    },
+    {
+      "text": "pago por trasnferencia",
+      "intent": "cuotas_transferencia"
+    },
+    {
+      "text": "necesito un comprobante del pago",
+      "intent": "cuotas_comprobante"
+    },
+    {
+      "text": "me pueden dar una factura",
+      "intent": "cuotas_comprobante"
+    },
+    {
+      "text": "quiero imprimir lo que pague",
+      "intent": "cuotas_comprobante"
+    },
+    {
+      "text": "donde bajo el recibo en pdf",
+      "intent": "cuotas_comprobante"
+    },
+    {
+      "text": "constancia del pago de la cuota",
+      "intent": "cuotas_comprobante"
+    },
+    {
+      "text": "que dia vence",
+      "intent": "cuotas_vencimiento"
+    },
+    {
+      "text": "hasta que fecha pago la cuota",
+      "intent": "cuotas_vencimiento"
+    },
+    {
+      "text": "cuando sale la cuota nueva",
+      "intent": "cuotas_vencimiento"
+    },
+    {
+      "text": "por que tengo cuota social y deportiva",
+      "intent": "cuotas_vencimiento"
+    },
+    {
+      "text": "vencimiento",
+      "intent": "cuotas_vencimiento"
+    },
+    {
+      "text": "que me pasa si no pago a tiempo",
+      "intent": "cuotas_atraso"
+    },
+    {
+      "text": "por que estoy suspendida",
+      "intent": "cuotas_atraso"
+    },
+    {
+      "text": "si debo cuotas me pueden citar",
+      "intent": "cuotas_atraso"
+    },
+    {
+      "text": "estoy atrasada con los pagos",
+      "intent": "cuotas_atraso"
+    },
+    {
+      "text": "me sacan de socia si no pago",
+      "intent": "cuotas_atraso"
+    },
+    {
+      "text": "quiero anotarme en voley",
+      "intent": "deporte_inscripcion"
+    },
+    {
+      "text": "como pido entrar al equipo",
+      "intent": "deporte_inscripcion"
+    },
+    {
+      "text": "inscribirse a un deporte",
+      "intent": "deporte_inscripcion"
+    },
+    {
+      "text": "como me hago jugadora",
+      "intent": "deporte_inscripcion"
+    },
+    {
+      "text": "solicitud de inscripcion",
+      "intent": "deporte_inscripcion"
+    },
+    {
+      "text": "ya no voy a seguir en voley",
+      "intent": "deporte_baja"
+    },
+    {
+      "text": "como abandono el equipo",
+      "intent": "deporte_baja"
+    },
+    {
+      "text": "como dejo de estar anotada en voley",
+      "intent": "deporte_baja"
+    },
+    {
+      "text": "si dejo de jugar sigo pagando la cuota deportiva",
+      "intent": "deporte_baja"
+    },
+    {
+      "text": "me quiero ir del equipo",
+      "intent": "deporte_baja"
+    },
+    {
+      "text": "que es la sub 16",
+      "intent": "liga_que_es"
+    },
+    {
+      "text": "como funcionan las ligas",
+      "intent": "liga_que_es"
+    },
+    {
+      "text": "quien decide mi categoria",
+      "intent": "liga_que_es"
+    },
+    {
+      "text": "categoria",
+      "intent": "liga_que_es"
+    },
+    {
+      "text": "se puede estar en dos ligas",
+      "intent": "liga_que_es"
+    },
+    {
+      "text": "cuando es el partido",
+      "intent": "fixture_donde_ver"
+    },
+    {
+      "text": "donde veo cuando jugamos",
+      "intent": "fixture_donde_ver"
+    },
+    {
+      "text": "contra quien jugamos el sabado",
+      "intent": "fixture_donde_ver"
+    },
+    {
+      "text": "proximo partido de mi hija",
+      "intent": "fixture_donde_ver"
+    },
+    {
+      "text": "calendario del torneo",
+      "intent": "fixture_donde_ver"
+    },
+    {
+      "text": "tengo dos partidos que se pisan",
+      "intent": "fixture_conflicto"
+    },
+    {
+      "text": "dice no jugas este partido por que",
+      "intent": "fixture_conflicto"
+    },
+    {
+      "text": "conflicto entre partidos",
+      "intent": "fixture_conflicto"
+    },
+    {
+      "text": "dos categorias juegan al mismo tiempo",
+      "intent": "fixture_conflicto"
+    },
+    {
+      "text": "superposicion de horarios",
+      "intent": "fixture_conflicto"
+    },
+    {
+      "text": "como salio el ultimo partido",
+      "intent": "partidos_resultados"
+    },
+    {
+      "text": "cuantos ganamos este año",
+      "intent": "partidos_resultados"
+    },
+    {
+      "text": "donde estan los resultados",
+      "intent": "partidos_resultados"
+    },
+    {
+      "text": "como viene el equipo esta temporada",
+      "intent": "partidos_resultados"
+    },
+    {
+      "text": "historial de los partidos jugados",
+      "intent": "partidos_resultados"
+    },
+    {
+      "text": "que quiere decir citacion",
+      "intent": "citacion_que_es"
+    },
+    {
+      "text": "cuanto antes del partido me citan",
+      "intent": "citacion_que_es"
+    },
+    {
+      "text": "como me avisan que me convocaron",
+      "intent": "citacion_que_es"
+    },
+    {
+      "text": "quien hace las citaciones",
+      "intent": "citacion_que_es"
+    },
+    {
+      "text": "que es estar convocada",
+      "intent": "citacion_que_es"
+    },
+    {
+      "text": "como confirmo que voy al partido",
+      "intent": "citacion_responder"
+    },
+    {
+      "text": "no voy a poder ir como aviso",
+      "intent": "citacion_responder"
+    },
+    {
+      "text": "hasta cuando puedo responder la citacion",
+      "intent": "citacion_responder"
+    },
+    {
+      "text": "que pasa si no confirmo",
+      "intent": "citacion_responder"
+    },
+    {
+      "text": "decir que no a una citacion",
+      "intent": "citacion_responder"
+    },
+    {
+      "text": "donde estan los ejercicios de la semana",
+      "intent": "rutina_donde_ver"
+    },
+    {
+      "text": "en que parte veo las rutinas",
+      "intent": "rutina_donde_ver"
+    },
+    {
+      "text": "rutinas viejas",
+      "intent": "rutina_donde_ver"
+    },
+    {
+      "text": "la rutina tiene video",
+      "intent": "rutina_donde_ver"
+    },
+    {
+      "text": "como veo las rutinas de la preparadora fisica",
+      "intent": "rutina_donde_ver"
+    },
+    {
+      "text": "como marco que hice la rutina",
+      "intent": "seguimiento_registro"
+    },
+    {
+      "text": "registrar como me fue",
+      "intent": "seguimiento_registro"
+    },
+    {
+      "text": "no hice la rutina como lo anoto",
+      "intent": "seguimiento_registro"
+    },
+    {
+      "text": "donde pongo cuanto me costo la rutina",
+      "intent": "seguimiento_registro"
+    },
+    {
+      "text": "hasta cuando puedo registrar una rutina",
+      "intent": "seguimiento_registro"
+    },
+    {
+      "text": "quiero cargar una meta",
+      "intent": "seguimiento_objetivos"
+    },
+    {
+      "text": "ya logre mi meta como la cierro",
+      "intent": "seguimiento_objetivos"
+    },
+    {
+      "text": "objetivos",
+      "intent": "seguimiento_objetivos"
+    },
+    {
+      "text": "puedo reabrir una meta",
+      "intent": "seguimiento_objetivos"
+    },
+    {
+      "text": "agregar objetivo nuevo",
+      "intent": "seguimiento_objetivos"
+    },
+    {
+      "text": "donde veo como vengo",
+      "intent": "seguimiento_progreso"
+    },
+    {
+      "text": "graficos de las rutinas",
+      "intent": "seguimiento_progreso"
+    },
+    {
+      "text": "mi preparadora puede ver mis registros",
+      "intent": "seguimiento_progreso"
+    },
+    {
+      "text": "cumplimiento",
+      "intent": "seguimiento_progreso"
+    },
+    {
+      "text": "cuantas rutinas seguidas llevo",
+      "intent": "seguimiento_progreso"
+    },
+    {
+      "text": "donde veo las notificaciones",
+      "intent": "notificaciones"
+    },
+    {
+      "text": "no me llega ningun email",
+      "intent": "notificaciones"
+    },
+    {
+      "text": "como me entero de los avisos del club",
+      "intent": "notificaciones"
+    },
+    {
+      "text": "que es la campana",
+      "intent": "notificaciones"
+    },
+    {
+      "text": "donde llegan los mensajes de la plataforma",
+      "intent": "notificaciones"
+    },
+    {
+      "text": "tengo tres hijas en el club",
+      "intent": "familia_varios_hijos"
+    },
+    {
+      "text": "tengo otro chico menor en el club como lo sumo",
+      "intent": "familia_varios_hijos"
+    },
+    {
+      "text": "como paso de socia a familia",
+      "intent": "familia_varios_hijos"
+    },
+    {
+      "text": "soy socia y mama a la vez",
+      "intent": "familia_varios_hijos"
+    },
+    {
+      "text": "vincular hermanos",
+      "intent": "familia_varios_hijos"
+    },
+    {
+      "text": "que puedo hacer siendo familia",
+      "intent": "familia_que_veo"
+    },
+    {
+      "text": "puedo ver las rutinas de mi hijo",
+      "intent": "familia_que_veo"
+    },
+    {
+      "text": "como madre puedo confirmar la citacion",
+      "intent": "familia_que_veo"
+    },
+    {
+      "text": "que ve el padre",
+      "intent": "familia_que_veo"
+    },
+    {
+      "text": "rol de familia que permite",
+      "intent": "familia_que_veo"
+    },
+    {
+      "text": "numero de telefono del club",
+      "intent": "club_contacto"
+    },
+    {
+      "text": "necesito llamar al club",
+      "intent": "club_contacto"
+    },
+    {
+      "text": "tienen whatsapp",
+      "intent": "club_contacto"
+    },
+    {
+      "text": "correo del club",
+      "intent": "club_contacto"
+    },
+    {
+      "text": "quiero comunicarme con la secretaria",
+      "intent": "club_contacto"
+    },
+    {
+      "text": "a que hora atiende la secretaria",
+      "intent": "club_horarios"
+    },
+    {
+      "text": "que dias hay entrenamiento",
+      "intent": "club_horarios"
+    },
+    {
+      "text": "en que horario se entrena voley",
+      "intent": "club_horarios"
+    },
+    {
+      "text": "el sabado abren",
+      "intent": "club_horarios"
+    },
+    {
+      "text": "a que hora entrenan",
+      "intent": "club_horarios"
+    },
+    {
+      "text": "donde esta el club",
+      "intent": "club_direccion"
+    },
+    {
+      "text": "cual es la direccion",
+      "intent": "club_direccion"
+    },
+    {
+      "text": "donde esta la cancha anexo",
+      "intent": "club_direccion"
+    },
+    {
+      "text": "como llego a la sede",
+      "intent": "club_direccion"
+    },
+    {
+      "text": "ubicacion de las canchas",
+      "intent": "club_direccion"
+    },
+    {
+      "text": "cuanto le debo al club",
+      "intent": "personal_cuotas"
+    },
+    {
+      "text": "debo la cuota de octubre",
+      "intent": "personal_cuotas"
+    },
+    {
+      "text": "cuanto vale la cuota",
+      "intent": "personal_cuotas"
+    },
+    {
+      "text": "estoy debiendo algo",
+      "intent": "personal_cuotas"
+    },
+    {
+      "text": "cuanto tengo que pagar este mes",
+      "intent": "personal_cuotas"
+    },
+    {
+      "text": "estoy citada",
+      "intent": "personal_citacion"
+    },
+    {
+      "text": "me convocaron para el sabado",
+      "intent": "personal_citacion"
+    },
+    {
+      "text": "juego el domingo",
+      "intent": "personal_citacion"
+    },
+    {
+      "text": "citaron a mi hija para el partido",
+      "intent": "personal_citacion"
+    },
+    {
+      "text": "tengo alguna citacion",
+      "intent": "personal_citacion"
+    },
+    {
+      "text": "que rutina tengo hoy",
+      "intent": "personal_rutina"
+    },
+    {
+      "text": "que me toca hacer hoy",
+      "intent": "personal_rutina"
+    },
+    {
+      "text": "hay rutina mañana",
+      "intent": "personal_rutina"
+    },
+    {
+      "text": "cual es mi rutina del viernes",
+      "intent": "personal_rutina"
+    },
+    {
+      "text": "que ejercicios me tocan hoy",
+      "intent": "personal_rutina"
+    },
+    {
+      "text": "holis",
+      "intent": "saludo"
+    },
+    {
+      "text": "buen dia como va",
+      "intent": "saludo"
+    },
+    {
+      "text": "hola que onda",
+      "intent": "saludo"
+    },
+    {
+      "text": "buenas buenas",
+      "intent": "saludo"
+    },
+    {
+      "text": "hola asistente",
+      "intent": "saludo"
+    },
+    {
+      "text": "muchisimas gracias",
+      "intent": "despedida"
+    },
+    {
+      "text": "chau gracias",
+      "intent": "despedida"
+    },
+    {
+      "text": "listo era eso",
+      "intent": "despedida"
+    },
+    {
+      "text": "hasta mañana",
+      "intent": "despedida"
+    },
+    {
+      "text": "gracias por todo",
+      "intent": "despedida"
+    },
+    {
+      "text": "como se hace un asado",
+      "intent": "fuera_de_tema"
+    },
+    {
+      "text": "cuando juega argentina",
+      "intent": "fuera_de_tema"
+    },
+    {
+      "text": "esta nublado hoy",
+      "intent": "fuera_de_tema"
+    },
+    {
+      "text": "cual es la raiz cuadrada de 16",
+      "intent": "fuera_de_tema"
+    },
+    {
+      "text": "recomendame una pelicula",
+      "intent": "fuera_de_tema"
+    },
+    {
+      "text": "quien invento la electricidad",
+      "intent": "fuera_de_tema"
+    },
+    {
+      "text": "como cocino fideos",
+      "intent": "fuera_de_tema"
+    },
+    {
+      "text": "me haces el resumen de historia",
+      "intent": "fuera_de_tema"
+    },
+    {
+      "text": "que auto me compro",
+      "intent": "fuera_de_tema"
+    },
+    {
+      "text": "cuantos mundiales gano brasil",
+      "intent": "fuera_de_tema"
+    },
+    {
+      "text": "escribime un poema",
+      "intent": "fuera_de_tema"
+    },
+    {
+      "text": "como funciona internet",
+      "intent": "fuera_de_tema"
+    },
+    {
+      "text": "reglas del tenis",
+      "intent": "fuera_de_tema"
+    },
+    {
+      "text": "donde compro zapatillas baratas",
+      "intent": "fuera_de_tema"
+    },
+    {
+      "text": "cual es el rio mas largo del mundo",
+      "intent": "fuera_de_tema"
+    }
+  ]
+}

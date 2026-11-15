@@ -36,6 +36,7 @@ app.use('/notifications', require('./modules/notifications/notifications.routes'
 app.use('/logs', require('./modules/logs/logs.routes'))
 app.use('/integrity', require('./modules/integrity/integrity.routes'))
 app.use('/backup', require('./modules/backup/backup.routes'))
+app.use('/bot', require('./modules/bot/bot.routes'))
 
 app.use(errorHandler)
 

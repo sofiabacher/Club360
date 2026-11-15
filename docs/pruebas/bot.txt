@@ -1,0 +1,201 @@
+CASOS DE PRUEBA — MÓDULO BOT (ASISTENTE DE CONSULTAS)
+======================================================================
+
+Club360 · Prompt 21 · 15/11/2026
+Formato según CLAUDE.md ("Pruebas"). Los resultados obtenidos salen del script de verificación del P21, corrido contra la
+base local club360 (datos de la demo, contraseña común Demo.2026), con la API en un puerto de prueba. La precisión del
+clasificador está en bot-evaluacion.txt (npm run bot:eval). Lo que solo se ve en el navegador queda anotado en cada caso.
+
+Usuarios: Camila = ctorres (Jugadora), Gabriela = gromero (Socio y Familia), Sofía = sromero (Jugadora menor),
+Carla = cbenitez (Entrenadora), Admin = el del seed.
+
+
+--------------------------------------------------
+ID: CP-BOT-01
+Módulo: bot
+Descripción: Menú por grupo, con la categoría de la pantalla primero
+Precondiciones: Camila logueada como Jugadora.
+Pasos:
+  1. Abrir el asistente desde Mis cuotas. 2. Abrirlo desde Mi rutina. 3. Desde una pantalla sin categoría propia.
+Datos de entrada: screen = my-fees, my-routine, family/fees, algo-raro.
+Resultado esperado: el saludo con su nombre y el club; las categorías de la jugadora (con Rutinas y seguimiento, sin
+  Familia), con "Cuotas y pagos" primero desde Mis cuotas y "Rutinas y seguimiento" desde Mi rutina; en una pantalla
+  desconocida, el orden por defecto (Empezar primero). Las categorías se ven en una grilla de 2 columnas.
+Resultado obtenido: GET /bot/menu → grupo jugadora; my-fees → cuotas primero; my-routine → rutinas primero; family/fees →
+  cuotas primero; algo-raro → empezar primero. Falta ver la grilla en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BOT-02
+Módulo: bot
+Descripción: Usuario con dos roles: Gabriela como Socio y como Familia
+Precondiciones: Gabriela con los roles Socio y Familia.
+Pasos:
+  1. Entrar como Familia y abrir el asistente. 2. Cambiar de rol a Socio y abrirlo de nuevo.
+Datos de entrada: —
+Resultado esperado: como Familia, grupo familia (Empezar, Cuotas, Ligas y partidos, Citaciones, Notificaciones,
+  Familia, El club); como Socio, grupo socio (Empezar, Cuotas, Deportes, Notificaciones, El club). Al cambiar de rol el
+  chat empieza de cero.
+Resultado obtenido: los dos menús con esas categorías. Falta ver el reinicio del widget al cambiar de rol en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BOT-03
+Módulo: bot
+Descripción: Un botón
+Precondiciones: Camila logueada.
+Pasos:
+  1. Citaciones → "¿Cómo confirmo o rechazo una citación?".
+Datos de entrada: { type: "button", intent: "citacion_responder" }.
+Resultado esperado: la respuesta fija, sin pasar por el clasificador (confianza null), con "¿Qué es una citación?",
+  "Volver al menú", "Contactar al club" y 👍/👎.
+Resultado obtenido: responseType answer, confidence null, con esos botones e interactionId.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BOT-04
+Módulo: bot
+Descripción: Texto claro, ambiguo y fuera de tema
+Precondiciones: Camila logueada.
+Pasos:
+  1. Escribir cada texto.
+Datos de entrada: a) "¿cómo pago por transferencia?"; b) "citación"; c) "receta de milanesas".
+Resultado esperado: a) la respuesta de cuotas_transferencia; b) "No estoy seguro de haber entendido. ¿Quisiste
+  decir…?" con 2 o 3 preguntas y el menú; c) el fallback con el contacto del club y el menú, en una burbuja Crema.
+Resultado obtenido: a) answer cuotas_transferencia; b) suggestions con 3 preguntas de citaciones; c) fallback con
+  "(011) 4000-0000" y el botón del menú.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BOT-05
+Módulo: bot
+Descripción: Intención de otro perfil
+Precondiciones: Camila logueada (grupo jugadora).
+Pasos:
+  1. Forzar el botón de una intención de Familia. 2. Escribir una consulta de Familia. 3. Forzar un tag que no existe.
+Datos de entrada: intent "familia_que_veo"; texto "que puedo ver como familia"; intent "no_existe".
+Resultado esperado: "Esa consulta corresponde a otro perfil de usuario." y el menú, sin error.
+Resultado obtenido: other_profile en los tres, con 200.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BOT-06
+Módulo: bot
+Descripción: "¿Cuánto debo?" redirige sin dar el monto
+Precondiciones: Camila (Jugadora) y Gabriela (Familia).
+Pasos:
+  1. Como Camila, escribir "¿cuánto debo?". 2. Como Gabriela, "cuanto debe mi hija".
+Datos de entrada: —
+Resultado esperado: 1) "Eso lo ves en tu estado de cuenta, en Mis cuotas." 2) "Eso lo ves en el estado de cuenta de tu
+  jugadora, en Estado de cuenta." Sin montos.
+Resultado obtenido: las dos respuestas, sin números ni "$".
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BOT-07
+Módulo: bot
+Descripción: Un texto con datos personales se bloquea y no se guarda
+Precondiciones: Camila logueada.
+Pasos:
+  1. Escribir un texto con un DNI. 2. Escribir un texto con un email.
+Datos de entrada: "mi dni es 40.123.456 cuanto debo"; "escribime a juana.prueba@mail.com".
+Resultado esperado: "Por tu seguridad, no compartas datos personales en el chat." (blocked). Ninguno de los dos textos
+  queda en la bitácora.
+Resultado obtenido: blocked en los dos; ningún registro de la bitácora tiene "40.123.456" ni el email.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BOT-08
+Módulo: bot
+Descripción: Ninguna respuesta tiene los días de mora, el margen ni montos
+Precondiciones: los tres grupos.
+Pasos:
+  1. Pedir por botón todas las intenciones visibles de cada grupo.
+Datos de entrada: —
+Resultado esperado: ninguna respuesta con "$", 15.000, 25.000, 180 días o 60 minutos. Sí las reglas fijas (día 1 y 10,
+  7 días y 48 horas, 24 horas, 7 días para registrar una rutina). Los datos del club salen de la base; si falta uno:
+  "Todavía no tengo ese dato cargado; consultalo directamente en el club."
+Resultado obtenido: ninguna respuesta con esos valores; horarios, dirección y canchas desde club y club.extraInfo; con
+  los horarios borrados de extraInfo (y vueltos a cargar después), el aviso de dato faltante.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BOT-09
+Módulo: bot
+Descripción: Acceso: sin sesión, Entrenadora y Admin
+Precondiciones: —
+Pasos:
+  1. GET /bot/menu sin token. 2. Como Carla (Entrenadora). 3. Como el Admin.
+Datos de entrada: —
+Resultado esperado: 1) 401. 2 y 3) 403, y el botón del asistente no aparece en la pantalla.
+Resultado obtenido: 401, 403 (menú y chat) y 403. Falta comprobar en el navegador que el widget no aparece.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BOT-10
+Módulo: bot
+Descripción: Límite de 30 mensajes por minuto y validaciones
+Precondiciones: Sofía logueada como Jugadora.
+Pasos:
+  1. Mandar 31 mensajes en menos de un minuto. 2. Mandar un mensaje de 301 caracteres, uno vacío, un botón sin intent y
+  un tipo inválido.
+Datos de entrada: —
+Resultado esperado: 1) los primeros 30 → 200; el 31 → 429 "Esperá un momento antes de seguir escribiendo." (el menú
+  sigue andando). 2) 400 en todos.
+Resultado obtenido: 30 con 200 y el 31 con 429 y ese mensaje; el menú, 200; los cuatro con 400.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BOT-11
+Módulo: bot
+Descripción: Bitácora y feedback
+Precondiciones: los casos anteriores.
+Pasos:
+  1. Revisar la bitácora. 2. Tocar 👍 en una respuesta. 3. Mandar feedback de una consulta de otro usuario o que no
+  existe.
+Datos de entrada: —
+Resultado esperado: BOT_INTERACTION (Baja) por cada consulta, con interactionId, grupo, pantalla, tipo, intención,
+  confianza y resultado, nunca el texto; BOT_UNANSWERED solo en los fallbacks, con el texto y sin userId ni roleId;
+  BOT_FEEDBACK con el interactionId y si fue útil, y "¡Gracias!" en el chat. Feedback ajeno o inexistente: 404.
+Resultado obtenido: 146 BOT_INTERACTION sin ningún texto del usuario; 2 BOT_UNANSWERED ("receta de milanesas") con
+  userId y roleId en NULL; 1 BOT_FEEDBACK. Feedback de Gabriela sobre una consulta de Camila → 404; inexistente → 404.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BOT-12
+Módulo: bot
+Descripción: Conocimiento roto al arrancar
+Precondiciones: —
+Pasos:
+  1. Repetir un tag en intents.json. 2. Arrancar el servidor. 3. Devolver el archivo.
+Datos de entrada: el tag de la segunda intención igual al de la primera.
+Resultado esperado: el servidor no arranca y dice qué falla.
+Resultado obtenido: "No se pudo iniciar el servidor: El conocimiento del bot (intents.json) no es válido: el tag
+  "empezar_hacerme_socio" está repetido" (y los followUps que quedan sin intención), con código de salida 1. Con el
+  archivo original, arranca: "Bot de consultas: 33 intenciones, 552 patrones".
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BOT-13
+Módulo: bot
+Descripción: El widget con el back caído
+Precondiciones: Camila logueada, con el asistente abierto.
+Pasos:
+  1. Apagar la API (o esperar a que Render se duerma). 2. Escribir una consulta. 3. Volver a levantar la API y reintentar.
+Datos de entrada: —
+Resultado esperado: una burbuja "El asistente no está disponible en este momento. Reintentá en unos minutos."; el
+  widget sigue andando y la consulta siguiente funciona.
+Resultado obtenido: —
+Estado: Pendiente

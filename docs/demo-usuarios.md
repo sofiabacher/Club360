@@ -118,6 +118,8 @@ Sub-16 juega al mejor de 3 y las otras dos categorías al mejor de 5. Todos los 
 14. **Registrar la rutina del día como Camila y ver Mi progreso.**
 15. **Ver el seguimiento de Sub-18 como Valeria** (Preparadora física).
 16. **Ver la pestaña Jugados** como Camila, como Gabriela (Familia) y como Carla (Entrenadora).
+17. **Abrir el asistente como Camila desde Mis cuotas** (aparece primero "Cuotas y pagos"), preguntar "¿cómo pago por transferencia?" y "¿cuánto debo?" (redirige, no da el monto).
+18. **Entrar como Carla (Entrenadora):** el asistente no aparece.
 
 ## Advertencias
 

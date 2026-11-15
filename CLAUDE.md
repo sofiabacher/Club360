@@ -75,7 +75,7 @@ client/src/
 docs/pruebas/          Casos de prueba en .txt, uno por módulo
 ```
 
-Módulos: auth, access, clubs, members, staff, inscriptions, fees, leagues, games, citations, routines, notifications, logs, integrity, backup.
+Módulos: auth, access, clubs, members, staff, inscriptions, fees, leagues, games, citations, routines, notifications, logs, integrity, backup, bot.
 
 ## Capas del backend (respetar la responsabilidad de cada una)
 
@@ -306,6 +306,15 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 - **Integridad:** `verifyClub` (DVH de las filas del club y de los catálogos, y DVV de cada tabla) y `getIntegrityStatus` (caché en memoria de `INTEGRITY_CACHE_MINUTES`). Con estado `ERROR` el club se **bloquea**: login e `isAuth` responden 503 `INTEGRITY_LOCK`, salvo a quien tiene `integrity.manage` o `backup.manage`, y los jobs saltean ese club. `INTEGRITY_ALERT` (in-app + email) solo al pasar de `OK` a `ERROR`. Reparar actualiza `dvh` con `hooks: false` y recalcula el DVV.
 - **Backup:** JSON por club con `meta` y `checksum` SHA-256, en `api/backups/club-{clubId}/`, últimos `BACKUP_KEEP_LAST` (7). Manual o con el job de los domingos 03:00. Los nombres de archivo se validan con regex y solo se buscan en la carpeta del club.
 - **Restauración:** valida formato, club, checksum, catálogos y que quien restaura exista activo con `backup.manage` en el backup; guarda un `PRE_RESTORE`; reemplaza las filas del club en **una transacción** con `queryInterface` (sin hooks, conserva ids, `dvh` y teléfono cifrado; sin desactivar `FOREIGN_KEY_CHECKS`); recalcula el DVV y verifica. La bitácora no se toca.
+
+## Bot de consultas (módulo `bot`)
+
+- **Sin Python ni servicios externos:** clasificador TF-IDF con similitud de coseno en `bot.classifier.js` (normalización sin tildes, stopwords sin "no"/"si", stemming con `natural`), entrenado al arrancar con `knowledge/intents.json`. Umbrales en `BOT_THRESHOLD` y `BOT_SUGGEST_THRESHOLD`, calibrados con `npm run bot:eval`.
+- **Acceso:** `bot.use`. El grupo del menú se calcula **por permisos** (`citations.respond` → `jugadora`; si no, `fees.manageLinked` → `familia`; si no, `socio`), nunca por el nombre del rol.
+- **Nunca** devuelve datos personales, partidos, días de mora, margen de conflicto ni montos. Los datos del club salen de `club` y `club.extraInfo`.
+- **Privacidad:** texto con 7 o más dígitos o un email → `blocked`, sin guardarlo. `BOT_INTERACTION` en la bitácora **sin** el texto; `BOT_UNANSWERED` (solo fallbacks) con el texto y sin `userId` ni `roleId`. Límite de 30 mensajes por minuto por usuario.
+- **Conocimiento:** al cambiar `intents.json`, correr `npm run bot:eval` y actualizar `docs/pruebas/bot-evaluacion.txt`. Si el conocimiento no valida, el servidor no arranca.
+- **Widget:** `components/bot/ChatBot.jsx` en `DashboardLayout`, solo con `bot.use`; Fab Marino (no naranja).
 
 ## Lista de tareas (`docs/TODO.md`)
 

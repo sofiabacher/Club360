@@ -2,6 +2,19 @@
 
 Plataforma web de gestión para clubes deportivos: socios, cuotas, ligas, categorías, partidos, citaciones, rutinas y notificaciones. Es un proyecto integrador escolar que se desarrolla en profundidad sobre un caso real, el **club Valencia** y su módulo de **Vóley**, con arquitectura multi-club desde el diseño.
 
+## Funciones
+
+- **Socios y familias:** alta presencial con número de socio, registro, vínculo familiar con código y mayoría de edad automática.
+- **Roles y permisos:** roles base y roles nuevos del Admin, con permisos por rol y rol activo.
+- **Cuotas y pagos:** cuota mensual automática, pago con tarjeta (simulado), por transferencia con comprobante o en secretaría, mora y suspensión.
+- **Deportes y competencias:** inscripciones, ligas y categorías, fixture con detección de partidos superpuestos, resultados y campaña de cada categoría.
+- **Citaciones:** convocatoria a los partidos, respuesta de la jugadora y confirmación automática.
+- **Rutinas y seguimiento:** rutinas diarias de la preparadora física, registro de cómo le fue a cada jugadora, objetivos y progreso con gráficos.
+- **Notificaciones:** in-app y por email, y avisos generales.
+- **Paneles de inicio** para la Jugadora, la Familia y el Representante.
+- **Asistente de consultas:** un chat con menú de botones y texto libre que responde dudas generales sobre el club y la plataforma (Socio, Jugadora y Familia), sin acceder a datos personales.
+- **Seguridad:** bitácora, dígitos verificadores con verificación y reparación, y copias de seguridad por club.
+
 ## Integrantes
 
 - Sofía Bacher

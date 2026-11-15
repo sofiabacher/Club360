@@ -184,6 +184,12 @@ const LOG_ACTIONS = {
     GAME_CANCELLED: { message: 'Cancelación de partido', criticity: CRITICITY.HIGH },
     CONFLICT_RESOLVED: { message: 'Resolución de conflicto de horario', criticity: CRITICITY.MEDIUM },
 
+    // Bot de consultas (P21). BOT_INTERACTION nunca guarda el texto del usuario; BOT_UNANSWERED guarda el texto de los
+    // fallbacks sin userId ni roleId
+    BOT_INTERACTION: { message: 'Consulta al asistente', criticity: CRITICITY.LOW },
+    BOT_UNANSWERED: { message: 'Consulta al asistente sin respuesta', criticity: CRITICITY.LOW },
+    BOT_FEEDBACK: { message: 'Opinión sobre una respuesta del asistente', criticity: CRITICITY.LOW },
+
     // Citaciones. La confirmación automática la hace el job (sin usuario ni rol)
     CITATION_CREATED: { message: 'Generación de citaciones', criticity: CRITICITY.MEDIUM },
     CITATION_CANCELLED: { message: 'Cancelación de citación', criticity: CRITICITY.MEDIUM },
@@ -304,6 +310,21 @@ const VALID_SET_RESULTS = [[3, 0], [3, 1], [3, 2], [2, 0], [2, 1]]
 // Cuántos resultados entran en la racha de la campaña
 const CAMPAIGN_STREAK_LENGTH = 5
 
+// Bot de consultas (P21): umbrales de confianza del clasificador (calibrados con npm run bot:eval). Con confianza
+// >= BOT_THRESHOLD responde; entre BOT_SUGGEST_THRESHOLD y BOT_THRESHOLD sugiere hasta BOT_MAX_SUGGESTIONS intenciones;
+// por debajo, el fallback. Mensajes de hasta BOT_MAX_MESSAGE_LENGTH caracteres y BOT_RATE_LIMIT_PER_MINUTE por usuario
+const BOT_THRESHOLD = 0.45
+const BOT_SUGGEST_THRESHOLD = 0.25
+const BOT_MAX_SUGGESTIONS = 3
+// Una consulta de una sola palabra ("citación") es ambigua si la segunda intención queda a menos de este margen de la
+// primera: en lugar de responder, sugiere
+const BOT_AMBIGUITY_MARGIN = 0.1
+const BOT_MAX_MESSAGE_LENGTH = 300
+const BOT_RATE_LIMIT_PER_MINUTE = 30
+
+// Grupos del menú del bot (se calculan por permisos, nunca por el nombre del rol)
+const BOT_GROUPS = ['socio', 'jugadora', 'familia']
+
 // Seguimiento personal (P20): la jugadora registra una rutina desde su día hasta 7 días después; hasta 10 objetivos En
 // curso a la vez; esfuerzo percibido de 1 a 5
 const ROUTINE_LOG_WINDOW_DAYS = 7
@@ -397,6 +418,13 @@ module.exports = {
     VALID_SET_RESULTS,
     CAMPAIGN_STREAK_LENGTH,
     ROUTINE_LOG_WINDOW_DAYS,
+    BOT_THRESHOLD,
+    BOT_SUGGEST_THRESHOLD,
+    BOT_MAX_SUGGESTIONS,
+    BOT_AMBIGUITY_MARGIN,
+    BOT_MAX_MESSAGE_LENGTH,
+    BOT_RATE_LIMIT_PER_MINUTE,
+    BOT_GROUPS,
     MAX_GOALS_IN_PROGRESS,
     EFFORT_MIN,
     EFFORT_MAX,
