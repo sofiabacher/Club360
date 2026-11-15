@@ -36,5 +36,36 @@ export const deleteRoutine = (id) => axiosClient.delete(`/routines/${id}`).then(
 
 // ---------- Jugadora ----------
 
-// data: { weekStart, weekEnd, today, currentWeekStart, categories: [{ category, league, days }] }
+// data: { weekStart, weekEnd, today, currentWeekStart, canTrack, categories: [{ category, league, days }] }. Con
+// routines.trackOwn, cada rutina trae myLog ({ status, effort, note } o null) y canLog
 export const getMyRoutine = (weekStart) => axiosClient.get('/routines/mine', { params: { weekStart } }).then((res) => res.data)
+
+// ---------- Seguimiento personal (routines.trackOwn) ----------
+
+// payload: { status, effort?, note? }. Crea o edita el registro. data: { log }
+export const saveRoutineLog = (routineId, payload) => axiosClient.put(`/routines/${routineId}/log`, payload).then((res) => res.data)
+
+// data: { weeks: [{ weekStart, scheduled, completed, partial, notCompleted, unlogged, compliance, effort }], totals, goals }
+export const getMyProgress = (weeks) => axiosClient.get('/routines/progress/mine', { params: { weeks } }).then((res) => res.data)
+
+// data: { items: [{ id, text, dueDate, goalState, closedAt, overdue }] }
+export const getMyGoals = () => axiosClient.get('/routines/goals/mine').then((res) => res.data)
+
+// payload: { text, dueDate }
+export const createGoal = (payload) => axiosClient.post('/routines/goals', payload).then((res) => res.data)
+
+export const updateGoal = (id, payload) => axiosClient.put(`/routines/goals/${id}`, payload).then((res) => res.data)
+
+// payload: { goalState, dueDate? } (dueDate: al reabrir uno con la fecha pasada)
+export const setGoalState = (id, payload) => axiosClient.patch(`/routines/goals/${id}/state`, payload).then((res) => res.data)
+
+// ---------- Seguimiento de las jugadoras (routines.viewTracking) ----------
+
+// data: { category, weekStart, weekEnd, today, currentWeekStart, routines: [{ id, dayOfWeek, date, title }],
+//         players: [{ member, logs: { [routineId]: log | null }, compliance, effort }] }
+export const getTracking = (categoryId, weekStart) =>
+  axiosClient.get('/routines/tracking', { params: { categoryId, weekStart } }).then((res) => res.data)
+
+// data: { member, categories, progress, goals }
+export const getMemberTracking = (memberId, weeks) =>
+  axiosClient.get(`/routines/tracking/members/${memberId}`, { params: { weeks } }).then((res) => res.data)

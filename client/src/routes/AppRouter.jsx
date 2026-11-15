@@ -51,6 +51,8 @@ import PaymentVoucherPage from '../pages/fees/PaymentVoucherPage.jsx'
 import RoutinesManagePage from '../pages/routines/RoutinesManagePage.jsx'
 import RoutinesAssignedPage from '../pages/routines/RoutinesAssignedPage.jsx'
 import MyRoutinePage from '../pages/routines/MyRoutinePage.jsx'
+import MyProgressPage from '../pages/routines/MyProgressPage.jsx'
+import TrackingPage from '../pages/routines/TrackingPage.jsx'
 import LogsPage from '../pages/logs/LogsPage.jsx'
 import IntegrityPage from '../pages/integrity/IntegrityPage.jsx'
 import BackupPage from '../pages/backup/BackupPage.jsx'
@@ -83,6 +85,8 @@ const SCREENS = {
   '/routines': RoutinesManagePage,
   '/routines/assigned': RoutinesAssignedPage,
   '/my-routine': MyRoutinePage,
+  '/my-progress': MyProgressPage,
+  '/routines/tracking': TrackingPage,
   '/logs': LogsPage,
   '/integrity': IntegrityPage,
   '/backup': BackupPage,

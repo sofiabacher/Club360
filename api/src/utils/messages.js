@@ -316,7 +316,9 @@ module.exports = {
         scoreInvalid: 'Ingresá los sets ganados por cada equipo.',
         setScoresInvalid: 'Los puntos de los sets tienen que ser una lista de sets, cada uno con los puntos del club y del rival.',
         seasonInvalid: 'La temporada no es válida (un año, por ejemplo 2026).',
-        withoutResultInvalid: 'El filtro de partidos sin resultado no es válido.'
+        withoutResultInvalid: 'El filtro de partidos sin resultado no es válido.',
+        scopeInvalid: 'El listado tiene que ser upcoming o history.',
+        includeCancelledInvalid: 'Indicá si se muestran los cancelados.'
     },
 
     citations: {
@@ -407,6 +409,21 @@ module.exports = {
         notMember: 'No sos socio del club.',
         pastWeek: 'Las rutinas de semanas pasadas no se pueden modificar.',
         dayTaken: 'Ese día ya tiene una rutina cargada. Editala en lugar de crear otra.',
+        routineHasLogs: 'No se puede borrar: ya hay jugadoras que registraron esta rutina. Podés editarla.',
+
+        // Seguimiento personal (P20)
+        logNotYet: 'Todavía no podés registrar esta rutina.',
+        logExpired: 'Ya pasó el plazo para registrar esta rutina.',
+        effortRequired: 'Indicá el esfuerzo, del 1 al 5.',
+        effortNotAllowed: 'Si no la hiciste, no se indica el esfuerzo.',
+        goalNotFound: 'No encontramos el objetivo.',
+        goalDueDatePast: 'La fecha límite tiene que ser de hoy en adelante.',
+        goalTooMany: 'Tenés 10 objetivos en curso. Cerrá alguno antes de sumar otro.',
+        goalNotInProgress: 'Solo se pueden editar los objetivos en curso.',
+        goalAlreadyClosed: 'El objetivo ya está cerrado.',
+        goalAlreadyInProgress: 'El objetivo ya está en curso.',
+        goalReopenNeedsDate: 'La fecha límite de este objetivo ya pasó: elegí una nueva para reabrirlo.',
+        playerNotFound: 'No encontramos a esa jugadora en tus categorías.',
 
         // Validaciones de formato
         idInvalid: 'El identificador no es válido.',
@@ -416,7 +433,15 @@ module.exports = {
         titleInvalid: 'El título tiene que tener entre 3 y 150 caracteres.',
         descriptionInvalid: 'Escribí la descripción de la rutina (hasta 3000 caracteres).',
         videoUrlInvalid: 'El video tiene que ser un link http o https de hasta 255 caracteres.',
-        removeImageInvalid: 'Indicá si se quita la imagen.'
+        removeImageInvalid: 'Indicá si se quita la imagen.',
+        statusInvalid: 'Elegí cómo te fue: Completada, Parcial o No la hice.',
+        effortInvalid: 'El esfuerzo tiene que ser un número del 1 al 5.',
+        noteInvalid: 'La nota puede tener hasta 300 caracteres.',
+        weeksInvalid: 'El período tiene que ser de 1 a 26 semanas.',
+        goalTextInvalid: 'El objetivo tiene que tener entre 5 y 200 caracteres.',
+        goalDueDateInvalid: 'Elegí una fecha límite válida (AAAA-MM-DD).',
+        goalStateInvalid: 'El estado del objetivo no es válido.',
+        memberIdInvalid: 'La jugadora no es válida.'
     },
 
     logs: {

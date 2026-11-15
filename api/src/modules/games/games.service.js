@@ -822,15 +822,22 @@ async function gamesOfCategories(clubId, categoryIds, { from, to }) {
     return games.map(formatGame)
 }
 
-// Partidos de las categorías del staff logueado, y esas categorías con su liga (para la campaña de cada una)
-async function listAssigned(user, { from, to }) {
+// Partidos de las categorías del staff logueado, y esas categorías con su liga (para la campaña de cada una).
+// scope 'history': los partidos que ya pasaron (historyOf), cada uno con el resumen de sus citaciones
+async function listAssigned(user, { from, to, scope = 'upcoming', ...history }) {
     const staff = await staffOf(user)
-    if (!staff) return { items: [], categories: [] }
+    const categories = staff ? await getCategoriesOfStaff(user.clubId, staff.id) : []
+    const categoryList = categories.map(category => ({ id: category.id, name: category.name, league: { id: category.league.id, name: category.league.name } }))
 
-    const categories = await getCategoriesOfStaff(user.clubId, staff.id)
+    if (scope === 'history') {
+        const result = await historyOf(user.clubId, categories.map(category => category.id), history)
+        const summaries = await citationSummaries(result.items.map(game => game.id))
+        return { ...result, items: result.items.map(game => ({ ...game, citationSummary: summaries.get(game.id) })), categories: categoryList }
+    }
+
     return {
-        items: await gamesOfCategories(user.clubId, categories.map(category => category.id), { from, to }),
-        categories: categories.map(category => ({ id: category.id, name: category.name, league: { id: category.league.id, name: category.league.name } }))
+        items: staff ? await gamesOfCategories(user.clubId, categories.map(category => category.id), { from, to }) : [],
+        categories: categoryList
     }
 }
 
@@ -904,6 +911,97 @@ async function resolveConflict(actor, { memberId, gameIds, chosenGameId, note })
     return conflict
 }
 
+// ---------- Historial de partidos (P20) ----------
+
+const HISTORY_PAGE_SIZE = 20
+
+// Los partidos que ya pasaron de un conjunto de categorías: Jugados, Cancelados y Programados con la fecha pasada
+// (todavía sin marcar), del más nuevo al más viejo, paginados. Filtros: season (por defecto la actual), categoryId (una
+// del conjunto; si no, 404) e includeCancelled (por defecto true). seasons: las temporadas con partidos, para el selector
+async function historyOf(clubId, categoryIds, { season, categoryId, includeCancelled = true, page = 1 } = {}) {
+    page = Number(page) || 1
+    const selectedSeason = String(season || currentSeason())
+
+    if (categoryId && !categoryIds.includes(Number(categoryId))) throw createError(m.categoryNotFound, 404)
+    const ids = categoryId ? [Number(categoryId)] : categoryIds
+
+    const empty = { items: [], total: 0, page, pageSize: HISTORY_PAGE_SIZE, totalPages: 1, season: selectedSeason, seasons: [selectedSeason] }
+    if (ids.length === 0) return empty
+
+    const states = [
+        { gameState: GAME_STATES.PLAYED },
+        { gameState: GAME_STATES.SCHEDULED, dateTime: { [Op.lt]: new Date() } },
+        ...(includeCancelled ? [{ gameState: GAME_STATES.CANCELLED }] : [])
+    ]
+
+    const [{ count, rows }, seasonRows] = await Promise.all([
+        Game.findAndCountAll({
+            where: { clubId, categoryId: ids, season: selectedSeason, [Op.or]: states },
+            include: [includeActiveCategory()],
+            order: [['dateTime', 'DESC'], ['id', 'DESC']],
+            limit: HISTORY_PAGE_SIZE,
+            offset: (page - 1) * HISTORY_PAGE_SIZE
+        }),
+        Game.findAll({ where: { clubId, categoryId: categoryIds }, attributes: [[sequelize.fn('DISTINCT', sequelize.col('season')), 'season']], raw: true })
+    ])
+
+    const seasons = [...new Set([selectedSeason, ...seasonRows.map(row => String(row.season))])].sort((a, b) => b.localeCompare(a))
+
+    return {
+        items: rows.map(formatGame),
+        total: count,
+        page,
+        pageSize: HISTORY_PAGE_SIZE,
+        totalPages: Math.max(1, Math.ceil(count / HISTORY_PAGE_SIZE)),
+        season: selectedSeason,
+        seasons
+    }
+}
+
+// Resumen de las citaciones de cada partido, para la entrenadora: Map gameId → { cited, confirmed, rejected, cancelled,
+// pending }. cited cuenta todas salvo las canceladas; confirmed suma las confirmadas a mano y las automáticas
+async function citationSummaries(gameIds) {
+    const summaries = new Map(gameIds.map(id => [id, { cited: 0, confirmed: 0, rejected: 0, cancelled: 0, pending: 0 }]))
+    if (gameIds.length === 0) return summaries
+
+    const citations = await Citation.findAll({ where: { gameId: gameIds }, attributes: ['gameId', 'citationState'] })
+    for (const { gameId, citationState } of citations) {
+        const summary = summaries.get(gameId)
+        if (citationState === CITATION_STATES.CANCELLED) { summary.cancelled++; continue }
+        summary.cited++
+        if ([CITATION_STATES.CONFIRMED, CITATION_STATES.AUTO_CONFIRMED].includes(citationState)) summary.confirmed++
+        else if (citationState === CITATION_STATES.REJECTED) summary.rejected++
+        else summary.pending++
+    }
+
+    return summaries
+}
+
+// Historial de una socia: sus categorías activas, con su citación en cada partido ({ citationState, justification } o
+// null si no la citaron; si hay varias, la que no está cancelada) y la marca de conflicto (conflict.notPlaying)
+async function historyOfMember(clubId, member, filters) {
+    const categories = member.memberStateId === MEMBER_STATES.INACTIVE ? [] : await getCategoriesOfMember(clubId, member.id)
+    const result = await historyOf(clubId, categories.map(category => category.id), filters)
+
+    const ids = result.items.map(game => game.id)
+    const [citations, notPlaying] = await Promise.all([
+        ids.length > 0 ? Citation.findAll({ where: { gameId: ids, memberId: member.id }, order: [['id', 'DESC']] }) : [],
+        getNotPlayingGames(clubId, member.id)
+    ])
+
+    const citationOf = (gameId) => {
+        const own = citations.filter(citation => citation.gameId === gameId)
+        const citation = own.find(item => item.citationState !== CITATION_STATES.CANCELLED) ?? own[0]
+        return citation ? { id: citation.id, citationState: citation.citationState, justification: citation.justification } : null
+    }
+
+    return {
+        ...result,
+        categories: categories.map(category => ({ id: category.id, name: category.name, league: { id: category.league.id, name: category.league.name } })),
+        items: result.items.map(game => ({ ...game, citation: citationOf(game.id), conflict: conflictMarkOf(notPlaying, game.id) }))
+    }
+}
+
 // ---------- Jugadora y Familia ----------
 
 // Partidos de cada categoría activa de una socia (sin las inactivas), agrupados por categoría con su liga
@@ -927,16 +1025,19 @@ async function gamesByCategoryOf(clubId, member, { from, to }) {
     }))
 }
 
-// Mis partidos: los de las categorías de la jugadora logueada (por defecto, desde hoy)
-async function listMine(user, { from, to }) {
+// Mis partidos: los de las categorías de la jugadora logueada (por defecto, desde hoy). scope 'history': los que ya
+// pasaron, con su citación (historyOfMember)
+async function listMine(user, { from, to, scope = 'upcoming', ...history }) {
     const member = await Member.findOne({ where: { userId: user.id, clubId: user.clubId } })
     if (!member) throw createError(m.notMember, 404)
 
+    if (scope === 'history') return historyOfMember(user.clubId, member, history)
     return { categories: await gamesByCategoryOf(user.clubId, member, { from, to }) }
 }
 
 // Lo mismo para cada socia menor vinculada al adulto logueado (o solo una, con memberId)
-async function listLinked(user, { memberId, from, to }) {
+// scope 'history': el historial de una sola jugadora (memberId, o la primera vinculada), con la lista de las vinculadas
+async function listLinked(user, { memberId, from, to, scope = 'upcoming', ...history }) {
     const members = await Member.findAll({
         where: { clubId: user.clubId, adultUserId: user.id, linkStatus: true, ...(memberId && { id: Number(memberId) }) },
         include: [{ model: User, as: 'user', attributes: ['name', 'lastName'] }],
@@ -944,6 +1045,19 @@ async function listLinked(user, { memberId, from, to }) {
     })
 
     if (memberId && members.length === 0) throw createError(m.linkedMemberNotFound, 404)
+
+    if (scope === 'history') {
+        const memberOf = (item) => ({ id: item.id, name: `${item.user.name} ${item.user.lastName}`, memberStateId: item.memberStateId })
+        if (members.length === 0) return { players: [], member: null, items: [], total: 0, page: 1, pageSize: HISTORY_PAGE_SIZE, totalPages: 1, categories: [], season: String(history.season || currentSeason()), seasons: [] }
+        const all = memberId
+            ? await Member.findAll({
+                where: { clubId: user.clubId, adultUserId: user.id, linkStatus: true },
+                include: [{ model: User, as: 'user', attributes: ['name', 'lastName'] }],
+                order: [[{ model: User, as: 'user' }, 'name', 'ASC']]
+            })
+            : members
+        return { players: all.map(memberOf), member: memberOf(members[0]), ...await historyOfMember(user.clubId, members[0], history) }
+    }
 
     return {
         players: await Promise.all(members.map(async (member) => ({

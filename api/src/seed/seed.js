@@ -22,6 +22,7 @@ function count(result, created) {
     result[created ? 'created' : 'existing']++
 }
 
+// Devuelve los permisos por nombre. Los que se crean ahora (no existían en el catálogo) quedan en summary.newPermissions
 async function loadPermissions(transaction, summary) {
     const permissionsByName = {}
 
@@ -36,6 +37,7 @@ async function loadPermissions(transaction, summary) {
 
         permissionsByName[name] = permission
         count(summary.permissions, created)
+        if (created) summary.newPermissions.push(name)
     }
 
     return permissionsByName
@@ -106,6 +108,7 @@ async function loadClubSports(club, sportsByName, transaction, summary) {
 
 // Los permisos de un rol base se asignan solo cuando el rol se crea. Si el rol ya existía, sus permisos no se tocan:
 // el Admin los puede haber editado (gestión de roles) y volver a correr el seed no tiene que devolvérselos.
+// La única excepción son los permisos nuevos del catálogo (assignNewPermissions).
 async function loadBaseRoles(club, permissionsByName, transaction, summary) {
     const rolesByName = {}
 
@@ -132,6 +135,30 @@ async function loadBaseRoles(club, permissionsByName, transaction, summary) {
     }
 
     return rolesByName
+}
+
+// Permisos nuevos en una base que ya tiene datos. Excepción a la regla de loadBaseRoles: cuando el seed crea un permiso
+// que no existía en el catálogo, se lo asigna a los roles base que lo tienen en baseRoles.js, en todos los clubes (el
+// catálogo es uno solo para toda la plataforma). Así una base con datos (la local o la de la demo) recibe los permisos
+// que se suman al catálogo. No pisa nada del Admin: los permisos que ya existían no se tocan, y uno nuevo no lo pudo
+// haber quitado nadie, porque no existía. En una base vacía no hace nada: los roles se crean con todos sus permisos
+async function assignNewPermissions(permissionsByName, transaction, summary) {
+    for (const permissionName of summary.newPermissions) {
+        const permission = permissionsByName[permissionName]
+
+        for (const { name: roleName, permissions } of BASE_ROLES_SEED) {
+            if (!permissions.includes(permissionName)) continue
+
+            const roles = await Role.findAll({ where: { name: roleName, isBase: true }, transaction })
+            let clubs = 0
+            for (const role of roles) {
+                const [, created] = await RolePermission.findOrCreate({ where: { roleId: role.id, permissionId: permission.id }, transaction })
+                if (created) clubs++
+            }
+
+            if (clubs > 0) summary.newPermissionAssignments.push({ permissionName, roleName, clubs })
+        }
+    }
 }
 
 async function loadAdmin(club, rolesByName, transaction, summary) {
@@ -179,6 +206,10 @@ function printSummary(summary, club, admin) {
         console.log(`    ${roleName.padEnd(20)} ${result ? `${result.created} permisos asignados` : 'ya existía: sus permisos no se tocan'}`)
     }
 
+    for (const { permissionName, roleName, clubs } of summary.newPermissionAssignments) {
+        console.log(`  Permiso nuevo ${permissionName} → ${roleName} (${clubs} ${clubs === 1 ? 'club' : 'clubes'})`)
+    }
+
     console.log(`  Usuario Admin:       ${admin.username} (${state(summary.admin)})`)
     console.log(`  Rol del Admin:       ${BASE_ROLES.ADMIN} (${summary.adminRole.created ? 'asignado' : 'ya lo tenía'})`)
 }
@@ -194,6 +225,8 @@ async function seed() {
 
         const summary = {
             permissions: counter(),
+            newPermissions: [],
+            newPermissionAssignments: [],
             sports: counter(),
             club: counter(),
             clubSports: counter(),
@@ -211,6 +244,7 @@ async function seed() {
             const club = await loadClub(transaction, summary)
             await loadClubSports(club, sportsByName, transaction, summary)
             const rolesByName = await loadBaseRoles(club, permissionsByName, transaction, summary)
+            await assignNewPermissions(permissionsByName, transaction, summary)
             const admin = await loadAdmin(club, rolesByName, transaction, summary)
 
             return { club, admin }

@@ -6,7 +6,7 @@ Plataforma web de gestión para clubes deportivos (proyecto integrador escolar).
 
 - `docs/contexto.md`: documento de contexto del proyecto (roles, reglas de negocio, módulos del MVP, decisiones de modelado). Es una copia del documento que se mantiene en claude.ai; si se actualiza allá, se reemplaza esta copia.
 - `docs/moodboard.png`: referencia visual del front (ver "Diseño visual" más abajo).
-- `docs/DER_logico.jpg`: DER lógico (24 entidades). **Si la imagen y `docs/contexto.md` no coinciden, manda el contexto.** Diferencias conocidas (la imagen quedó desactualizada):
+- `docs/DER_logico.jpg`: DER lógico (24 entidades en la imagen; 26 con `routineLog` y `goal`). **Si la imagen y `docs/contexto.md` no coinciden, manda el contexto.** Diferencias conocidas (la imagen quedó desactualizada):
   - `fee`: `memberId` y `period` **no** son únicos por separado. La restricción es un índice único compuesto `(memberId, period)`.
   - `role`: `name` **no** es único en toda la base. La restricción es un índice único compuesto `(clubId, name)`, para que cada club pueda tener sus propios roles base ("Socio", "Jugadora", etc.).
   - `user.password` admite NULL: queda vacío desde el alta presencial hasta que el socio completa su registro con el número de socio. El login rechaza usuarios sin contraseña.
@@ -17,6 +17,7 @@ Plataforma web de gestión para clubes deportivos (proyecto integrador escolar).
   - `league` suma `ageScale` (1 o 2) y `category` suma `ageGroup` (código de la escala, ver `AGE_SCALES`).
   - `game` suma `isHome` (`BOOLEAN NOT NULL DEFAULT true`): partido de local o de visitante.
   - `game` suma `ownScore` y `rivalScore` (`TINYINT` NULL, sets) y `setScores` (JSON NULL, `[{ own, rival }]` por set). Sin resultado, los tres en NULL.
+  - **Tablas nuevas, que no están en la imagen:** `routineLog` (registro de cumplimiento de una jugadora por rutina: `status` con `ROUTINE_LOG_STATUS`, `effort` 1-5 NULL, `note`; único `(routineId, memberId)`) y `goal` (objetivo personal: `text`, `dueDate`, `goalState` con `GOAL_STATES`, `closedAt`).
   - `notification` suma `batchId` (`CHAR(36)` NULL): identifica las notificaciones de un mismo aviso general; las del sistema lo tienen en NULL.
   - `routine` suma `dayOfWeek` (`TINYINT NOT NULL DEFAULT 1`, `DAYS_OF_WEEK`, 1 lunes … 7 domingo), con índice único `(categoryId, weekStart, dayOfWeek)`. `weekStart` es siempre lunes.
   - `payment` suma `method` (`TINYINT NOT NULL DEFAULT 1`, `PAYMENT_METHODS`: 1 tarjeta, 2 transferencia, 3 secretaría), `receiptUrl` (`VARCHAR(255)` NULL) y `note` (`VARCHAR(300)` NULL).
@@ -93,12 +94,12 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
 - **Multi-tenant:** toda entidad de negocio tiene `clubId`. Todo service filtra por `req.user.clubId`; nunca se toma el clubId del body.
 - **Permisos, no roles:** el back verifica con `checkPermission('módulo.acción')` y el front con `usePermission()` / `PermissionRoute`. Nunca se compara el nombre de un rol para dar acceso.
 - **Rol activo:** el JWT lleva `id`, `clubId` y `activeRoleId`. Los permisos efectivos son los del rol activo + los permisos directos del usuario (`user_permission`), no la suma de todos sus roles. Cambiar de rol genera un token nuevo.
-- **Nombres de permisos:** `módulo.acción` (ej. `fees.manage`, `citations.create`). El catálogo es fijo (41 permisos) y vive en `api/src/utils/permissions.js`: en las rutas se usan sus constantes (`checkPermission(PERMISSIONS.FEES_MANAGE)`), nunca strings sueltos. El Admin no puede crear ni modificar permisos, solo roles.
+- **Nombres de permisos:** `módulo.acción` (ej. `fees.manage`, `citations.create`). El catálogo es fijo (43 permisos) y vive en `api/src/utils/permissions.js`: en las rutas se usan sus constantes (`checkPermission(PERMISSIONS.FEES_MANAGE)`), nunca strings sueltos. El Admin no puede crear ni modificar permisos, solo roles.
 - **Estados:** los campos de estado son `INT NOT NULL DEFAULT 1`, sin tabla de estados. El mapeo vive en `api/src/utils/constants.js` y se replica en `client/src/utils/constants.js`. Nunca escribir números mágicos: usar las constantes.
 - **Dígitos verificadores:** las tablas de negocio tienen `dvh`. El DVH de cada registro y el DVV de cada tabla se calculan **automáticamente** con los hooks de `models/integrityHooks.js`: no se calculan a mano en los services. Para que funcionen, toda escritura tiene que pasar por Sequelize (nunca SQL directo con `sequelize.query` para insertar, modificar o borrar datos de negocio) y, si se usa una transacción, hay que pasarla en `options.transaction`. La tabla `log` no tiene `dvh`.
 - **Bitácora:** las acciones relevantes se registran con `utils/logger.js`, indicando `clubId`, `userId` y `roleId` (el rol activo). Las acciones se definen en `LOG_ACTIONS` de `constants.js`.
 - **Encriptación:** contraseñas con bcrypt (`hashPassword`); datos sensibles reversibles con `encrypt`/`decrypt` de `utils/crypto.js`. El dato cifrado reversible es el **teléfono del usuario**, y lo cifra y descifra el propio modelo `User`: los services lo usan en claro, y **no** se lee `phone` con `raw: true`.
-- **Seed:** la carga inicial se hace solo con `npm run seed`, nunca al arrancar el servidor. Es idempotente (se puede correr varias veces). Los datos del club están en `seed/data/club.js` (provisorios, ver `docs/contexto.md` sección 2.1) y los del usuario Admin en el `.env` (`SEED_ADMIN_*`). Los permisos de un rol base se asignan **solo cuando el rol se crea**: volver a correr el seed no pisa los cambios que hizo el Admin.
+- **Seed:** la carga inicial se hace solo con `npm run seed`, nunca al arrancar el servidor. Es idempotente (se puede correr varias veces). Los datos del club están en `seed/data/club.js` (provisorios, ver `docs/contexto.md` sección 2.1) y los del usuario Admin en el `.env` (`SEED_ADMIN_*`). Los permisos de un rol base se asignan **solo cuando el rol se crea**: volver a correr el seed no pisa los cambios que hizo el Admin. **Excepción:** cuando el seed crea un permiso que no existía en el catálogo, se lo asigna a los roles base que lo tienen en `baseRoles.js` (así una base con datos recibe los permisos nuevos).
 - **Datos de la demo:** se cargan solo con `npm run seed:demo`, después del seed (ver "Datos de la demo").
 - **Configuración:** todo valor de entorno se lee desde `config/index.js`, no con `process.env` en otros archivos. Las URLs no se hardcodean.
 
@@ -214,7 +215,7 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 - **Rol "Admin del Club":** siempre conserva `LOCKED_ADMIN_PERMISSIONS` (`access.manageRoles` y `access.assignRoles`), definidos en `utils/permissions.js`. Siempre tiene que quedar al menos un usuario ACTIVE con ese rol, y un Admin no puede quitárselo a sí mismo.
 - **Roles que el Admin asigna a mano:** solo los roles nuevos (no base) y "Admin del Club". Socio, Jugadora, Familia, Representante, Entrenadora y Preparadora física se asignan **solo** desde su circuito (alta de socio, aprobación de inscripción, vínculo familiar, alta de staff), y el back rechaza asignarlos desde `access`. Los módulos de esos circuitos asignan el rol con un helper de `access.service.js`, no escribiendo `user_role` por su cuenta.
 - **Eliminar un rol** con usuarios asignados no se puede: primero hay que quitárselo a cada uno.
-- **Permisos directos** (`user_permission`): excepción puntual por usuario, con cualquiera de los 41 permisos. Los de `ADULT_ONLY_PERMISSIONS` igual se quitan si el usuario es menor.
+- **Permisos directos** (`user_permission`): excepción puntual por usuario, con cualquiera de los 43 permisos. Los de `ADULT_ONLY_PERMISSIONS` igual se quitan si el usuario es menor.
 - Los cambios de roles y permisos rigen en el back desde la siguiente request; el front refresca la sesión al recuperar el foco de la pestaña (como mínimo cada 60 segundos).
 
 ## Socios y club (módulos `members` y `clubs`)
@@ -253,6 +254,7 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 - **Al guardar un partido no se bloquea:** se avisa (`check-conflicts` antes de guardar y `conflicts` en la respuesta) y se notifica `SCHEDULE_CONFLICT` a las entrenadoras.
 - **Resultado:** obligatorio al marcar como Jugado; `validateResult` acepta solo `VALID_SET_RESULTS` (3-0, 3-1, 3-2, 2-0, 2-1 y al revés) y, si vienen puntos, un set por cada set jugado, con ganador por 2 o más y coherente con los sets. Se corrige con `PUT /games/:id/result` (solo Jugados; bitácora con el anterior). No avisa a nadie.
 - **Campaña:** `getCampaign(categoryId, season)`, calculada (no se guarda) con los Jugados con resultado; informa también cuántos Jugados no tienen resultado. Un solo endpoint, `GET /games/campaign`, con el alcance de cada permiso de `games`.
+- **Historial:** `/games/mine`, `/games/linked` y `/games/assigned` aceptan `scope=history` (Jugados, Cancelados y Programados con fecha pasada, del más nuevo al más viejo), con la citación de la jugadora o el resumen de citaciones de la entrenadora. En el front, pestañas "Próximos" y "Jugados" (`?tab=jugados`).
 - **Resolución:** solo en la bitácora (`CONFLICT_RESOLVED`, con `conflictKey = "{memberId}:{idMenor}-{idMayor}"` y el partido elegido en `details`). Se consulta con `getConflictResolutions`.
 
 ## Citaciones (módulo `citations`)
@@ -288,7 +290,9 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 - Una rutina por **categoría y día** (`weekStart` lunes + `dayOfWeek`). Las fechas de semana salen de `getWeekStart` / `getCurrentWeekStart` de `utils/dates.js` (zona horaria de Argentina).
 - **Alcance** (`getRoutineScope`): la preparadora, sus categorías (`getCategoriesOfStaff`); un usuario con `routines.manage` que no es staff, todas las del club. La entrenadora consulta las suyas y la jugadora las de `getCategoriesOfMember`.
 - Se cargan, editan y borran solo rutinas de la **semana actual o futuras**; las pasadas son de solo lectura. El borrado es físico (nada depende de `routine`) y se registra en la bitácora.
-- Crear o editar avisa `ROUTINE_PUBLISHED` (in-app) a las jugadoras activas de la categoría; borrar no avisa.
+- Crear o editar avisa `ROUTINE_PUBLISHED` (in-app) a las jugadoras activas de la categoría; borrar no avisa. Una rutina con registros (`routineLog`) no se borra (409).
+- **Seguimiento** (`routines.trackOwn`, Jugadora): registro por rutina con `PUT /routines/:id/log`, dentro de `ROUTINE_LOG_WINDOW_DAYS` (7) desde la fecha de la rutina, nunca antes; `effort` obligatorio si es Completada o Parcial y vacío si es No completada. Objetivos con `GOAL_STATES` (máximo 10 En curso, no se borran, se reabren). `getProgress` calcula semanas, cumplimiento, esfuerzo y racha: no se guarda. Sin bitácora ni avisos.
+- **Vista de la preparadora** (`routines.viewTracking`): solo jugadoras activas en categorías de `getRoutineScope`; fuera del alcance, 404. Nadie más ve el seguimiento.
 
 ## Panel de inicio (`HomePage`)
 

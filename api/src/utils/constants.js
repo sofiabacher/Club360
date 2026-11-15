@@ -64,6 +64,20 @@ const GAME_STATES = {
     CANCELLED: 3 
 }
 
+// routineLog.status — cómo le fue a la jugadora con la rutina del día (P20)
+const ROUTINE_LOG_STATUS = {
+    COMPLETED: 1,
+    PARTIAL: 2,
+    NOT_COMPLETED: 3
+}
+
+// goal.goalState — "Vencido" no es un estado: es un objetivo IN_PROGRESS con dueDate pasada (se calcula al mostrarlo)
+const GOAL_STATES = {
+    IN_PROGRESS: 1,
+    ACHIEVED: 2,
+    ABANDONED: 3
+}
+
 // Días de la semana con la numeración ISO (routine.dayOfWeek): 1 lunes … 7 domingo. short: la letra de las pastillas
 const DAYS_OF_WEEK = [
     { value: 1, short: 'L', name: 'lunes' },
@@ -290,6 +304,13 @@ const VALID_SET_RESULTS = [[3, 0], [3, 1], [3, 2], [2, 0], [2, 1]]
 // Cuántos resultados entran en la racha de la campaña
 const CAMPAIGN_STREAK_LENGTH = 5
 
+// Seguimiento personal (P20): la jugadora registra una rutina desde su día hasta 7 días después; hasta 10 objetivos En
+// curso a la vez; esfuerzo percibido de 1 a 5
+const ROUTINE_LOG_WINDOW_DAYS = 7
+const MAX_GOALS_IN_PROGRESS = 10
+const EFFORT_MIN = 1
+const EFFORT_MAX = 5
+
 // Citaciones (contexto, sección 6): se generan dentro de una ventana, desde 7 días hasta 48 horas antes del partido, y
 // la jugadora tiene 24 horas desde la citación para responder. Después, el job autoConfirmCitations la confirma sola
 const CITATION_WINDOW_OPEN_DAYS = 7
@@ -329,6 +350,8 @@ const TABLE_LABELS = {
     game: 'Partidos',
     citation: 'Citaciones',
     routine: 'Rutinas',
+    routineLog: 'Registros de rutinas',
+    goal: 'Objetivos',
     notification: 'Notificaciones'
 }
 
@@ -355,6 +378,8 @@ module.exports = {
     PAYMENT_METHODS,
     CITATION_STATES,
     GAME_STATES,
+    ROUTINE_LOG_STATUS,
+    GOAL_STATES,
     DAYS_OF_WEEK,
     ROUTINE_DAYS,
     CRITICITY,
@@ -371,6 +396,10 @@ module.exports = {
     GAME_DURATION_MINUTES,
     VALID_SET_RESULTS,
     CAMPAIGN_STREAK_LENGTH,
+    ROUTINE_LOG_WINDOW_DAYS,
+    MAX_GOALS_IN_PROGRESS,
+    EFFORT_MIN,
+    EFFORT_MAX,
     CITATION_WINDOW_OPEN_DAYS,
     CITATION_MIN_HOURS,
     CITATION_RESPONSE_HOURS,

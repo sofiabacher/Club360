@@ -65,3 +65,20 @@ export const getMyGames = () => axiosClient.get('/games/mine').then((res) => res
 
 // data: { players: [{ member: { id, name }, categories: [{ category, league, campaign, games }] }] }
 export const getLinkedGames = () => axiosClient.get('/games/linked').then((res) => res.data)
+
+// ---------- Historial de partidos (scope=history) ----------
+
+// kind: 'mine' | 'linked' | 'assigned'. params: { season, categoryId, includeCancelled, page, memberId (linked) }.
+// data: { items, total, page, pageSize, totalPages, season, seasons, categories } (+ players y member en linked). Cada
+// partido trae citation y conflict (mine y linked) o citationSummary (assigned)
+export const getGamesHistory = (kind, { season, categoryId, includeCancelled = true, page = 1, memberId } = {}) =>
+  axiosClient.get(`/games/${kind}`, {
+    params: {
+      scope: 'history',
+      season: season || undefined,
+      categoryId: categoryId || undefined,
+      includeCancelled: includeCancelled ? 'true' : 'false',
+      page,
+      memberId: memberId || undefined
+    }
+  }).then((res) => res.data)

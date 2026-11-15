@@ -104,10 +104,19 @@ const cancel = async (req, res, next) => {
 
 // ---------- Staff ----------
 
+// Filtros del historial (scope=history): includeCancelled llega como texto
+const historyFilters = ({ scope, season, categoryId, includeCancelled, page }) => ({
+    scope,
+    season,
+    categoryId,
+    includeCancelled: includeCancelled !== 'false',
+    page
+})
+
 const assigned = async (req, res, next) => {
     try {
         const { from, to } = req.query
-        const data = await service.listAssigned(req.user, { from, to })
+        const data = await service.listAssigned(req.user, { from, to, ...historyFilters(req.query) })
         res.json({ success: true, data })
 
     } catch (error) {
@@ -141,7 +150,7 @@ const resolveConflict = async (req, res, next) => {
 const mine = async (req, res, next) => {
     try {
         const { from, to } = req.query
-        const data = await service.listMine(req.user, { from, to })
+        const data = await service.listMine(req.user, { from, to, ...historyFilters(req.query) })
         res.json({ success: true, data })
 
     } catch (error) {
@@ -152,7 +161,7 @@ const mine = async (req, res, next) => {
 const linked = async (req, res, next) => {
     try {
         const { memberId, from, to } = req.query
-        const data = await service.listLinked(req.user, { memberId, from, to })
+        const data = await service.listLinked(req.user, { memberId, from, to, ...historyFilters(req.query) })
         res.json({ success: true, data })
 
     } catch (error) {

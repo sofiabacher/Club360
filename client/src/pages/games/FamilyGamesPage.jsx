@@ -9,12 +9,17 @@ import SportsVolleyballRounded from '@mui/icons-material/SportsVolleyballRounded
 
 import { getLinkedGames } from '../../api/games.api.js'
 import EmptyState from '../../components/common/EmptyState.jsx'
+import GameHistory from '../../components/games/GameHistory.jsx'
+import GamesTabs, { useGamesTab } from '../../components/games/GamesTabs.jsx'
 import PlayerGamesList from '../../components/games/PlayerGamesList.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 
-// Partidos de las jugadoras vinculadas al adulto (games.viewLinked), de solo lectura. Con más de una jugadora, un
-// selector arriba
+const TABS = [{ value: 'proximos', label: 'Próximos' }, { value: 'jugados', label: 'Jugados' }]
+
+// Partidos de las jugadoras vinculadas al adulto (games.viewLinked), de solo lectura, en dos pestañas: "Próximos" y
+// "Jugados" (historial con la citación de la jugadora). Con más de una jugadora, un selector arriba
 export default function FamilyGamesPage() {
+  const [tab, setTab] = useGamesTab(TABS.map((item) => item.value))
   const [players, setPlayers] = useState(null)
   const [selectedId, setSelectedId] = useState('')
   const [error, setError] = useState('')
@@ -46,7 +51,7 @@ export default function FamilyGamesPage() {
       <Box sx={{ mb: 3 }}>
         <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Partidos</Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          {players.length === 1 ? `Los próximos partidos de ${selected.member.name}.` : 'Los próximos partidos de tus jugadoras vinculadas.'}
+          {players.length === 1 ? `Los partidos de ${selected.member.name}.` : 'Los partidos de tus jugadoras vinculadas.'}
         </Typography>
       </Box>
 
@@ -56,9 +61,12 @@ export default function FamilyGamesPage() {
         </TextField>
       )}
 
-      {!hasGames
+      <GamesTabs tabs={TABS} value={tab} onChange={setTab} />
+
+      {tab === 'jugados' && <GameHistory key={selected.member.id} kind="linked" memberId={selected.member.id} />}
+      {tab === 'proximos' && (!hasGames
         ? <EmptyState icon={SportsVolleyballRounded} title="Sin partidos" description={`Todavía no hay partidos en las categorías de ${selected.member.name}.`} />
-        : <PlayerGamesList categories={selected.categories} />}
+        : <PlayerGamesList categories={selected.categories} />)}
     </>
   )
 }

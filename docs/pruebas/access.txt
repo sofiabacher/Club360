@@ -265,3 +265,36 @@ Resultado esperado: el rol no aparece en la lista; pedirlo, editarlo o eliminarl
   usuario del otro club da 404 y no aparece en la búsqueda. El rol del otro club queda intacto.
 Resultado obtenido: todo según lo esperado. El club de prueba se borró al final.
 Estado: Aprobado
+
+
+======================================================================
+PERMISOS NUEVOS EN UNA BASE CON DATOS (Prompt 20 · 14/11/2026)
+======================================================================
+
+
+--------------------------------------------------
+ID: CP-ACCESS-16
+Módulo: access
+Descripción: Correr el seed sobre una base con datos: los permisos nuevos se asignan a Jugadora y Preparadora física
+Precondiciones: la base local club360 con la demo, con el catálogo de 41 permisos y los 7 roles base.
+Pasos:
+  1. npm run seed.
+Datos de entrada: el catálogo de 43 permisos (routines.trackOwn y routines.viewTracking nuevos).
+Resultado esperado: se crean los 2 permisos; la consola muestra "Permiso nuevo routines.trackOwn → Jugadora (1 club)" y
+  "Permiso nuevo routines.viewTracking → Preparadora física (1 club)"; los demás permisos de los roles no se tocan.
+Resultado obtenido: "Permisos: 43 (2 creados, 41 ya existían)" y las dos líneas; Jugadora queda con 13 permisos.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ACCESS-17
+Módulo: access
+Descripción: Un permiso que el Admin le quitó a un rol base no vuelve al correr el seed
+Precondiciones: el caso anterior.
+Pasos:
+  1. Quitarle routines.trackOwn a Jugadora. 2. npm run seed. 3. Devolvérselo.
+Datos de entrada: —
+Resultado esperado: después del seed, Jugadora sigue sin routines.trackOwn (el permiso ya existía en el catálogo); no
+  aparece ninguna línea "Permiso nuevo".
+Resultado obtenido: Jugadora con 12 permisos antes y después del seed, sin la línea; al devolvérselo, 13.
+Estado: Aprobado

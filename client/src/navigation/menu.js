@@ -23,6 +23,7 @@ import HowToRegRounded from '@mui/icons-material/HowToRegRounded'
 import ManageAccountsRounded from '@mui/icons-material/ManageAccountsRounded'
 import ManageHistoryRounded from '@mui/icons-material/ManageHistoryRounded'
 import PaymentsRounded from '@mui/icons-material/PaymentsRounded'
+import InsightsRounded from '@mui/icons-material/InsightsRounded'
 import ReceiptLongRounded from '@mui/icons-material/ReceiptLongRounded'
 import RequestQuoteRounded from '@mui/icons-material/RequestQuoteRounded'
 import SettingsRounded from '@mui/icons-material/SettingsRounded'
@@ -51,10 +52,12 @@ export const MENU_ITEMS = [
   { label: 'Citaciones', path: '/citations', icon: AssignmentIndRounded, permission: 'citations.create', group: 'Deportivo' },
   { label: 'Rutinas', path: '/routines', icon: FitnessCenterRounded, permission: 'routines.manage', group: 'Deportivo' },
   { label: 'Rutinas', path: '/routines/assigned', icon: FitnessCenterRounded, permission: 'routines.viewAssigned', group: 'Deportivo' },
+  { label: 'Seguimiento', path: '/routines/tracking', icon: InsightsRounded, permission: 'routines.viewTracking', group: 'Deportivo' },
 
   { label: 'Mis partidos', path: '/my-games', icon: EventRounded, permission: 'games.viewOwn', group: 'Mi espacio' },
   { label: 'Mis citaciones', path: '/my-citations', icon: AssignmentIndRounded, permission: 'citations.respond', group: 'Mi espacio' },
   { label: 'Mi rutina', path: '/my-routine', icon: FitnessCenterRounded, permission: 'routines.viewOwn', group: 'Mi espacio' },
+  { label: 'Mi progreso', path: '/my-progress', icon: InsightsRounded, permission: 'routines.trackOwn', group: 'Mi espacio' },
   { label: 'Mis cuotas', path: '/my-fees', icon: PaymentsRounded, permission: 'fees.viewOwn', group: 'Mi espacio' },
   { label: 'Deportes', path: '/my-sports', icon: SportsRounded, permission: 'inscriptions.request', group: 'Mi espacio' },
 

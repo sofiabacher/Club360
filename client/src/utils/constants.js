@@ -77,6 +77,23 @@ export const GAME_STATES = {
     CANCELLED: 3 
 }
 
+// routineLog.status — cómo le fue a la jugadora con la rutina del día (igual que el backend)
+export const ROUTINE_LOG_STATUS = {
+    COMPLETED: 1,
+    PARTIAL: 2,
+    NOT_COMPLETED: 3
+}
+
+// goal.goalState — "Vencido" no es un estado: es un objetivo IN_PROGRESS con la fecha pasada (overdue en la respuesta)
+export const GOAL_STATES = {
+    IN_PROGRESS: 1,
+    ACHIEVED: 2,
+    ABANDONED: 3
+}
+
+// Días desde la fecha de la rutina en los que la jugadora la puede registrar
+export const ROUTINE_LOG_WINDOW_DAYS = 7
+
 // Resultados en sets de un partido de vóley terminado, del lado del ganador (igual que el backend): al mejor de 5
 // (3-0, 3-1, 3-2) o al mejor de 3 (2-0, 2-1). Valen también al revés. No hay empates
 export const VALID_SET_RESULTS = [[3, 0], [3, 1], [3, 2], [2, 0], [2, 1]]
@@ -98,7 +115,7 @@ export const TABLE_LABELS = {
   user_permission: 'Permisos directos', permission: 'Permisos (catálogo)', sport: 'Deportes (catálogo)', clubSport: 'Deportes del club',
   member: 'Socios', staff: 'Staff', inscription: 'Inscripciones', fee: 'Cuotas', payment: 'Pagos', league: 'Ligas', category: 'Categorías',
   categoryPlayer: 'Jugadoras de las categorías', categoryStaff: 'Staff de las categorías', game: 'Partidos', citation: 'Citaciones',
-  routine: 'Rutinas', notification: 'Notificaciones'
+  routine: 'Rutinas', routineLog: 'Registros de rutinas', goal: 'Objetivos', notification: 'Notificaciones'
 }
 
 // Escalas de edad del vóley (copia de api/src/utils/constants.js). Cada liga elige una (league.ageScale) y sus

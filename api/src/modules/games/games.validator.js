@@ -29,7 +29,16 @@ const list = [
     query('page').optional().isInt({ min: 1 }).withMessage(m.pageInvalid)
 ]
 
-const range = [dateQuery('from'), dateQuery('to')]
+// Próximos (por defecto) o historial (P20), con sus filtros
+const history = [
+    query('scope').optional({ values: 'falsy' }).isIn(['upcoming', 'history']).withMessage(m.scopeInvalid),
+    query('season').optional({ values: 'falsy' }).matches(/^\d{4}$/).withMessage(m.seasonInvalid),
+    query('categoryId').optional({ values: 'falsy' }).isInt({ min: 1 }).withMessage(m.categoryIdInvalid),
+    query('includeCancelled').optional({ values: 'falsy' }).isIn(['true', 'false']).withMessage(m.includeCancelledInvalid),
+    query('page').optional({ values: 'falsy' }).isInt({ min: 1 }).withMessage(m.pageInvalid)
+]
+
+const range = [dateQuery('from'), dateQuery('to'), ...history]
 
 const byId = [idParam]
 

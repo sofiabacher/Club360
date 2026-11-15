@@ -198,3 +198,18 @@ Render **no** crea las columnas nuevas: en producción `sync()` no altera tablas
 4. Entrá a la demo con el Admin y, desde **Integridad**, verificá que todo dé correcto.
 
 `db:snapshot`, `db:restore` y el arranque con `DB_FORCE_SYNC` o `DB_ALTER_SYNC` piden la confirmación siempre que el host no es `localhost` ni `127.0.0.1`: contra el MySQL local no preguntan nada.
+
+### Si el cambio solo suma tablas o permisos
+
+Cuando el cambio **no toca columnas de tablas que ya existen** (por ejemplo, el P20: las tablas `routineLog` y `goal` y los permisos `routines.trackOwn` y `routines.viewTracking`), no hace falta recrear la base:
+
+- **Tablas nuevas:** al arrancar, `sync()` (sin `force` ni `alter`, también en producción) crea las tablas que faltan y no toca las que ya están. Render las crea solo al publicar el código nuevo.
+- **Permisos nuevos:** los crea `npm run seed`, que además se los asigna a los roles base que los tienen en `baseRoles.js` (solo los permisos que no existían: los cambios del Admin se respetan).
+
+En este orden:
+
+1. **Integrá la rama a `main`** y esperá a que Render diga *Live* (ahí ya creó las tablas nuevas).
+2. **Corré `npm run seed` contra Railway**, desde la compu, con el `.env` apuntando a Railway como en el paso 7 (`DATABASE_URL` pública, `DB_SSL=true`, la misma `ENCRYPTION_KEY` que Render y `DB_FORCE_SYNC`/`DB_ALTER_SYNC` en `false`). En la consola tiene que aparecer una línea por permiso, por ejemplo *"Permiso nuevo routines.trackOwn → Jugadora (1 club)"*. Después volvé a dejar el `.env` local como estaba.
+3. **Verificá la integridad** desde la demo, con el Admin.
+
+Hasta el paso 2, las pantallas nuevas no aparecen en el menú de nadie (los roles todavía no tienen los permisos), pero el resto de la demo funciona igual.

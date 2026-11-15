@@ -3,7 +3,7 @@
 // Que la categoría esté en el alcance, que la semana sea editable y que el día esté libre lo controla el service.
 const { body, param, query } = require('express-validator')
 const { isoDayOfWeek } = require('../../utils/dates')
-const { ROUTINE_DAYS } = require('../../utils/constants')
+const { ROUTINE_DAYS, ROUTINE_LOG_STATUS, GOAL_STATES } = require('../../utils/constants')
 const { routines: m } = require('../../utils/messages')
 
 const DATE_FORMAT = /^\d{4}-\d{2}-\d{2}$/
@@ -53,11 +53,54 @@ const update = [
 
 const remove = [idParam]
 
+// ---------- Seguimiento personal (P20) ----------
+// Que el esfuerzo sea obligatorio según el estado, la ventana de 7 días y las reglas de los objetivos las controla el service
+
+const isDate = (value) => DATE_FORMAT.test(String(value)) && !isNaN(new Date(`${value}T12:00:00Z`)) && new Date(`${value}T12:00:00Z`).toISOString().startsWith(value)
+
+const weeksQuery = query('weeks').optional({ values: 'falsy' }).isInt({ min: 1, max: 26 }).withMessage(m.weeksInvalid)
+
+const log = [
+    idParam,
+    body('status').isIn(Object.values(ROUTINE_LOG_STATUS).map(String)).withMessage(m.statusInvalid).bail().toInt(),
+    body('effort').optional({ values: 'null' }).isInt().withMessage(m.effortInvalid),
+    body('note').optional({ values: 'null' }).isString().withMessage(m.noteInvalid).bail().isLength({ max: 300 }).withMessage(m.noteInvalid)
+]
+
+const progress = [weeksQuery]
+
+const goalText = body('text').isString().withMessage(m.goalTextInvalid).bail().trim().isLength({ min: 5, max: 200 }).withMessage(m.goalTextInvalid)
+const goalDueDate = body('dueDate').custom(isDate).withMessage(m.goalDueDateInvalid)
+
+const goals = [query('state').optional({ values: 'falsy' }).isIn(Object.values(GOAL_STATES).map(String)).withMessage(m.goalStateInvalid)]
+
+const createGoal = [goalText, goalDueDate]
+
+const updateGoal = [idParam, goalText, goalDueDate]
+
+const goalState = [
+    idParam,
+    body('goalState').isIn(Object.values(GOAL_STATES).map(String)).withMessage(m.goalStateInvalid).bail().toInt(),
+    body('dueDate').optional({ values: 'falsy' }).custom(isDate).withMessage(m.goalDueDateInvalid)
+]
+
+const tracking = [query('categoryId').optional({ values: 'falsy' }).isInt({ min: 1 }).withMessage(m.categoryInvalid), weekStartQuery]
+
+const memberTracking = [param('memberId').isInt({ min: 1 }).withMessage(m.memberIdInvalid).bail().toInt(), weeksQuery]
+
 module.exports = {
     week,
     weeks,
     mine,
     create,
     update,
-    remove
+    remove,
+    log,
+    progress,
+    goals,
+    createGoal,
+    updateGoal,
+    goalState,
+    tracking,
+    memberTracking
 }

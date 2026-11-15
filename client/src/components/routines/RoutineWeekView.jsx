@@ -19,6 +19,7 @@ import ParquetBackground from '../common/ParquetBackground.jsx'
 import { DAYS_OF_WEEK } from '../../utils/constants.js'
 import { formatDayMonth } from '../../utils/format.js'
 import { getUploadUrl } from '../../utils/media.js'
+import { LOG_STATUS_INFO } from '../../utils/tracking.js'
 
 // 'AAAA-MM-DD' + días → 'AAAA-MM-DD' (en UTC, para que no influya la zona)
 export function shiftDate(date, days) {
@@ -39,8 +40,9 @@ export function defaultDayOf(week) {
 
 // Pastillas de los días de lunes a viernes (los que tienen rutina), como en el moodboard ("Rutina de la semana"): verde
 // suave con rutina, borde Azul la elegida, gris las vacías y un punto debajo de hoy.
-// Sin onSelect se muestran solo para ver (panel de inicio)
-export function DayPills({ days, today, selectedDay, onSelect, size = 'medium' }) {
+// Sin onSelect se muestran solo para ver (panel de inicio). showLog (vista de la jugadora): un indicador chico del
+// registro de la rutina (✓ verde, ◐ ámbar, ✕ rojo, o nada)
+export function DayPills({ days, today, selectedDay, onSelect, size = 'medium', showLog = false }) {
   const small = size === 'small'
 
   return (
@@ -49,16 +51,42 @@ export function DayPills({ days, today, selectedDay, onSelect, size = 'medium' }
         const short = DAYS_OF_WEEK.find((item) => item.value === day.dayOfWeek).short
         const selected = day.dayOfWeek === selectedDay
         const isToday = day.date === today
+        const logInfo = showLog && day.routine?.myLog ? LOG_STATUS_INFO[day.routine.myLog.status] : null
 
         return (
-          <Stack key={day.dayOfWeek} sx={{ alignItems: 'center', gap: 0.5 }}>
+          <Stack key={day.dayOfWeek} sx={{ alignItems: 'center', gap: 0.5, position: 'relative' }}>
+            {logInfo && (
+              <Box
+                aria-hidden="true"
+                sx={(theme) => ({
+                  position: 'absolute',
+                  top: -4,
+                  right: -4,
+                  zIndex: 1,
+                  width: small ? 14 : 18,
+                  height: small ? 14 : 18,
+                  borderRadius: '50%',
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontSize: small ? 9 : 11,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  bgcolor: theme.status[logInfo.status].fg,
+                  color: '#FFFFFF',
+                  border: 2,
+                  borderColor: 'background.paper'
+                })}
+              >
+                {logInfo.symbol}
+              </Box>
+            )}
             <ButtonBase
               component={onSelect ? 'button' : 'div'}
               disabled={!onSelect}
               onClick={onSelect ? () => onSelect(day.dayOfWeek) : undefined}
               role={onSelect ? 'tab' : undefined}
               aria-selected={onSelect ? selected : undefined}
-              aria-label={`${capitalize(dayName(day.dayOfWeek))} ${formatDayMonth(day.date)}${day.routine ? `: ${day.routine.title}` : ': sin rutina'}${isToday ? ' (hoy)' : ''}`}
+              aria-label={`${capitalize(dayName(day.dayOfWeek))} ${formatDayMonth(day.date)}${day.routine ? `: ${day.routine.title}` : ': sin rutina'}${isToday ? ' (hoy)' : ''}${logInfo ? ` (registrada: ${logInfo.label})` : ''}`}
               focusRipple
               sx={(theme) => ({
                 width: small ? 36 : 46,
@@ -108,8 +136,8 @@ export function WeekNavigator({ weekStart, weekEnd, currentWeekStart, onChange, 
 }
 
 // Tarjeta de lectura de la rutina de un día: título, descripción con sus saltos de línea, imagen (se abre en grande) y
-// el botón "Ver video". Sin rutina, el estado vacío
-export function RoutineDayCard({ day }) {
+// el botón "Ver video". Sin rutina, el estado vacío. footer: lo que va debajo de la rutina (el registro de la jugadora)
+export function RoutineDayCard({ day, footer }) {
   const [zoom, setZoom] = useState(false)
   const routine = day?.routine
   const heading = day ? `${capitalize(dayName(day.dayOfWeek))} ${formatDayMonth(day.date)}` : ''
@@ -147,6 +175,7 @@ export function RoutineDayCard({ day }) {
               Ver video
             </Button>
           )}
+          {footer}
         </CardContent>
       </Card>
 
@@ -165,14 +194,15 @@ export function RoutineDayCard({ day }) {
 // Vista de una semana de rutinas: el navegador de semanas, las pastillas de los días y, debajo, el día elegido
 // (la tarjeta de lectura, o lo que devuelva renderDay; por ejemplo, el editor de la preparadora).
 //   - week: { weekStart, weekEnd, today, currentWeekStart, days } (days: de lunes a viernes)
-export default function RoutineWeekView({ week, selectedDay, onSelectDay, onChangeWeek, loading = false, renderDay }) {
+//   - showLog: el indicador del registro en las pastillas (vista de la jugadora)
+export default function RoutineWeekView({ week, selectedDay, onSelectDay, onChangeWeek, loading = false, renderDay, showLog = false }) {
   const day = week.days.find((item) => item.dayOfWeek === selectedDay) ?? week.days[0]
 
   return (
     <Stack spacing={2.5}>
       <Stack direction={{ xs: 'column', md: 'row' }} sx={{ gap: 2, justifyContent: 'space-between', alignItems: { md: 'center' } }}>
         <WeekNavigator weekStart={week.weekStart} weekEnd={week.weekEnd} currentWeekStart={week.currentWeekStart} onChange={onChangeWeek} disabled={loading} />
-        <DayPills days={week.days} today={week.today} selectedDay={day.dayOfWeek} onSelect={onSelectDay} />
+        <DayPills days={week.days} today={week.today} selectedDay={day.dayOfWeek} onSelect={onSelectDay} showLog={showLog} />
       </Stack>
 
       <Box sx={{ opacity: loading ? 0.6 : 1 }}>

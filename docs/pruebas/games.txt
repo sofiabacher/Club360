@@ -513,3 +513,62 @@ Resultado obtenido: los cuatro piden la confirmación y cancelan; con el nombre 
   intento de conexión es posterior); con NODE_ENV=production, "DB_FORCE_SYNC y DB_ALTER_SYNC no se pueden activar en
   producción". Funciona también con npm run dev (node --watch).
 Estado: Aprobado
+
+
+======================================================================
+HISTORIAL DE PARTIDOS JUGADOS (Prompt 20 · 14/11/2026)
+======================================================================
+
+Resultados del script de verificación del P20 (base club360_p20test con la demo). Para tener todos los casos se creó
+con el modelo un Programado de Sub-18 de hace 2 días (sin marcar) y dos Jugados superpuestos de hace 10 días (Sub-18
+10:00 y Mayores 11:00) con el conflicto de Camila resuelto a favor de Sub-18 (CONFLICT_RESOLVED en la bitácora).
+
+
+--------------------------------------------------
+ID: CP-GAMES-33
+Módulo: games
+Descripción: Pestaña Jugados de la Jugadora, con un cancelado, uno sin resultado y uno con conflicto
+Precondiciones: Camila logueada como Jugadora.
+Pasos:
+  1. Mis partidos → Jugados.
+Datos de entrada: —
+Resultado esperado: arriba la campaña de la categoría elegida con los selectores de temporada y categoría; los partidos
+  que ya pasaron, del más nuevo al más viejo: Jugados con el resultado y Ganado o Perdido, el de Mayores de H-21 sin
+  resultado, el Programado pasado con "Resultado pendiente", el Cancelado de H-3 con "Cancelado" y su citación
+  Cancelada, y en el partido no elegido del conflicto "No jugaste este partido (conflicto de horario)". Cada partido con
+  su citación ("Confirmada", "Rechazada: {justificación}" o "No citada"). La URL queda con ?tab=jugados.
+Resultado obtenido: GET /games/mine?scope=history → todos esos casos, ordenados; sin partidos futuros; las citaciones
+  coinciden con la base; conflict.notPlaying solo en el de Mayores. Falta ver la pantalla en el navegador y el celular.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-34
+Módulo: games
+Descripción: Pestaña Jugados de la Familia y de la Entrenadora
+Precondiciones: Gabriela (Familia de Sofía y Martina) y Carla (Entrenadora de Sub-16 y Sub-18).
+Pasos:
+  1. Como Gabriela: Partidos → Jugados, con cada jugadora. 2. Como Carla: Partidos → Jugados.
+Datos de entrada: —
+Resultado esperado: 1) el historial de la jugadora elegida, con su citación y los textos en tercera persona ("No jugó
+  este partido"). 2) solo partidos de Sub-16 y Sub-18, cada uno con el resumen "N citadas · N confirmadas · N
+  rechazadas", paginados de a 20.
+Resultado obtenido: /games/linked?scope=history&memberId={Martina} → su historial y las dos jugadoras en players; sin
+  memberId, la primera; las citaciones coinciden. /games/assigned?scope=history → solo sus categorías; Sub-16 vs.
+  Náutico Sur: "7 citadas · 6 confirmadas · 1 rechazada", igual que la base.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-GAMES-35
+Módulo: games
+Descripción: Filtros del historial: cancelados, temporada y categoría
+Precondiciones: las del caso CP-GAMES-33.
+Pasos:
+  1. Apagar "Mostrar cancelados". 2. Elegir la temporada 2025. 3. Elegir Mayores. 4. Pedir una categoría que no es suya.
+Datos de entrada: —
+Resultado esperado: 1) desaparecen los cancelados; 2) "Todavía no hay partidos jugados esta temporada." (2026 sigue en
+  el selector); 3) solo los de Mayores; 4) 404. Sin scope, /games/mine sigue devolviendo los próximos por categoría.
+Resultado obtenido: includeCancelled=false → el total baja en la cantidad de cancelados; 2025 → vacío con 2026 en
+  seasons; categoryId de Mayores → solo Mayores; Sub-16 → 404; sin scope, la respuesta de siempre.
+Estado: Aprobado

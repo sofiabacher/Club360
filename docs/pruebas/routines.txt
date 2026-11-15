@@ -243,3 +243,177 @@ Resultado esperado: solo hay pastillas L, M, X, J y V (también al editar). La c
 Resultado obtenido: dayOfWeek 6 y 7 → 400 con ese mensaje; GET /routines y /routines/mine traen 5 días (el último, el
   viernes); el partido del sábado 14/11 aparece en los partidos de la semana. Falta ver las pastillas en el navegador.
 Estado: Aprobado
+
+
+======================================================================
+SEGUIMIENTO PERSONAL DE LA JUGADORA (Prompt 20 · 14/11/2026)
+======================================================================
+
+Los resultados obtenidos salen del script de verificación del P20, corrido contra una base local de prueba
+(club360_p20test: seed + seed:demo), con la API en un puerto de prueba. Fecha de la prueba: sábado 14/11/2026.
+Usuarios: Juana = juana.molina (Jugadora de Sub-18, sin registros en la demo), Camila = ctorres (Jugadora), Valeria =
+vsosa (Preparadora física de las tres categorías), Carla = cbenitez (Entrenadora), Gabriela = gromero (Familia).
+Precondición general: una categoría "Prueba P20" con Juana y rutinas de hoy, de hace 3, 7 y 8 días y de mañana (creadas
+con el modelo, para probar los bordes de la ventana).
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-16
+Módulo: routines
+Descripción: Registrar una rutina de hoy, de hace 3 días, de hace 7 y de hace 8 (rechazada)
+Precondiciones: Juana logueada como Jugadora.
+Pasos:
+  1. Mi rutina → elegir el día → "¿Cómo te fue?" → Completada → esfuerzo → Guardar.
+Datos de entrada: Completada con esfuerzo 4 (hoy y hace 3 días), 5 (hace 7) y 3 (hace 8).
+Resultado esperado: hoy, hace 3 y hace 7 días se registran (el día 7 es el último de la ventana, en hora de Argentina);
+  hace 8 días: 400, "Ya pasó el plazo para registrar esta rutina." En la pastilla del día aparece el ✓ verde.
+Resultado obtenido: PUT /routines/:id/log → 200, 200, 200 y 400 con ese mensaje. Falta ver las pastillas en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-17
+Módulo: routines
+Descripción: Registrar una rutina de mañana (rechazada)
+Precondiciones: las del caso anterior.
+Pasos:
+  1. Enviar PUT /routines/{rutina de mañana}/log.
+Datos de entrada: Completada con esfuerzo 3.
+Resultado esperado: 400, "Todavía no podés registrar esta rutina." En la pantalla no aparece el formulario.
+Resultado obtenido: 400 con ese mensaje.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-18
+Módulo: routines
+Descripción: Esfuerzo obligatorio según el estado
+Precondiciones: las del caso CP-ROUTINES-16.
+Pasos:
+  1. Registrar la rutina de hoy con cada combinación.
+Datos de entrada: a) Completada sin esfuerzo; b) Parcial con esfuerzo 6; c) No completada con esfuerzo 2; d) estado 9.
+Resultado esperado: a) 400 "Indicá el esfuerzo, del 1 al 5."; b) 400; c) 400 "Si no la hiciste, no se indica el
+  esfuerzo."; d) 400 del validator. En la pantalla, el esfuerzo solo aparece con Completada o Parcial.
+Resultado obtenido: los cuatro con 400 y esos mensajes.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-19
+Módulo: routines
+Descripción: Editar un registro
+Precondiciones: la rutina de hoy registrada como Completada.
+Pasos:
+  1. Mi rutina → Editar → Parcial, esfuerzo 2, nota → Guardar.
+Datos de entrada: Parcial, 2, "Me dolía la rodilla."
+Resultado esperado: se actualiza el mismo registro (uno solo por jugadora y rutina); no queda en la bitácora ni avisa.
+Resultado obtenido: 200 con el mismo id; 1 registro para esa rutina y jugadora. El índice único (routineId, memberId)
+  rechaza un segundo registro creado con el modelo (UniqueConstraintError).
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-20
+Módulo: routines
+Descripción: Registrar una rutina de una categoría que no es suya, o sin el permiso
+Precondiciones: una rutina de Sub-16 de esta semana.
+Pasos:
+  1. Como Juana (Sub-18), PUT a la rutina de Sub-16. 2. Como Carla (Entrenadora), PUT a una rutina.
+Datos de entrada: Completada con esfuerzo 3.
+Resultado esperado: 1) 404. 2) 403 (no tiene routines.trackOwn).
+Resultado obtenido: 404 y 403.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-21
+Módulo: routines
+Descripción: Borrar una rutina ya registrada (rechazado)
+Precondiciones: Valeria logueada como Preparadora física; la rutina del miércoles de Sub-18 de esta semana, registrada
+  por Camila.
+Pasos:
+  1. Rutinas → Sub-18 → el miércoles → Borrar.
+Datos de entrada: —
+Resultado esperado: 409, "No se puede borrar: ya hay jugadoras que registraron esta rutina. Podés editarla."
+Resultado obtenido: DELETE /routines/:id → 409 con ese mensaje.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-22
+Módulo: routines
+Descripción: Crear, editar, cumplir, abandonar y reabrir un objetivo
+Precondiciones: Juana logueada como Jugadora.
+Pasos:
+  1. Mi progreso → Nuevo objetivo. 2. Editar. 3. Cumplido. 4. Editar el cerrado. 5. Reabrir. 6. Abandonar.
+  7. Reabrir uno con la fecha pasada, sin fecha y con una fecha nueva.
+Datos de entrada: "Hola" (corto), fecha de ayer, "Mejorar el bloqueo" con fecha de hoy, después "Mejorar el bloqueo
+  doble" con fecha +5.
+Resultado esperado: texto corto y fecha pasada → 400; crear → 201 En curso; editar → 200; cumplir → Cumplido con
+  closedAt; editar un cerrado → 400 "Solo se pueden editar los objetivos en curso."; reabrir → En curso con closedAt en
+  NULL; abandonar → Abandonado; reabrir uno vencido sin fecha → 400 "La fecha límite de este objetivo ya pasó: elegí una
+  nueva para reabrirlo."; con fecha nueva → 200. En la pantalla, al reabrir uno vencido se abre el diálogo de la fecha.
+Resultado obtenido: todos con el código y el estado esperados.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-23
+Módulo: routines
+Descripción: El objetivo número 11 en curso (rechazado) y objetivos de otra jugadora
+Precondiciones: Juana con 10 objetivos En curso.
+Pasos:
+  1. Crear otro. 2. Como Camila, editar y cerrar un objetivo de Juana.
+Datos de entrada: "Objetivo número once".
+Resultado esperado: 1) 400, "Tenés 10 objetivos en curso. Cerrá alguno antes de sumar otro." 2) 404 en los dos; Camila
+  ve solo sus 3 objetivos (uno vencido).
+Resultado obtenido: 400 con ese mensaje; 404 y 404; GET /routines/goals/mine de Camila → 3, uno con overdue.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-24
+Módulo: routines
+Descripción: Progreso con números calculados a mano
+Precondiciones: Juana con los registros de los casos anteriores: hoy Parcial 2, hace 3 días Completada 4, hace 7
+  Completada 5; las 9 rutinas de Sub-18 de la demo sin registrar.
+Pasos:
+  1. Mi progreso con 8 semanas.
+Datos de entrada: —
+Resultado esperado: 13 programadas (9 de Sub-18 + 4 de prueba con fecha de hoy o anterior; la de mañana no cuenta);
+  2 completadas, 1 parcial, 10 sin registrar; cumplimiento (2 + 0,5) / 13 = 19 %; esfuerzo (2 + 4 + 5) / 3 = 3,7.
+  Racha 3: hoy (Parcial), hace 3 y hace 7 (Completadas); las de Sub-18 sin registrar dentro de la ventana no cortan; la
+  de Sub-18 de hace 8 días, sin registrar y vencida, corta. Semana actual: 5 programadas, cumplimiento 30 %. Si la de
+  hace 3 días pasa a No completada, la racha queda en 1.
+Resultado obtenido: todos los números coinciden (racha 3, y 1 con la No completada). Camila (demo): 18 programadas,
+  13 completadas, 2 parciales, 1 no completada, 2 sin registrar, 78 %, esfuerzo 4,1, racha 6.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-25
+Módulo: routines
+Descripción: La preparadora ve el seguimiento de su categoría y no el de otra
+Precondiciones: Valeria logueada como Preparadora física (Sub-16, Sub-18 y Mayores).
+Pasos:
+  1. Seguimiento → Sub-18. 2. Tocar a una jugadora. 3. Pedir la categoría "Prueba P20" y una socia sin categorías suyas.
+Datos de entrada: —
+Resultado esperado: 1) la grilla con las 6 jugadoras activas de Sub-18, el estado y el esfuerzo de cada rutina ("✓ 4"),
+  la nota al pasar y el cumplimiento de la semana; 2) su progreso y sus objetivos en solo lectura; 3) 404.
+Resultado obtenido: GET /routines/tracking → 6 jugadoras (Camila: lunes Parcial 3 con nota, miércoles Completada 4,
+  viernes sin registrar; 50 % y esfuerzo 3,5); detalle de Juana → 200; la categoría de prueba y Florencia → 404. Falta
+  ver la grilla, el Drawer y la vista del celular en el navegador.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ROUTINES-26
+Módulo: routines
+Descripción: La entrenadora y la Familia no tienen acceso al seguimiento
+Precondiciones: Carla (Entrenadora) y Gabriela (Familia) logueadas.
+Pasos:
+  1. GET /routines/tracking como Carla. 2. GET /routines/tracking/members/:id y /routines/progress/mine como Gabriela.
+Datos de entrada: —
+Resultado esperado: 403 en todos; "Seguimiento" y "Mi progreso" no aparecen en sus menús.
+Resultado obtenido: 403 en los tres.
+Estado: Aprobado

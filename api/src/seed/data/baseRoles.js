@@ -74,7 +74,8 @@ const BASE_ROLES_SEED = [
             P.NOTIFICATIONS_VIEW,
             P.LEAGUES_VIEW_ASSIGNED,
             P.GAMES_VIEW_ASSIGNED,
-            P.ROUTINES_MANAGE
+            P.ROUTINES_MANAGE,
+            P.ROUTINES_VIEW_TRACKING
         ]
     },
     {
@@ -85,7 +86,7 @@ const BASE_ROLES_SEED = [
     {
         name: R.PLAYER,
         description: 'Socia deportista, incluye todo lo del Socio.',
-        permissions: [...MEMBER_PERMISSIONS, P.GAMES_VIEW_OWN, P.CITATIONS_RESPOND, P.ROUTINES_VIEW_OWN]
+        permissions: [...MEMBER_PERMISSIONS, P.GAMES_VIEW_OWN, P.CITATIONS_RESPOND, P.ROUTINES_VIEW_OWN, P.ROUTINES_TRACK_OWN]
     },
     {
         name: R.FAMILY,

@@ -7,6 +7,8 @@ Este documento es el contexto acumulado del proyecto. Está pensado para pegarse
 - Cada regla vive en **un solo lugar**; en el resto del documento se referencia con "ver sección X". Si una regla cambia, se actualiza solo en su lugar de origen.
 - `[A DEFINIR]` marca una contradicción o ambigüedad que necesita una decisión explícita. `[COMPLETAR]` marca datos que faltan cargar. `[PROVISORIO]` marca datos inventados para avanzar, que se reemplazan por los reales más adelante.
 
+**Última actualización (14/11/2026) — seguimiento personal de la jugadora e historial de partidos:** el seguimiento personal vuelve al MVP: la jugadora registra cómo le fue con cada rutina diaria (completada, parcial o no completada, esfuerzo del 1 al 5 y nota), carga sus objetivos y ve su progreso con gráficos; la preparadora física de sus categorías lo consulta. Se suman las tablas `routineLog` y `goal` (26 entidades) y dos permisos (43 en total). La Jugadora, la Entrenadora y la Familia tienen una pestaña "Jugados" con el historial de partidos (ver sección 4, 6, 7 y 8).
+
 **Última actualización (13/11/2026) — resultados de los partidos y nueva fecha de entrega:** la entrega pasa al **18/11/2026**. Los resultados de los partidos y la campaña por categoría entran al MVP: se cargan los sets y, opcionalmente, los puntos de cada set (`game` suma `ownScore`, `rivalScore` y `setScores`), y la campaña se ve en los paneles de la Jugadora, la Familia y el nuevo panel del Representante. También se suman, si llegan, el seguimiento personal de la jugadora y el bot de consultas (ver sección 0, 6, 7, 8 y 10).
 
 **Última actualización (12/11/2026) — datos de la demo:** un script aparte (`npm run seed:demo`) carga los datos de la demo de Valencia con fechas relativas al día en que se corre, una contraseña común para los usuarios de la demo (`SEED_DEMO_PASSWORD`) y alias de una casilla del equipo como emails (`SEED_DEMO_EMAIL`). Con `--reset` borra los datos del club salvo lo del seed y vuelve a cargarlos (ver sección 11).
@@ -214,7 +216,7 @@ Se usan para el seed, los datos de prueba, la pantalla "El club" y el bot. Se re
 
 **Roles del sistema (7):** Socio (perfil base), Jugadora (Socio-Deportista), Familia, Representante, Entrenadora, Preparadora física y Admin del club. *(El SuperAdmin salió del MVP; ver sección 2 y 7. Estos 7 son los roles base del DER, `Rol.es_base`, ver sección 8.)*
 
-**Catálogo de permisos (definido el 11/10/2026):** el catálogo completo (41 permisos, formato `módulo.acción`, con los permisos de cada rol: Admin 14, Representante 9, Entrenadora 8, Preparadora física 5, Socio 9, Jugadora 12, Familia 7) está en el documento `Documentación Club360`, sección 4.1, que es su lugar de origen. En el código vive en `api/src/utils/permissions.js`. El catálogo es fijo y común a toda la plataforma: lo carga el seed y el Admin del club no puede crear, modificar ni eliminar permisos (sí crear roles con los permisos existentes, editar los permisos de cada rol y asignar permisos directos).
+**Catálogo de permisos (definido el 11/10/2026):** el catálogo completo (formato `módulo.acción`) está en el documento `Documentación Club360`, sección 4.1, que es su lugar de origen. **Desde el 14/11/2026 son 43 permisos**: se sumaron `routines.trackOwn` (registrar el cumplimiento de las propias rutinas y gestionar los objetivos personales; rol Jugadora) y `routines.viewTracking` (consultar el seguimiento de las jugadoras de sus categorías; rol Preparadora física). Permisos por rol: Admin 14, Representante 9, Entrenadora 8, Preparadora física 6, Socio 9, Jugadora 13, Familia 7. *(La sección 4.1 de `Documentación Club360` todavía tiene los 41 anteriores: se actualiza con la documentación formal.)* Cuando el seed crea un permiso nuevo en una base que ya tiene datos, se lo asigna a los roles base que lo traen; los permisos que ya existían no se tocan, para respetar los cambios del Admin. En el código vive en `api/src/utils/permissions.js`. El catálogo es fijo y común a toda la plataforma: lo carga el seed y el Admin del club no puede crear, modificar ni eliminar permisos (sí crear roles con los permisos existentes, editar los permisos de cada rol y asignar permisos directos).
 
 Los actores se describen por rol para facilitar la lectura, pero el acceso a pantallas y acciones se implementa por **permisos** (patentes): cada rol es un conjunto de permisos (familia), y el front y el back verifican el permiso, no el rol. Además de los permisos por rol, un usuario puede tener permisos directos (tabla `UsuarioPermiso`, ver sección 8) para excepciones puntuales sin crear un rol nuevo. Un usuario con más de un rol trabaja con un rol activo a la vez (ver 3.5).
 
@@ -256,11 +258,13 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 - Resolver conflictos de horario junto con otras entrenadoras (reglas y registro en bitácora en sección 6)
 - Ver rutinas físicas en solo lectura
 - Enviar notificaciones a jugadoras y familias
+- Ver el historial de partidos jugados de sus categorías, con resultados y citaciones (14/11/2026)
 
 **Preparadora física**
 - Asignar la rutina semanal por categoría/liga
 - Subir contenido adicional (texto, imagen o link de video)
 - Ver el fixture para ajustar las rutinas
+- Consultar el seguimiento personal de las jugadoras de sus categorías: cumplimiento, esfuerzo, notas, objetivos y progreso (14/11/2026)
 
 **Socio** — perfil base
 - Gestionar sus datos personales, cuotas y pagos
@@ -273,10 +277,12 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 - Ver un dashboard con fixtures y citaciones, con módulos diferenciados si juega en 2 ligas
 - Confirmar o rechazar citaciones con justificación (plazos y reglas en sección 6)
 - Ver la rutina física semanal
+- Registrar cómo le fue con cada rutina, cargar sus objetivos personales y ver su progreso (14/11/2026)
+- Ver el historial de sus partidos jugados, con resultados y su citación (14/11/2026)
 
 **Familia**
 - Vincularse con el código (ver 3.5)
-- Ver fixtures y citaciones de sus jugadoras vinculadas, solo lectura
+- Ver fixtures y citaciones de sus jugadoras vinculadas, solo lectura, incluido el historial de partidos jugados (14/11/2026)
 - Ver el estado de cuenta y pagar las cuotas de la menor (pago simulado)
 - Usar el bot de consultas (ver sección 9)
 - Si además es Socio, suma las funciones de Socio
@@ -290,7 +296,7 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 2. Gestión de ligas y categorías de Vóley + asignación de jugadoras
 3. Fixture inteligente: dirección de cancha + detección automática de superposición de horarios (margen configurable)
 4. Citaciones (reglas en sección 6)
-5. Rutinas físicas semanales (texto + imagen/link video, historial por semana)
+5. Rutinas físicas semanales (texto + imagen/link video, historial por semana) y seguimiento personal de la jugadora (cumplimiento, objetivos y progreso, desde el 14/11/2026)
 6. Notificaciones (in-app y email): citación, fixture/conflicto, rutina publicada, cuota por vencer/vencida, avisos generales. Canal de cada tipo: ver sección 6
 7. Vínculo familiar por código (ver 3.5)
 8. Bitácora de actividad y decisiones de negocio
@@ -336,6 +342,12 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 - **Resultados de los partidos (13/11/2026):** al marcar un partido como Jugado, el Representante carga el resultado en sets (obligatorio) y, si quiere, los puntos de cada set. Solo se aceptan resultados de un partido de vóley terminado: 3-0, 3-1, 3-2 (al mejor de 5) o 2-0, 2-1 (al mejor de 3), en cualquiera de los dos sentidos. Si se cargan los puntos, tiene que haber uno por cada set jugado, cada set con un ganador por al menos 2 puntos y coincidir con el resultado en sets. El Representante puede corregir el resultado de un partido Jugado (queda en la bitácora con el anterior), y cargárselo a los que se marcaron como Jugados antes de esta regla. Cargar un resultado no avisa a nadie.
 - **Campaña por categoría (13/11/2026):** se calcula con los partidos Jugados con resultado de la temporada (no se guarda): jugados, ganados y perdidos, sets y puntos a favor y en contra, de local y de visitante, la racha de los últimos 5 y el último resultado. Es la campaña del club, no la tabla de posiciones del torneo. La ven la Jugadora y la Entrenadora (en su panel o su fixture), la Familia (en la tarjeta de cada jugadora) y el Representante, que tiene un **panel de inicio propio** con sus pendientes (inscripciones por aprobar, partidos sin resultado y conflictos sin resolver), la campaña de cada categoría y los próximos partidos.
 - **Rutinas (08/11/2026):** la Preparadora física carga una rutina **por cada día de entrenamiento** de sus categorías (título, descripción, imagen opcional y link de video opcional), como muestra el moodboard con los días de la semana. Hay una sola rutina por categoría y por día. Puede cargar, editar y borrar las de la **semana actual y las futuras**; las semanas pasadas quedan como historial de solo lectura. Al publicar o editar una rutina se avisa in-app a las jugadoras activas de la categoría (al borrarla, no). La Entrenadora las consulta en solo lectura y la Jugadora ve las de sus categorías, separadas si juega en dos ligas.
+- **Seguimiento personal de la jugadora (14/11/2026):**
+  - **Registro de cumplimiento:** la jugadora registra cada rutina diaria de sus categorías como Completada, Parcial o No completada, con el esfuerzo percibido del 1 al 5 (obligatorio si la hizo, vacío si no) y una nota opcional. Puede registrarla desde el día de la rutina hasta 7 días después, y editar el registro dentro de ese plazo; no se borra. No avisa a nadie ni se registra en la bitácora, porque es información personal. Una rutina que ya tiene registros no se puede borrar (sí editar).
+  - **Objetivos personales:** solo los crea la jugadora (texto y fecha límite, hasta 10 en curso). Los marca como Cumplidos o Abandonados, y puede reabrirlos. No se borran. "Vencido" no es un estado: es un objetivo en curso con la fecha pasada.
+  - **Progreso:** se calcula, no se guarda. Por semana: rutinas programadas, completadas, parciales, no completadas y sin registrar; el cumplimiento (completadas más la mitad de las parciales, sobre las programadas hasta hoy) y el esfuerzo promedio. En total: cumplimiento, esfuerzo, racha de rutinas seguidas cumplidas y resumen de objetivos. Se ve con gráficos de 4, 8 o 12 semanas.
+  - **Quién lo ve:** la jugadora (con un aviso de que su preparadora física también lo ve) y la preparadora física de sus categorías, en solo lectura. No lo ven la Entrenadora ni la Familia.
+- **Historial de partidos (14/11/2026):** la Jugadora, la Entrenadora y la Familia tienen, junto a los próximos partidos, una pestaña "Jugados" con los partidos que ya pasaron (jugados, cancelados y programados con la fecha pasada), con la campaña de la categoría arriba, el resultado de cada uno y un filtro para ocultar los cancelados. La Jugadora y la Familia ven además la citación de la jugadora en cada partido; la Entrenadora, el resumen de citaciones.
 - **Paneles de inicio (08/11/2026):** la Jugadora tiene un panel con lo más urgente (citación pendiente, cuota vencida o próximo partido), su carnet de socia, el próximo partido de cada categoría con el estado de la citación (y puede confirmarla o rechazarla desde ahí), el estado de la cuota y la rutina de la semana. La Familia tiene un panel con una tarjeta por jugadora vinculada (próximo partido, citación en solo lectura y cuota, con acceso al pago). Los demás roles tienen el inicio con accesos rápidos.
 - **Canal de cada notificación (21/10/2026, decisión D5):** todas las notificaciones se guardan y se muestran **in-app**. Algunas se envían además por **email**:
 
@@ -373,7 +385,7 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 
 **Prioridad 1 si queda tiempo (definido el 18/10/2026):**
 - ~~Resultados de los partidos y campaña por categoría~~ — **entró al MVP el 13/11/2026** (ver sección 6).
-- **Seguimiento personal de la jugadora** (ver "Recortados del MVP", más abajo): se intenta sumar el 14/11/2026, con sus reglas a definir antes de programarlo.
+- ~~Seguimiento personal de la jugadora~~ — **entró al MVP el 14/11/2026** (ver sección 6).
 
 **Prioridad 2 si queda tiempo (definido el 21/10/2026):**
 - Bot de consultas (sección 9).
@@ -381,7 +393,7 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 
 **Recortados del MVP el 04/10/2026:**
 - Panel de SuperAdmin (Administrador de Plataforma): alta de clubes y asignación del primer Admin, mantenimiento del catálogo maestro de deportes, consulta y corrección de datos de un club como soporte (con registro en bitácora), sin poder ingresar como otro usuario
-- Módulo de seguimiento personal de la jugadora: registro semanal de cumplimiento de rutina (completada/parcial/no completada + nota + percepción de esfuerzo 1-5), objetivos personales (texto + fecha límite + estado) y progreso con gráficos básicos
+- ~~Módulo de seguimiento personal de la jugadora~~ — volvió al MVP el 14/11/2026, con el registro por rutina diaria en lugar de semanal (ver sección 6)
 - Tienda de merch tipo e-commerce (productos, pedidos, detalle), habilitada para mayores de 18 y familias, con catálogo gestionable y delegable por permiso
 
 **Otras mejoras futuras:**
@@ -404,16 +416,16 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 
 ## 8. Entidades del DER lógico (cerrado — ver imagen adjunta al proyecto)
 
-**24 entidades en 6 módulos.** El DER lógico definitivo está adjunto como **imagen (JPG) al conocimiento del proyecto** — esa imagen es la referencia visual oficial. Nombres de tabla/campo en inglés camelCase, igual que el código Sequelize.
+**26 entidades en 6 módulos** (24 hasta el 14/11/2026). El DER lógico definitivo está adjunto como **imagen (JPG) al conocimiento del proyecto** — esa imagen es la referencia visual oficial. Nombres de tabla/campo en inglés camelCase, igual que el código Sequelize.
 
 1. **Seguridad y acceso (7):** Usuario (`user`), Rol (`role`), Permiso (`permission`), UsuarioRol (`user_role`), RolPermiso (`role_permission`), UsuarioPermiso (`user_permission`), DigitoVerificadorVertical (`dvv`)
 2. **Club, deportes y auditoría (5):** Club (`club`, incluye cuota_social → `socialFee`, dias_atraso → `delayFee`, margen_conflicto_min → `conflictMargin`), Deporte (`sport`), ClubDeporte (`clubSport`, incluye valor_cuota → `priceFee`), Bitacora (`log`), Notificacion (`notification`)
 3. **Socios, staff e inscripciones (3):** Socio (`member`, incluye el vínculo familiar: codigo_vinculo → `codeFamily`, adulto_id → `memberAdultId`, vinculo_activo → `linkStatus`), Staff (`staff`), Inscripcion (`inscription`)
 4. **Cuotas y pagos (2):** Cuota (`fee`), Pago (`payment`)
 5. **Ligas, partidos y citaciones (6):** Liga (`league`), Categoria (`category`), JugadoraCategoria (`categoryPlayer`), StaffCategoria (`categoryStaff`), Partido (`game`), Citacion (`citation`)
-6. **Rutinas (1):** Rutina (`routine`)
+6. **Rutinas y seguimiento (3):** Rutina (`routine`), RegistroRutina (`routineLog`) y Objetivo (`goal`), estas dos desde el 14/11/2026
 
-**Salieron del DER por el recorte de alcance (04/10/2026):** `Producto`, `Pedido`, `PedidoDetalle` (tienda) y `RegistroSemanal`, `Objetivo` (seguimiento personal) — ver sección 7.
+**Salieron del DER por el recorte de alcance (04/10/2026):** `Producto`, `Pedido`, `PedidoDetalle` (tienda) — ver sección 7. `RegistroSemanal` y `Objetivo` (seguimiento personal) también habían salido, y volvieron el 14/11/2026 como `routineLog` (por rutina diaria, no semanal) y `goal`.
 
 **Decisiones de modelado (vigentes):**
 - Tipos reales de MySQL 8, con longitud y restricciones (`NOT NULL`, `UNIQUE`, `DEFAULT`) en cada columna. `boolean` se modela como `TINYINT(1)`.
@@ -442,6 +454,7 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
   - (28/10) `league` suma `ageScale` (`TINYINT NOT NULL`, 1 o 2) y `category` suma `ageGroup` (`VARCHAR(10) NOT NULL`, código del grupo de edad, por ejemplo `SUB18` o `MAYORES`). Las edades máximas de cada grupo viven en la constante `AGE_SCALES` de la aplicación, no en la base (ver sección 6, "Escalas de edad").
   - (01/11) `game` suma `isHome` (`TINYINT(1) NOT NULL DEFAULT 1`): si el partido es de local, como muestra el moodboard ("vs. Atlético Ribera · Local").
   - (01/11) `notification` suma `batchId` (`CHAR(36)` NULL, con índice): identifica a todas las notificaciones de un mismo aviso general, para el historial de enviados. Las notificaciones automáticas lo tienen en NULL. Se agrega recreando la base y restaurando los datos (ver sección 11, "Cambios en el modelo").
+  - (14/11) **Tablas nuevas** (no están en la imagen): `routineLog` (`id`, `clubId`, `routineId` FK, `memberId` FK, `status` `TINYINT NOT NULL DEFAULT 1` — 1 Completada, 2 Parcial, 3 No completada —, `effort` `TINYINT` NULL de 1 a 5, `note` `VARCHAR(300)` NULL, `dvh`; único `(routineId, memberId)`) y `goal` (`id`, `clubId`, `memberId` FK, `text` `VARCHAR(200) NOT NULL`, `dueDate` `DATEONLY NOT NULL`, `goalState` `INT NOT NULL DEFAULT 1` — 1 En curso, 2 Cumplido, 3 Abandonado —, `closedAt` `DATE` NULL, `dvh`). Sus FK usan `RESTRICT`. Al ser tablas nuevas, `sync()` las crea sin recrear la base.
   - (13/11) `game` suma `ownScore` y `rivalScore` (`TINYINT` NULL, sets ganados por el club y por el rival) y `setScores` (JSON NULL, los puntos de cada set en orden: `[{ "own": 25, "rival": 20 }, ...]`). Sin resultado, los tres quedan en NULL. Se agregan recreando la base y restaurando los datos; en la base de la demo, con la receta de `docs/deploy.md`, sección 11.
   - (08/11) `routine` suma `dayOfWeek` (`TINYINT NOT NULL DEFAULT 1`, 1 lunes … 7 domingo) con un índice único compuesto `(categoryId, weekStart, dayOfWeek)`: una rutina por categoría y por día. `weekStart` es siempre el lunes de la semana. Se agrega recreando la base y restaurando los datos.
   - (08/11) `payment` suma `method` (`TINYINT NOT NULL DEFAULT 1`: 1 Tarjeta, 2 Transferencia, 3 Secretaría), `receiptUrl` (`VARCHAR(255)` NULL, comprobante de la transferencia) y `note` (`VARCHAR(300)` NULL: nota del pago en secretaría, motivo del rechazo de una transferencia o los últimos 4 dígitos de la tarjeta). Se agregan recreando la base y restaurando los datos.
@@ -475,11 +488,12 @@ Asistente de consultas generales sobre el club y sobre cómo usar la plataforma,
 
 ## 10. Estado actual y próximos pasos
 
-**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**, **recuperación de contraseña y Mi cuenta (3.6.2 y 3.7, 21/10)**, **decisiones D2 a D7, D9 y D11 y emails de la demo (21/10)**, **gestión de roles y permisos (sección 4, 21/10)**, **club y alta de socios, D13 (3.1 y sección 8, 21/10)**, **staff y vínculo familiar (3.4, 3.5 y 3.6, 23/10)**, **ligas y categorías (sección 6, 26/10)**, **notificaciones (sección 6, 31/10; detalle e historial, 01/11)**, **partidos y superposiciones (sección 6, 01/11)**, **citaciones (sección 6, 05/11)**, **inscripciones (3.3, 05/11)**, **cuotas y pagos, D12 (sección 6, 08/11)**, **pago por transferencia y comprobantes de pago (sección 6, 08/11)**, **rutinas y paneles de inicio (sección 6, 08/11)**, **bitácora, integridad y copias de seguridad (sección 11, 09/11)**, **deploy de la demo: Railway, Brevo y servicio que mantiene despierto el back (sección 11, 11/11)**, **datos de la demo (sección 11, 12/11)**, **resultados de los partidos, campaña y panel del Representante (sección 6, 13/11)**, **fecha de entrega y cronograma final (sección 0, 13/11)**
+**Cerrado:** visión, problema/objetivo, arquitectura multi-club, circuito de alta/login, actores y permisos, módulos del MVP (recortados el 04/10), reglas de negocio, futuro/escalabilidad, **DER lógico completo (sección 8; imagen adjunta al proyecto, actualizado el 10/10)**, bot de consultas (resumen en la sección 9; detalle en la guía de traspaso), documento de visión y requisitos, **estructura del proyecto y convenciones técnicas (sección 11, 10/10)**, **valores de los estados (sección 8, 18/10)**, **diseño visual (sección 11, 18/10)**, **recuperación de contraseña y Mi cuenta (3.6.2 y 3.7, 21/10)**, **decisiones D2 a D7, D9 y D11 y emails de la demo (21/10)**, **gestión de roles y permisos (sección 4, 21/10)**, **club y alta de socios, D13 (3.1 y sección 8, 21/10)**, **staff y vínculo familiar (3.4, 3.5 y 3.6, 23/10)**, **ligas y categorías (sección 6, 26/10)**, **notificaciones (sección 6, 31/10; detalle e historial, 01/11)**, **partidos y superposiciones (sección 6, 01/11)**, **citaciones (sección 6, 05/11)**, **inscripciones (3.3, 05/11)**, **cuotas y pagos, D12 (sección 6, 08/11)**, **pago por transferencia y comprobantes de pago (sección 6, 08/11)**, **rutinas y paneles de inicio (sección 6, 08/11)**, **bitácora, integridad y copias de seguridad (sección 11, 09/11)**, **deploy de la demo: Railway, Brevo y servicio que mantiene despierto el back (sección 11, 11/11)**, **datos de la demo (sección 11, 12/11)**, **resultados de los partidos, campaña y panel del Representante (sección 6, 13/11)**, **fecha de entrega y cronograma final (sección 0, 13/11)**, **seguimiento personal de la jugadora e historial de partidos (sección 6, 14/11)**
 
 **Pendiente:**
 1. ~~Modelo DER Lógico completo~~ — cerrado el 04/10/2026, actualizado el 10/10/2026 (ver sección 8)
 2. Diagrama de Clases
+2b. Actualizar `Documentación Club360` (alcance, catálogo de 43 permisos y especificaciones funcionales) con lo que se sumó desde el 21/10/2026: transferencias y comprobantes, resultados y campaña, seguimiento personal, historial de partidos, bitácora, integridad y backup por club
 3. ~~Documento de Visión formal + requisitos funcionales/no funcionales~~ — cerrado el 10/10/2026 (Propósito del sistema, Alcance funcional, requisitos funcionales y no funcionales, ajustados al recorte de alcance). Actualizado el 21/10/2026 con las decisiones D3, D4, D5 y D6: 51 requisitos funcionales (se sumaron el comprobante del alta y la baja de un deporte) y 11 no funcionales
 4. Diagrama General de Casos de Uso + especificación de funcionalidad
 5. ~~Cronograma de trabajo~~ — cerrado el 13/11/2026: entrega el 18/11 (ver sección 0)

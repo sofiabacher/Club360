@@ -17,8 +17,6 @@ import Radio from '@mui/material/Radio'
 import RadioGroup from '@mui/material/RadioGroup'
 import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
-import Tab from '@mui/material/Tab'
-import Tabs from '@mui/material/Tabs'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import EventAvailableRounded from '@mui/icons-material/EventAvailableRounded'
@@ -28,13 +26,16 @@ import { getAssignedGames, getConflicts, resolveConflict } from '../../api/games
 import EmptyState from '../../components/common/EmptyState.jsx'
 import { CategoryCampaign } from '../../components/games/CampaignCard.jsx'
 import ConflictCard from '../../components/games/ConflictCard.jsx'
+import GameHistory from '../../components/games/GameHistory.jsx'
+import GamesTabs, { useGamesTab } from '../../components/games/GamesTabs.jsx'
 import GameListItem from '../../components/games/GameListItem.jsx'
 import usePermission from '../../hooks/usePermission.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { formatDayHeader } from '../../utils/format.js'
 import { gameSummary } from '../../utils/games.js'
 
-const TABS = { GAMES: 'games', CONFLICTS: 'conflicts' }
+// Pestañas (la elegida va en la URL: ?tab=jugados o ?tab=conflictos)
+const TABS = { GAMES: 'proximos', HISTORY: 'jugados', CONFLICTS: 'conflictos' }
 
 function groupByDay(games) {
   const groups = new Map()
@@ -52,7 +53,7 @@ export default function AssignedGamesPage() {
   const { hasPermission } = usePermission()
   const canResolve = hasPermission('games.resolveConflicts')
 
-  const [tab, setTab] = useState(TABS.GAMES)
+  const [tab, setTab] = useGamesTab(canResolve ? [TABS.GAMES, TABS.HISTORY, TABS.CONFLICTS] : [TABS.GAMES, TABS.HISTORY])
   const [games, setGames] = useState(null)
   const [categories, setCategories] = useState([])
   const [conflictData, setConflictData] = useState(null)   // { conflictMargin, conflicts }
@@ -103,12 +104,17 @@ export default function AssignedGamesPage() {
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>Los partidos de tus categorías.</Typography>
       </Box>
 
-      {canResolve && (
-        <Tabs value={tab} onChange={(event, value) => setTab(value)} textColor="secondary" indicatorColor="secondary" sx={{ mb: 2 }}>
-          <Tab value={TABS.GAMES} label="Próximos partidos" />
-          <Tab value={TABS.CONFLICTS} label={pending > 0 ? `Conflictos (${pending})` : 'Conflictos'} />
-        </Tabs>
-      )}
+      <GamesTabs
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { value: TABS.GAMES, label: 'Próximos' },
+          { value: TABS.HISTORY, label: 'Jugados' },
+          ...(canResolve ? [{ value: TABS.CONFLICTS, label: pending > 0 ? `Conflictos (${pending})` : 'Conflictos' }] : [])
+        ]}
+      />
+
+      {tab === TABS.HISTORY && <GameHistory kind="assigned" />}
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 

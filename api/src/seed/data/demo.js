@@ -155,6 +155,38 @@ const DEMO_ROUTINES = {
     }
 }
 
+// ---------- Seguimiento personal (P20) ----------
+// Registros de cumplimiento: por jugadora, en el orden de sus rutinas con fecha de hoy o anterior, de la MÁS NUEVA a la
+// más vieja (si juega en dos categorías, las dos del mismo día van seguidas). null: sin registrar. Las rutinas que
+// quedan después del final de la lista, sin registrar. Formato: [estado, esfuerzo, nota], estado C (Completada),
+// P (Parcial) o N (No completada; sin esfuerzo). No pasan por la ventana de 7 días: son datos cargados
+const DEMO_ROUTINE_LOGS = {
+    // Las dos rutinas del último día (Sub-18 y Mayores) sin registrar, para registrarlas en vivo
+    ctorres: [
+        null, null,
+        ['C', 4], ['C', 5], ['P', 3, 'Me dolía el hombro: hice la mitad de los saltos.'], ['C', 4], ['C', 3], ['C', 5],
+        ['N', null, 'Tenía parcial de la facu.'], ['C', 4], ['C', 5], ['C', 4], ['P', 3], ['C', 5], ['C', 4], ['C', 3], ['C', 5], ['C', 4]
+    ],
+    sromero: [['C', 3], null, ['P', 2], ['C', 4], ['N'], null, ['C', 3], ['P', 3], ['C', 4]],
+    mromero: [null, ['C', 4], ['C', 3], null, ['P', 2, 'Me cansé en la segunda serie.'], ['C', 3], ['N'], ['C', 4], null],
+    vruiz: [['C', 4], null, null, ['C', 3]],
+    'lucia.paz': [['C', 3], null, ['C', 4]],
+    'agustina.rey': [null, ['C', 4]],
+    'brenda.rios': [['C', 5], ['C', 4]]
+}
+
+// Objetivos personales. due: días desde hoy (negativo, ya pasó). closedDaysAgo: si está cerrado, hace cuántos días
+const DEMO_GOALS = {
+    ctorres: [
+        { text: 'Mejorar la recepción en el saque flotado', due: 21, state: 'IN_PROGRESS', createdDaysAgo: 10 },
+        { text: 'Llegar a 50 saltos al cajón por serie', due: -2, state: 'IN_PROGRESS', createdDaysAgo: 30 },   // Vencido
+        { text: 'Completar todas las rutinas de la pretemporada', due: -20, state: 'ACHIEVED', createdDaysAgo: 60, closedDaysAgo: 22 }
+    ],
+    sromero: [
+        { text: 'Mejorar el saque de arriba', due: 30, state: 'IN_PROGRESS', createdDaysAgo: 7 }
+    ]
+}
+
 // ---------- Aviso general del Admin ----------
 const DEMO_GENERAL_NOTICE = {
     title: 'Reunión de familias',
@@ -171,5 +203,7 @@ module.exports = {
     DEMO_DEFAULT_TIMES,
     DEMO_GAMES,
     DEMO_ROUTINES,
+    DEMO_ROUTINE_LOGS,
+    DEMO_GOALS,
     DEMO_GENERAL_NOTICE
 }

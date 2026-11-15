@@ -33,6 +33,7 @@ import useAuth from '../../hooks/useAuth.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { formatDeadline, formatGameDate, formatMoney, formatShortDateTime, formatTime, formatWeekdayDay } from '../../utils/format.js'
 import { getUploadUrl } from '../../utils/media.js'
+import { pendingLogsOf, weekComplianceOf } from '../../utils/tracking.js'
 
 // Carga un bloque del panel con su propia llamada: { data, error, loading, reload }
 function useBlock(request) {
@@ -283,7 +284,7 @@ export default function PlayerHome() {
                           {routine.data.categories.length > 1 && (
                             <Typography variant="body2" sx={{ fontWeight: 600, color: 'navy.main', mb: 1 }}>{item.league.name} · {item.category.name}</Typography>
                           )}
-                          <DayPills days={item.days} today={routine.data.today} size="small" />
+                          <DayPills days={item.days} today={routine.data.today} size="small" showLog={routine.data.canTrack} />
                           <Typography variant="body2" sx={{ color: today?.routine ? 'navy.main' : 'text.secondary', mt: 0.5, fontWeight: today?.routine ? 600 : 400 }}>
                             {today?.routine ? `Hoy: ${today.routine.title}` : 'Hoy no hay rutina cargada.'}
                           </Typography>
@@ -291,7 +292,17 @@ export default function PlayerHome() {
                       )
                     })}
                   </Stack>
-                  <Link component={RouterLink} to="/my-routine" color="secondary" sx={{ display: 'inline-block', mt: 1.5, fontWeight: 600 }}>Ver rutina</Link>
+                  {routine.data.canTrack && weekComplianceOf(routine.data) !== null && (
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
+                      Cumplimiento de la semana: <Typography component="span" variant="numeric" sx={{ fontSize: '1.1rem', color: 'navy.main' }}>{weekComplianceOf(routine.data)} %</Typography>
+                    </Typography>
+                  )}
+                  <Stack direction="row" sx={{ gap: 2, mt: 1.5, flexWrap: 'wrap' }}>
+                    {routine.data.canTrack && pendingLogsOf(routine.data).length > 0 && (
+                      <Link component={RouterLink} to="/my-routine" color="secondary" sx={{ fontWeight: 600 }}>Registrá cómo te fue</Link>
+                    )}
+                    <Link component={RouterLink} to="/my-routine" color="secondary" sx={{ fontWeight: 600 }}>Ver rutina</Link>
+                  </Stack>
                 </>
               )}
             </HomeBlock>

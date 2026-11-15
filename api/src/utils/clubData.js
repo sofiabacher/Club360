@@ -16,7 +16,7 @@ const CHUNK_SIZE = 500
 
 const {
     Club, User, Role, UserRole, RolePermission, UserPermission, ClubSport, Member, Staff, Inscription, Fee, Payment,
-    League, Category, CategoryPlayer, CategoryStaff, Game, Citation, Routine, Notification
+    League, Category, CategoryPlayer, CategoryStaff, Game, Citation, Routine, RoutineLog, Goal, Notification
 } = models
 
 // Tablas de un club, en orden de dependencia: cada una solo apunta a tablas que están antes en la lista (o a los
@@ -40,6 +40,7 @@ const CLUB_TABLES = [
     { Model: UserPermission, by: 'parent', parent: User, key: 'userId' },
     { Model: ClubSport, by: 'clubId' },
     { Model: Member, by: 'clubId' },
+    { Model: Goal, by: 'clubId' },
     { Model: Staff, by: 'clubId' },
     { Model: Inscription, by: 'clubId' },
     { Model: Fee, by: 'clubId' },
@@ -51,6 +52,7 @@ const CLUB_TABLES = [
     { Model: Game, by: 'clubId' },
     { Model: Citation, by: 'clubId' },
     { Model: Routine, by: 'clubId' },
+    { Model: RoutineLog, by: 'clubId' },   // Después de routine y de member
     { Model: Notification, by: 'clubId' }
 ]
 

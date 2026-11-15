@@ -61,6 +61,8 @@ const PERMISSIONS = {
     ROUTINES_MANAGE: 'routines.manage',
     ROUTINES_VIEW_ASSIGNED: 'routines.viewAssigned',
     ROUTINES_VIEW_OWN: 'routines.viewOwn',
+    ROUTINES_TRACK_OWN: 'routines.trackOwn',
+    ROUTINES_VIEW_TRACKING: 'routines.viewTracking',
 
     // Bitácora, integridad y copias de seguridad
     LOGS_VIEW: 'logs.view',
@@ -72,7 +74,7 @@ const PERMISSIONS = {
     BOT_USE: 'bot.use'
 }
 
-// Los 41 permisos con su descripción. En el seed, module y action salen de separar name por el punto.
+// Los 43 permisos con su descripción. En el seed, module y action salen de separar name por el punto.
 const PERMISSION_CATALOG = [
     { name: PERMISSIONS.AUTH_MANAGE_ACCOUNT, description: 'Ver y modificar los datos de la propia cuenta' },
     { name: PERMISSIONS.NOTIFICATIONS_VIEW, description: 'Ver las notificaciones recibidas' },
@@ -120,6 +122,8 @@ const PERMISSION_CATALOG = [
     { name: PERMISSIONS.ROUTINES_MANAGE, description: 'Cargar y editar las rutinas semanales y su contenido de apoyo' },
     { name: PERMISSIONS.ROUTINES_VIEW_ASSIGNED, description: 'Consultar las rutinas de sus categorías' },
     { name: PERMISSIONS.ROUTINES_VIEW_OWN, description: 'Consultar la propia rutina semanal' },
+    { name: PERMISSIONS.ROUTINES_TRACK_OWN, description: 'Registrar el cumplimiento de las propias rutinas y gestionar los objetivos personales' },
+    { name: PERMISSIONS.ROUTINES_VIEW_TRACKING, description: 'Consultar el seguimiento de las jugadoras de sus categorías' },
 
     { name: PERMISSIONS.LOGS_VIEW, description: 'Consultar la bitácora con filtros' },
     { name: PERMISSIONS.LOGS_EXPORT, description: 'Descargar la bitácora en formato CSV' },

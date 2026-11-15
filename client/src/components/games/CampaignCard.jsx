@@ -140,17 +140,18 @@ export default function CampaignCard({ category, league, campaign, compact = fal
   )
 }
 
-// La campaña completa de una categoría, pedida a GET /games/campaign. Carga y falla por separado
-export function CategoryCampaign({ categoryId, showPending = false }) {
+// La campaña completa de una categoría, pedida a GET /games/campaign (season: la temporada; sin ella, la actual). Carga y
+// falla por separado
+export function CategoryCampaign({ categoryId, season, showPending = false }) {
   const [state, setState] = useState({ data: null, error: '' })
 
   useEffect(() => {
     let active = true
-    getCampaign(categoryId)
+    getCampaign(categoryId, season)
       .then(({ data }) => active && setState({ data, error: '' }))
       .catch((err) => active && setState({ data: null, error: getErrorMessage(err) }))
     return () => { active = false }
-  }, [categoryId])
+  }, [categoryId, season])
 
   if (state.error) return <Alert severity="error">No pudimos cargar la campaña: {state.error}</Alert>
   if (!state.data) return <Skeleton variant="rounded" height={180} sx={{ borderRadius: 3 }} />

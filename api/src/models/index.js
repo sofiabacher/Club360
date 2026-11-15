@@ -32,8 +32,10 @@ const CategoryStaff = require('./CategoryStaff')
 const Game = require('./Game')
 const Citation = require('./Citation')
 
-// 6. Rutinas
+// 6. Rutinas y seguimiento
 const Routine = require('./Routine')
+const RoutineLog = require('./RoutineLog')
+const Goal = require('./Goal')
 
 const { registerIntegrityHooks } = require('./integrityHooks')
 
@@ -84,6 +86,8 @@ oneToMany(Club, Category, 'clubId', 'categories', 'club')
 oneToMany(Club, Game, 'clubId', 'games', 'club')
 oneToMany(Club, Citation, 'clubId', 'citations', 'club')
 oneToMany(Club, Routine, 'clubId', 'routines', 'club')
+oneToMany(Club, RoutineLog, 'clubId', 'routineLogs', 'club')
+oneToMany(Club, Goal, 'clubId', 'goals', 'club')
 
 // ---------- Deportes ----------
 oneToMany(Sport, ClubSport, 'sportId', 'clubSports', 'sport')
@@ -128,6 +132,8 @@ oneToMany(User, Routine, 'userId', 'routines', 'author')
 oneToMany(Member, Inscription, 'memberId', 'inscriptions', 'member')
 oneToMany(Member, Fee, 'memberId', 'fees', 'member')
 oneToMany(Member, Citation, 'memberId', 'citations', 'member')
+oneToMany(Member, RoutineLog, 'memberId', 'routineLogs', 'member')
+oneToMany(Member, Goal, 'memberId', 'goals', 'member')
 oneToMany(Staff, Citation, 'staffId', 'citations', 'staff')
 
 manyToMany(
@@ -146,6 +152,7 @@ manyToMany(
 oneToMany(League, Category, 'leagueId', 'categories', 'league')
 oneToMany(Category, Game, 'categoryId', 'games', 'category')
 oneToMany(Category, Routine, 'categoryId', 'routines', 'category')
+oneToMany(Routine, RoutineLog, 'routineId', 'logs', 'routine')
 oneToMany(Game, Citation, 'gameId', 'citations', 'game')
 oneToMany(Fee, Payment, 'feeId', 'payments', 'fee')
 
@@ -173,7 +180,9 @@ const models = {
     CategoryStaff,
     Game,
     Citation,
-    Routine
+    Routine,
+    RoutineLog,
+    Goal
 }
 
 registerIntegrityHooks(models)   // DVH y DVV automáticos en todos los modelos con dvh

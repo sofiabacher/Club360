@@ -7,11 +7,17 @@ import SportsVolleyballRounded from '@mui/icons-material/SportsVolleyballRounded
 
 import { getMyGames } from '../../api/games.api.js'
 import EmptyState from '../../components/common/EmptyState.jsx'
+import GameHistory from '../../components/games/GameHistory.jsx'
+import GamesTabs, { useGamesTab } from '../../components/games/GamesTabs.jsx'
 import PlayerGamesList from '../../components/games/PlayerGamesList.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 
-// Mis partidos (games.viewOwn): los próximos partidos de las categorías de la jugadora, separados por liga y categoría
+const TABS = [{ value: 'proximos', label: 'Próximos' }, { value: 'jugados', label: 'Jugados' }]
+
+// Mis partidos (games.viewOwn): pestaña "Próximos" (los próximos partidos de sus categorías, separados por liga y
+// categoría, con la campaña arriba) y "Jugados" (el historial, con su citación en cada partido)
 export default function MyGamesPage() {
+  const [tab, setTab] = useGamesTab(TABS.map((item) => item.value))
   const [categories, setCategories] = useState(null)
   const [error, setError] = useState('')
 
@@ -32,12 +38,15 @@ export default function MyGamesPage() {
     <>
       <Box sx={{ mb: 3 }}>
         <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Mis partidos</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>La campaña y los próximos partidos de tus categorías.</Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>La campaña, los próximos partidos y los ya jugados de tus categorías.</Typography>
       </Box>
 
-      {categories.length === 0
+      <GamesTabs tabs={TABS} value={tab} onChange={setTab} />
+
+      {tab === 'jugados' && <GameHistory kind="mine" />}
+      {tab === 'proximos' && (categories.length === 0
         ? <EmptyState icon={SportsVolleyballRounded} title="Sin partidos" description="Todavía no estás en ninguna categoría." />
-        : <PlayerGamesList categories={categories} showCampaign />}
+        : <PlayerGamesList categories={categories} showCampaign />)}
     </>
   )
 }

@@ -9,11 +9,13 @@ import FitnessCenterRounded from '@mui/icons-material/FitnessCenterRounded'
 
 import { getMyRoutine } from '../../api/routines.api.js'
 import EmptyState from '../../components/common/EmptyState.jsx'
-import RoutineWeekView, { defaultDayOf } from '../../components/routines/RoutineWeekView.jsx'
+import RoutineLogPanel from '../../components/routines/RoutineLogPanel.jsx'
+import RoutineWeekView, { RoutineDayCard, defaultDayOf } from '../../components/routines/RoutineWeekView.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 
 // Mi rutina (routines.viewOwn): la semana actual con el día de hoy elegido. Si está en más de una categoría, una
-// pestaña por categoría con el nombre de la liga. Se puede ir a semanas pasadas y futuras
+// pestaña por categoría con el nombre de la liga. Se puede ir a semanas pasadas y futuras. Con routines.trackOwn, debajo
+// de la rutina del día registra cómo le fue (RoutineLogPanel) y las pastillas muestran lo registrado
 export default function MyRoutinePage() {
   const [weekStart, setWeekStart] = useState(null)   // null: la semana actual
   const [data, setData] = useState(null)
@@ -56,6 +58,15 @@ export default function MyRoutinePage() {
 
   const current = data.categories[Math.min(tab, data.categories.length - 1)]
 
+  // Al guardar un registro, se actualiza esa rutina en los datos de la semana (sin volver a pedirla)
+  const handleLogSaved = (log) => setData((previous) => ({
+    ...previous,
+    categories: previous.categories.map((item) => ({
+      ...item,
+      days: item.days.map((day) => (day.routine?.id === log.routineId ? { ...day, routine: { ...day.routine, myLog: log } } : day))
+    }))
+  }))
+
   return (
     <>
       {header}
@@ -81,6 +92,13 @@ export default function MyRoutinePage() {
         onSelectDay={setSelectedDay}
         onChangeWeek={setWeekStart}
         loading={loading}
+        showLog={data.canTrack}
+        renderDay={(day) => (
+          <RoutineDayCard
+            day={day}
+            footer={data.canTrack && day.routine && <RoutineLogPanel routine={day.routine} onSaved={handleLogSaved} />}
+          />
+        )}
       />
     </>
   )

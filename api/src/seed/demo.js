@@ -30,14 +30,15 @@ const { listConflicts, validateResult } = require('../modules/games/games.servic
 const { today: todayAR, addDays, getCurrentWeekStart, dateTimeParts, isAdult, TIME_ZONE } = require('../utils/dates')
 const {
     USER_STATES, MEMBER_STATES, INSCRIPTION_STATES, FEE_STATES, TRANSACTION_STATES, PAYMENT_METHODS, CITATION_STATES,
-    GAME_STATES, BASE_ROLES, AGE_SCALES, LOG_ACTIONS, LOGIN_MAX_ATTEMPTS, FEE_DUE_DAY, CITATION_RESPONSE_HOURS
+    GAME_STATES, BASE_ROLES, AGE_SCALES, LOG_ACTIONS, LOGIN_MAX_ATTEMPTS, FEE_DUE_DAY, CITATION_RESPONSE_HOURS, ROUTINE_LOG_STATUS,
+    GOAL_STATES
 } = require('../utils/constants')
 const { CLUB_SEED } = require('./data/club')
 const DATA = require('./data/demo')
 
 const {
     User, Role, ClubSport, Sport, Member, Staff, Inscription, Fee, Payment, League, Category, CategoryPlayer,
-    CategoryStaff, Game, Citation, Routine, Notification, Club
+    CategoryStaff, Game, Citation, Routine, RoutineLog, Goal, Notification, Club
 } = models
 
 const DEMO_MARKER = 'ctorres'   // Si existe este usuario, los datos de la demo ya están cargados
@@ -486,10 +487,11 @@ async function loadDemo({ club, admin, people, transaction }) {
     // --- Rutinas: lunes, miércoles y viernes de las tres categorías, semana actual y las dos anteriores ---
     const trainer = userOf.get('vsosa')
     const currentWeek = getCurrentWeekStart()
+    const routines = []   // { routine, code, date }
     for (const weekStart of [addDays(currentWeek, -14), addDays(currentWeek, -7), currentWeek]) {
         for (const [code, days] of Object.entries(DATA.DEMO_ROUTINES)) {
             for (const [dayOfWeek, routine] of Object.entries(days)) {
-                await add(Routine, {
+                const created = await add(Routine, {
                     clubId: club.id,
                     categoryId: categoryOf.get(code).id,
                     userId: trainer.id,
@@ -500,7 +502,40 @@ async function loadDemo({ club, admin, people, transaction }) {
                     imageUrl: null,
                     videoUrl: null
                 }, { at: atAR(addDays(weekStart, -2), '11:00') })
+                routines.push({ routine: created, code, date: addDays(weekStart, Number(dayOfWeek) - 1) })
             }
+        }
+    }
+
+    // --- Seguimiento personal (P20): registros de cumplimiento y objetivos, con el modelo (sin la ventana de 7 días) ---
+    const LOG_STATUS = { C: ROUTINE_LOG_STATUS.COMPLETED, P: ROUTINE_LOG_STATUS.PARTIAL, N: ROUTINE_LOG_STATUS.NOT_COMPLETED }
+    const categoryCodesOf = (key) => [...playersOf].filter(([, players]) => players.some(person => person.key === key)).map(([code]) => code)
+
+    for (const [key, entries] of Object.entries(DATA.DEMO_ROUTINE_LOGS)) {
+        const codes = categoryCodesOf(key)
+        // Sus rutinas con fecha de hoy o anterior, de la más nueva a la más vieja (el mismo día, en el orden de las categorías)
+        const own = routines
+            .filter(item => codes.includes(item.code) && item.date <= today)
+            .sort((a, b) => b.date.localeCompare(a.date) || codes.indexOf(a.code) - codes.indexOf(b.code))
+
+        for (const [index, entry] of entries.entries()) {
+            const item = own[index]
+            if (!item || !entry) continue
+            const [status, effort = null, note = null] = entry
+            const loggedAt = new Date(Math.min(atAR(item.date, '20:30').getTime(), now.getTime()))
+            await add(RoutineLog, {
+                clubId: club.id, routineId: item.routine.id, memberId: memberOf.get(key).id, status: LOG_STATUS[status], effort, note
+            }, { at: loggedAt })
+        }
+    }
+
+    for (const [key, goals] of Object.entries(DATA.DEMO_GOALS)) {
+        for (const goal of goals) {
+            const closedAt = goal.closedDaysAgo ? atAR(addDays(today, -goal.closedDaysAgo), '21:00') : null
+            await add(Goal, {
+                clubId: club.id, memberId: memberOf.get(key).id, text: goal.text, dueDate: addDays(today, goal.due),
+                goalState: GOAL_STATES[goal.state], closedAt
+            }, { at: atAR(addDays(today, -goal.createdDaysAgo), '19:00'), updatedAt: closedAt ?? atAR(addDays(today, -goal.createdDaysAgo), '19:00') })
         }
     }
 

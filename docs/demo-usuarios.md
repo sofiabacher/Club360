@@ -20,7 +20,7 @@ El número de socio de Rocío y el código de vínculo de Julieta cambian en cad
 | `mferreyra` | Mariana Ferreyra | Representante | Todo Vóley | Su panel de inicio con los pendientes y la campaña de las tres categorías; la inscripción Pendiente de Florencia para aprobar; el partido de Mayores sin resultado para cargar |
 | `cbenitez` | Carla Benítez | Entrenadora | Sub-16 y Sub-18 | Citar en Sub-18; el rechazo de Pilar; el conflicto de Camila |
 | `lquiroga` | Laura Quiroga | Entrenadora | Mayores | Abril no se puede citar (mora); el conflicto de Camila |
-| `vsosa` | Valeria Sosa | Preparadora física **y** Entrenadora (elige el rol al entrar) | Las tres | Rutinas de lunes, miércoles y viernes de las últimas 3 semanas; la semana siguiente vacía para cargarla |
+| `vsosa` | Valeria Sosa | Preparadora física **y** Entrenadora (elige el rol al entrar) | Las tres | Rutinas de lunes, miércoles y viernes de las últimas 3 semanas; la semana siguiente vacía para cargarla; como Preparadora física, el **Seguimiento** de las jugadoras |
 | — | Natalia Ibáñez | Entrenadora, **Pendiente de activación** (sin usuario) | Ninguna | El Admin le reenvía el email de activación |
 
 ## Socias y familias
@@ -29,7 +29,7 @@ Las jugadoras tienen los roles Socio y Jugadora, así que eligen el rol al entra
 
 | Usuario | Nombre | Qué es | Caso que muestra |
 |---|---|---|---|
-| `ctorres` | Camila Torres (18) | Jugadora mayor, Sub-18 y Mayores | El **conflicto de horario** sin resolver (Sub-18 a las 10 y Mayores a las 12, en H+5) y una citación **Pendiente** al partido de Mayores. Cuotas al día, con un pago rechazado (tarjeta 0000) en el historial |
+| `ctorres` | Camila Torres (18) | Jugadora mayor, Sub-18 y Mayores | El **conflicto de horario** sin resolver (Sub-18 a las 10 y Mayores a las 12, en H+5) y una citación **Pendiente** al partido de Mayores. Cuotas al día, con un pago rechazado (tarjeta 0000) en el historial. **Seguimiento:** casi todas las rutinas registradas, las dos del último día sin registrar, y 3 objetivos (uno vencido) |
 | `sromero` | Sofía Romero (15) | Jugadora menor, Sub-16 | Cuotas del mes anterior y del actual **impagas** (no llega a la mora: se la puede citar). Citación Confirmada |
 | `mromero` | Martina Romero (13) | Jugadora menor, Sub-16 | Juega en una categoría superior a su edad. Citación **Pendiente**. Cuotas al día |
 | `gromero` | Gabriela Romero | Socia **y** Familia de Sofía y Martina (elige el rol al entrar) | El panel de Familia con dos jugadoras y una cuota vencida para **pagar en vivo** |
@@ -68,6 +68,17 @@ Cuatro por categoría, con las cuotas al día. Las de Sub-16 y Sub-18 son menore
 | Mayores | H+5, 12:00, local (Cancha Anexo) | Social Parque | Programado, con citaciones |
 | Las tres | H+11 y H+18 | Distinto cada vez | Programados, todavía fuera de la ventana de citación |
 
+### Seguimiento personal
+
+Registros de las rutinas de las 3 semanas cargadas, con fecha de hoy o anterior (datos cargados: no pasan por la ventana de 7 días):
+
+| Jugadora | Registros | Objetivos |
+|---|---|---|
+| Camila (`ctorres`) | Casi todas Completadas (esfuerzo de 3 a 5), dos Parciales (una con nota) y una No completada ("Tenía parcial de la facu."). **Las dos rutinas del último día sin registrar**, para hacerlo en vivo | En curso: "Mejorar la recepción en el saque flotado" (en 3 semanas); En curso y **vencido**: "Llegar a 50 saltos al cajón por serie" (hace 2 días); Cumplido: "Completar todas las rutinas de la pretemporada" |
+| Sofía (`sromero`) y Martina (`mromero`) | Cumplimiento medio, con alguna sin registrar | Sofía: uno En curso ("Mejorar el saque de arriba") |
+| Valentina (`vruiz`), `lucia.paz`, `agustina.rey` y `brenda.rios` | Pocos registros | — |
+| El resto | Sin registros | — |
+
 ### Resultados y campaña
 
 Sub-16 juega al mejor de 3 y las otras dos categorías al mejor de 5. Todos los Jugados tienen los puntos de cada set, salvo el de Sub-16 de H-7 (para mostrar que son opcionales) y el de Mayores de H-21, que no tiene resultado.
@@ -104,6 +115,9 @@ Sub-16 juega al mejor de 3 y las otras dos categorías al mejor de 5. Todos los 
 11. **Cargar la rutina** de la semana siguiente (Valeria, como Preparadora física), con una imagen.
 12. **Verificar la integridad** y **hacer un backup** (Admin).
 13. **Cargar el resultado del partido de Mayores sin resultado** (Representante) y ver cómo cambia la campaña en el inicio de Camila. Por ejemplo, con un 3-0, Mayores pasa de 4 – 2 a 5 – 2 y la racha a P G G G G.
+14. **Registrar la rutina del día como Camila y ver Mi progreso.**
+15. **Ver el seguimiento de Sub-18 como Valeria** (Preparadora física).
+16. **Ver la pestaña Jugados** como Camila, como Gabriela (Familia) y como Carla (Entrenadora).
 
 ## Advertencias
 
