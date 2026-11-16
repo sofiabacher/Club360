@@ -1,8 +1,9 @@
 // Validator de leagues.
 // Reglas de express-validator: solo el formato de los datos, no reglas de negocio.
-// Que el grupo de edad sea de la escala de la liga lo controla el service, porque depende de la liga.
+// Que el grupo de edad sea de la escala de la liga (o que una categoría personalizada traiga nombre y edades
+// coherentes) lo controla el service, porque depende de la liga.
 const { body, param, query } = require('express-validator')
-const { AGE_SCALES } = require('../../utils/constants')
+const { AGE_SCALES, CUSTOM_AGE_LIMITS } = require('../../utils/constants')
 const { leagues: m } = require('../../utils/messages')
 
 const idParam = (name = 'id') => param(name).isInt({ min: 1 }).withMessage(m.idInvalid).bail().toInt()
@@ -30,10 +31,18 @@ const createLeague = [
 
 const updateLeague = [idParam(), leagueName, ageScale]
 
-// El nombre es opcional: sin nombre se usa la etiqueta del grupo
+// Edad de una categoría personalizada: opcional (vacía = sin límite)
+const customAge = (field) => body(field)
+    .optional({ values: 'null' })
+    .isInt(CUSTOM_AGE_LIMITS).withMessage(m.customAgeInvalid(CUSTOM_AGE_LIMITS.min, CUSTOM_AGE_LIMITS.max)).bail().toInt()
+
+// ageGroup: el code del grupo (no hace falta en la escala personalizada, que usa minAge y maxAge). El nombre es
+// opcional: sin nombre se usa la etiqueta del grupo
 const createCategory = [
     idParam(),
-    body('ageGroup').isString().withMessage(m.ageGroupRequired).bail().trim().notEmpty().withMessage(m.ageGroupRequired),
+    body('ageGroup').optional({ values: 'falsy' }).isString().withMessage(m.ageGroupRequired).bail().trim(),
+    customAge('minAge'),
+    customAge('maxAge'),
     body('name').optional({ values: 'falsy' }).isString().withMessage(m.categoryNameInvalid).bail().trim().isLength({ max: 100 }).withMessage(m.categoryNameInvalid)
 ]
 

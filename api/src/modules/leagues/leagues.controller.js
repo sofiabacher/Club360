@@ -61,8 +61,8 @@ const reactivateLeague = async (req, res, next) => {
 
 const createCategory = async (req, res, next) => {
     try {
-        const { ageGroup, name } = req.body
-        const data = await service.createCategory(req.user, req.params.id, { ageGroup, name })
+        const { ageGroup, name, minAge, maxAge } = req.body
+        const data = await service.createCategory(req.user, req.params.id, { ageGroup, name, minAge, maxAge })
         res.status(201).json({ success: true, data })
 
     } catch (error) {

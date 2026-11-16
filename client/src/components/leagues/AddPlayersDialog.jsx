@@ -19,6 +19,7 @@ import SearchRounded from '@mui/icons-material/SearchRounded'
 
 import { assignPlayers, getEligiblePlayers } from '../../api/leagues.api.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
+import { hasAgeLimit, ageRangeText } from '../../utils/ageGroups.js'
 import { MEMBER_STATES } from '../../utils/constants.js'
 import StatusChip from '../common/StatusChip.jsx'
 
@@ -74,9 +75,9 @@ export default function AddPlayersDialog({ open, category, onClose, onSaved }) {
   }
 
   const { ageGroup, year } = category
-  const note = ageGroup.maxAge === null
-    ? 'Mayores: todas las edades.'
-    : `Solo aparecen las jugadoras de hasta ${ageGroup.maxAge} años en ${year}.`
+  const note = hasAgeLimit(ageGroup)
+    ? `Solo aparecen las jugadoras de ${ageRangeText(ageGroup, year)}.`
+    : `${ageGroup.label}: todas las edades.`
 
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">

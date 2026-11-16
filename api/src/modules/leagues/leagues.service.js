@@ -16,6 +16,9 @@ const {
     INSCRIPTION_STATES,
     CATEGORY_STAFF_ROLES,
     AGE_SCALE_LABELS,
+    AGE_SCALE_CUSTOM,
+    CUSTOM_AGE_GROUP,
+    customAgeLabel,
     findAgeGroup,
     LOG_ACTIONS
 } = require('../../utils/constants')
@@ -36,12 +39,27 @@ const includeSport = { model: ClubSport, as: 'clubSport', attributes: ['id', 'is
 
 // ---------- Edad ----------
 
-// Grupo de edad de una categoría con su edad máxima: { code, label, maxAge }. Si el code no está en la escala
-// (no debería pasar), se muestra el code sin límite de edad.
-const ageGroupOf = (league, category) => findAgeGroup(league.ageScale, category.ageGroup) ?? { code: category.ageGroup, label: category.ageGroup, maxAge: null }
+const toAge = (value) => (value === null || value === undefined ? null : Number(value))
 
-// true si con su edad de temporada supera la edad máxima del grupo (Mayores no tiene límite)
+// Grupo de edad de una categoría con sus edades: { code, label, minAge, maxAge } (null = sin límite). En la escala
+// personalizada, las edades son las de la categoría. Si el code no está en la escala (no debería pasar), se muestra el
+// code sin límite de edad.
+function ageGroupOf(league, category) {
+    if (league.ageScale === AGE_SCALE_CUSTOM) {
+        const minAge = toAge(category.minAge)
+        const maxAge = toAge(category.maxAge)
+        return { code: CUSTOM_AGE_GROUP, label: customAgeLabel(minAge, maxAge), minAge, maxAge }
+    }
+
+    return findAgeGroup(league.ageScale, category.ageGroup) ?? { code: category.ageGroup, label: category.ageGroup, minAge: null, maxAge: null }
+}
+
+// true si con su edad de temporada supera la edad máxima del grupo (Mayores y Maxi no tienen límite)
 const exceedsAge = (birthDate, group, year = currentYear()) => group.maxAge !== null && getSeasonAge(birthDate, year) > group.maxAge
+
+// true si con su edad de temporada no llega a la edad mínima del grupo (Maxi). Como la edad de temporada solo sube, una
+// jugadora ya asignada nunca queda por debajo: se controla solo al asignar
+const belowAge = (birthDate, group, year = currentYear()) => group.minAge !== null && getSeasonAge(birthDate, year) < group.minAge
 
 // ---------- Alcance ----------
 
@@ -84,6 +102,7 @@ function formatLeague(league, counts = {}, { includeInactive = true } = {}) {
                 name: category.name,
                 ageGroup: group.code,
                 ageGroupLabel: group.label,
+                minAge: group.minAge,
                 maxAge: group.maxAge,
                 isActive: category.isActive,
                 playerCount: counts.players?.get(category.id) ?? 0,
@@ -285,21 +304,35 @@ async function assertCategoryNameFree(leagueId, name, exceptId, transaction) {
 
 const categoryLabel = (category, league) => `Categoría "${category.name}" (id ${category.id}) de la liga "${league.name}"`
 
-// name es opcional: sin nombre, se usa la etiqueta del grupo ("Sub-18"). Puede haber dos del mismo grupo con nombres distintos
-async function createCategory(actor, leagueId, { ageGroup, name }) {
+// Grupo de edad de una categoría nueva y las columnas que se guardan. En la escala personalizada, con las edades que
+// llegan (las dos opcionales, la mínima no mayor que la máxima) y el nombre obligatorio; en las demás, un grupo de la escala
+function newCategoryGroup(league, { ageGroup, name, minAge = null, maxAge = null }) {
+    if (league.ageScale === AGE_SCALE_CUSTOM) {
+        if (!name) throw createError(m.customNameRequired, 400)
+        if (minAge !== null && maxAge !== null && minAge > maxAge) throw createError(m.customAgeRange, 400)
+        return { label: customAgeLabel(minAge, maxAge), values: { ageGroup: CUSTOM_AGE_GROUP, minAge, maxAge } }
+    }
+
+    const group = findAgeGroup(league.ageScale, ageGroup)
+    if (!group) throw createError(m.ageGroupInvalid, 400)
+    return { label: group.label, values: { ageGroup: group.code, minAge: null, maxAge: null } }
+}
+
+// name es opcional: sin nombre, se usa la etiqueta del grupo ("Sub-18"); en la escala personalizada es obligatorio.
+// Puede haber dos del mismo grupo con nombres distintos
+async function createCategory(actor, leagueId, { ageGroup, name, minAge, maxAge }) {
     const scope = await getSportScope(actor)
 
     const { category, league } = await sequelize.transaction(async (transaction) => {
         const league = await findScopedLeague(scope, leagueId, { transaction, lock: transaction.LOCK.UPDATE })
         if (!league.isActive) throw createError(m.leagueInactive, 409)
 
-        const group = findAgeGroup(league.ageScale, ageGroup)
-        if (!group) throw createError(m.ageGroupInvalid, 400)
+        const group = newCategoryGroup(league, { ageGroup, name, minAge, maxAge })
 
         const finalName = name || group.label
         await assertCategoryNameFree(league.id, finalName, null, transaction)
 
-        const category = await Category.create({ clubId: scope.clubId, leagueId: league.id, name: finalName, ageGroup: group.code, isActive: true }, { transaction })
+        const category = await Category.create({ clubId: scope.clubId, leagueId: league.id, name: finalName, ...group.values, isActive: true }, { transaction })
         return { category, league }
     })
 
@@ -438,7 +471,8 @@ function eligibleMembersQuery(clubId, clubSportId, extraWhere = {}) {
 const activeMemberIdsOf = async (categoryId) => (await CategoryPlayer.findAll({ where: { categoryId, isActive: true }, attributes: ['memberId'], raw: true })).map(row => row.memberId)
 
 // Jugadoras que se pueden asignar a la categoría y todavía no están, con su edad de temporada.
-// La edad se filtra en la base: edad de temporada <= maxAge ⇔ nació en el año (actual − maxAge) o después.
+// La edad se filtra en la base: edad de temporada <= maxAge ⇔ nació en el año (actual − maxAge) o después, y
+// edad de temporada >= minAge ⇔ nació en el año (actual − minAge) o antes.
 async function getEligiblePlayers(user, categoryId, { search = '' } = {}) {
     const scope = await getSportScope(user)
     const category = await findScopedCategory(scope, categoryId)
@@ -453,6 +487,7 @@ async function getEligiblePlayers(user, categoryId, { search = '' } = {}) {
     const conditions = [
         ...(assigned.length > 0 ? [{ id: { [Op.notIn]: assigned } }] : []),
         ...(group.maxAge !== null ? [{ '$user.birthDate$': { [Op.gte]: `${year - group.maxAge}-01-01` } }] : []),
+        ...(group.minAge !== null ? [{ '$user.birthDate$': { [Op.lte]: `${year - group.minAge}-12-31` } }] : []),
         ...words.map(word => ({ [Op.or]: fields.map(field => ({ [field]: { [Op.like]: `%${word}%` } })) }))
     ]
 
@@ -483,6 +518,7 @@ function playerProblem(member, { group, sportName, year, approvedIds }) {
     if (!PLAYING_MEMBER_STATES.includes(member.memberStateId)) return m.memberInactive(name)
     if (!approvedIds.has(member.id)) return m.noInscription(name, sportName)
     if (exceedsAge(member.user.birthDate, group, year)) return m.exceedsAge(name, group.label, getSeasonAge(member.user.birthDate, year), year)
+    if (belowAge(member.user.birthDate, group, year)) return m.belowAge(name, group.label, getSeasonAge(member.user.birthDate, year), year)
     return null
 }
 

@@ -120,7 +120,8 @@ export const TABLE_LABELS = {
 
 // Escalas de edad del vóley (copia de api/src/utils/constants.js). Cada liga elige una (league.ageScale) y sus
 // categorías un grupo (category.ageGroup = code). Una jugadora entra si su edad de temporada (año actual − año de
-// nacimiento) es <= maxAge; null = sin límite (Mayores).
+// nacimiento) es <= maxAge y >= minAge; sin el campo = sin límite (Mayores, Maxi). La escala personalizada
+// (AGE_SCALE_CUSTOM) no tiene grupos fijos: cada categoría se crea con su edad mínima y/o máxima.
 export const AGE_SCALES = {
   1: [
     { code: 'SUB11', label: 'Sub-11', maxAge: 11 },
@@ -139,13 +140,28 @@ export const AGE_SCALES = {
     { code: 'SUB20', label: 'Sub-20', maxAge: 20 },
     { code: 'SUB23', label: 'Sub-23', maxAge: 23 },
     { code: 'MAYORES', label: 'Mayores', maxAge: null }
-  ]
+  ],
+  3: [
+    { code: 'MAXI35', label: '+35', minAge: 35 },
+    { code: 'MAXI40', label: '+40', minAge: 40 },
+    { code: 'MAXI45', label: '+45', minAge: 45 },
+    { code: 'MAXI50', label: '+50', minAge: 50 },
+    { code: 'MAXI55', label: '+55', minAge: 55 },
+    { code: 'MAXI60', label: '+60', minAge: 60 }
+  ],
+  4: []
 }
+
+// Escala personalizada y edades que se pueden cargar en sus categorías
+export const AGE_SCALE_CUSTOM = 4
+export const CUSTOM_AGE_LIMITS = { min: 5, max: 99 }
 
 // Etiqueta de cada escala para mostrarla
 export const AGE_SCALE_LABELS = {
   1: 'Escala 1: Sub-11 a Sub-21 y Mayores',
-  2: 'Escala 2: Sub-13 a Sub-23 y Mayores'
+  2: 'Escala 2: Sub-13 a Sub-23 y Mayores',
+  3: 'Escala 3: Maxi (+35 a +60)',
+  4: 'Personalizada'
 }
 
 // Ventana para citar (copia de api/src/utils/constants.js): desde 7 días hasta 48 horas antes del partido

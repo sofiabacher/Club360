@@ -355,3 +355,51 @@ Datos de entrada: —
 Resultado esperado: acceso denegado en los tres casos.
 Resultado obtenido: 403 en los tres.
 Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-25
+Módulo: leagues
+Descripción: Liga con la escala 3 (Maxi) y asignación por edad mínima
+Precondiciones: Representante de Vóley logueado. Socias con inscripción Aprobada en Vóley nacidas en 1970 (56 años en
+  2026) y en 1990 (36 años en 2026).
+Pasos:
+  1. Crear la liga "Maxi Vóley" con la escala 3. 2. Crear la categoría +50. 3. Abrir "Agregar jugadoras".
+  4. Asignar a la socia de 1990 por la API.
+Datos de entrada: ageScale 3, ageGroup MAXI50.
+Resultado esperado: 2) la categoría "+50" con el texto "+50 · 50 años o más en 2026". 3) Aparece la socia de 1970 y no
+  la de 1990. 4) 400 "<Nombre> no llega a la edad de +50 (tiene 36 en 2026)."
+Resultado obtenido:
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-26
+Módulo: leagues
+Descripción: Liga con escala personalizada: alta de categorías con sus edades
+Precondiciones: Representante de Vóley logueado.
+Pasos:
+  1. Crear la liga "Recreativa Veteranas" con la escala Personalizada. 2. Nueva categoría: nombre "Veteranas +60",
+  edad mínima 60, sin máxima. 3. Nueva categoría sin nombre. 4. Nueva categoría con mínima 50 y máxima 40.
+  5. Nueva categoría "Libre" sin edades. 6. Edad mínima 3.
+Datos de entrada: ageScale 4; { name, minAge, maxAge }.
+Resultado esperado: 1) En el formulario de la liga, "Personalizada" con la explicación. 2) El formulario de la categoría
+  muestra nombre y edades (no el selector de grupo) y se crea con el grupo "+60". 3) "Ingresá el nombre de la
+  categoría." 4) "La edad mínima no puede ser mayor que la máxima." 5) Se crea con el grupo "Libre" (todas las edades).
+  6) "La edad tiene que ser un número entre 5 y 99."
+Resultado obtenido:
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-LEAGUES-27
+Módulo: leagues
+Descripción: Las ligas y categorías existentes siguen igual después de recrear la base
+Precondiciones: Base con datos de la demo, recreada con db:snapshot, DB_FORCE_SYNC y db:restore.
+Pasos:
+  1. Verificar la integridad del club. 2. Abrir la Liga Metropolitana y la categoría Sub-18.
+Datos de entrada: —
+Resultado esperado: integridad OK (minAge y maxAge en NULL no cambian el DVH); las categorías de las escalas 1 y 2 se ven
+  y asignan como antes.
+Resultado obtenido:
+Estado: Pendiente

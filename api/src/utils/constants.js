@@ -245,7 +245,10 @@ const STAFF_ROLES = [BASE_ROLES.REPRESENTATIVE, BASE_ROLES.COACH, BASE_ROLES.TRA
 const CATEGORY_STAFF_ROLES = [BASE_ROLES.COACH, BASE_ROLES.TRAINER]
 
 // Escalas de edad del vóley (contexto, sección 6). Cada liga elige una (league.ageScale) y sus categorías un grupo
-// (category.ageGroup = code). Una jugadora entra si su edad de temporada (getSeasonAge) es <= maxAge; null = sin límite.
+// (category.ageGroup = code). Una jugadora entra si su edad de temporada (getSeasonAge) es <= maxAge y >= minAge; null =
+// sin límite. Las escalas 1 y 2 van por edad máxima (las más chicas pueden subir); la 3 (Maxi) por edad mínima (las más
+// grandes pueden bajar). La 4 (AGE_SCALE_CUSTOM) no tiene grupos fijos: cada categoría guarda sus edades en
+// category.minAge y category.maxAge, con ageGroup = CUSTOM_AGE_GROUP.
 // IMPORTANTE: se replica en client/src/utils/constants.js.
 const AGE_SCALES = {
     1: [
@@ -265,13 +268,31 @@ const AGE_SCALES = {
         { code: 'SUB20', label: 'Sub-20', maxAge: 20 },
         { code: 'SUB23', label: 'Sub-23', maxAge: 23 },
         { code: 'MAYORES', label: 'Mayores', maxAge: null }
-    ]
+    ],
+    3: [
+        { code: 'MAXI35', label: '+35', minAge: 35 },
+        { code: 'MAXI40', label: '+40', minAge: 40 },
+        { code: 'MAXI45', label: '+45', minAge: 45 },
+        { code: 'MAXI50', label: '+50', minAge: 50 },
+        { code: 'MAXI55', label: '+55', minAge: 55 },
+        { code: 'MAXI60', label: '+60', minAge: 60 }
+    ],
+    4: []
 }
+
+// Escala personalizada: cada categoría con su edad mínima y/o máxima (category.minAge y category.maxAge)
+const AGE_SCALE_CUSTOM = 4
+const CUSTOM_AGE_GROUP = 'CUSTOM'
+
+// Edades que se pueden cargar en una categoría personalizada
+const CUSTOM_AGE_LIMITS = { min: 5, max: 99 }
 
 // Etiqueta de cada escala para mostrarla
 const AGE_SCALE_LABELS = {
     1: 'Escala 1: Sub-11 a Sub-21 y Mayores',
-    2: 'Escala 2: Sub-13 a Sub-23 y Mayores'
+    2: 'Escala 2: Sub-13 a Sub-23 y Mayores',
+    3: 'Escala 3: Maxi (+35 a +60)',
+    4: 'Personalizada'
 }
 
 // Tipos de notificación (notification.type guarda la clave) y su canal, según la tabla "Canal de cada notificación"
@@ -386,8 +407,20 @@ const BACKUP_TYPES = { MANUAL: 'MANUAL', AUTO: 'AUTO', PRE_RESTORE: 'PRE_RESTORE
 // Backups que se conservan por club (de todos los tipos): al guardar uno nuevo, se borran los más viejos
 const BACKUP_KEEP_LAST = 7
 
-// Grupo de edad de una escala por su code (undefined si no es de esa escala)
-const findAgeGroup = (ageScale, code) => AGE_SCALES[ageScale]?.find(group => group.code === code)
+// Etiqueta de un grupo personalizado según sus edades: "+50", "Sub-16", "40 a 49" o "Libre"
+function customAgeLabel(minAge, maxAge) {
+    if (minAge !== null && maxAge !== null) return `${minAge} a ${maxAge}`
+    if (minAge !== null) return `+${minAge}`
+    if (maxAge !== null) return `Sub-${maxAge}`
+    return 'Libre'
+}
+
+// Grupo de edad de una escala por su code, con las dos edades (null = sin límite): { code, label, minAge, maxAge }.
+// undefined si no es de esa escala. La escala personalizada no tiene grupos fijos (ver ageGroupOfCategory)
+function findAgeGroup(ageScale, code) {
+    const group = AGE_SCALES[ageScale]?.find(item => item.code === code)
+    return group && { code: group.code, label: group.label, minAge: group.minAge ?? null, maxAge: group.maxAge ?? null }
+}
 
 module.exports = {
     CRITICITY_LABELS,
@@ -416,6 +449,10 @@ module.exports = {
     CATEGORY_STAFF_ROLES,
     AGE_SCALES,
     AGE_SCALE_LABELS,
+    AGE_SCALE_CUSTOM,
+    CUSTOM_AGE_GROUP,
+    CUSTOM_AGE_LIMITS,
+    customAgeLabel,
     findAgeGroup,
     NOTIFICATION_TYPES,
     GAME_DURATION_MINUTES,

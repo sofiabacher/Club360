@@ -5,7 +5,7 @@ import axiosClient from './axiosClient.js'
 // ---------- Ligas ----------
 
 // data: { leagues: [{ id, name, isActive, ageScale, ageScaleLabel, clubSport: { id, name }, hasCategories,
-//         categories: [{ id, name, ageGroup, ageGroupLabel, maxAge, isActive, playerCount, staffCount }] }],
+//         categories: [{ id, name, ageGroup, ageGroupLabel, minAge, maxAge, isActive, playerCount, staffCount }] }],
 //         sports: [{ id (clubSportId), name }], year }
 export const getLeagues = ({ includeInactive } = {}) =>
   axiosClient.get('/leagues', { params: { includeInactive: includeInactive ? 'true' : undefined } }).then((res) => res.data)
@@ -22,10 +22,10 @@ export const reactivateLeague = (id) => axiosClient.post(`/leagues/${id}/reactiv
 
 // ---------- Categorías ----------
 
-// payload: { ageGroup, name? }. data: el detalle de la categoría
+// payload: { ageGroup, name? } o, en la escala personalizada, { name, minAge?, maxAge? } (null = sin límite). data: el detalle de la categoría
 export const createCategory = (leagueId, payload) => axiosClient.post(`/leagues/${leagueId}/categories`, payload).then((res) => res.data)
 
-// data: { id, name, isActive, ageGroup: { code, label, maxAge }, year, league, sport,
+// data: { id, name, isActive, ageGroup: { code, label, minAge, maxAge }, year, league, sport,
 //         players: [{ memberId, name, numMember, seasonAge, memberStateId, exceedsAge }],
 //         staff: [{ staffId, name, roles, isActiveStaff }] }
 export const getCategory = (id) => axiosClient.get(`/leagues/categories/${id}`).then((res) => res.data)
@@ -56,6 +56,6 @@ export const unassignStaff = (id, staffId) => axiosClient.delete(`/leagues/categ
 
 // ---------- Mis categorías ----------
 
-// data: { year, categories: [{ id, name, ageGroup: { code, label, maxAge }, league: { id, name, sport },
+// data: { year, categories: [{ id, name, ageGroup: { code, label, minAge, maxAge }, league: { id, name, sport },
 //         players: [{ memberId, name, numMember, seasonAge, memberStateId, exceedsAge }], otherStaff: [{ staffId, name, roles }] }] }
 export const getMyCategories = () => axiosClient.get('/leagues/my-categories').then((res) => res.data)

@@ -26,7 +26,7 @@ import { getCategory, unassignPlayer, unassignStaff } from '../../api/leagues.ap
 import EmptyState from '../../components/common/EmptyState.jsx'
 import AddPlayersDialog from '../../components/leagues/AddPlayersDialog.jsx'
 import AddStaffDialog from '../../components/leagues/AddStaffDialog.jsx'
-import { ageGroupText } from '../../components/leagues/CategoryFormDialog.jsx'
+import { ageGroupText } from '../../utils/ageGroups.js'
 import PlayerStatusChips from '../../components/leagues/PlayerStatusChips.jsx'
 import usePermission from '../../hooks/usePermission.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'

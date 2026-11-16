@@ -12,10 +12,12 @@ import TextField from '@mui/material/TextField'
 
 import { createLeague, updateLeague } from '../../api/leagues.api.js'
 import { getErrorMessage, getFieldErrors } from '../../utils/apiErrors.js'
-import { AGE_SCALE_LABELS, AGE_SCALES } from '../../utils/constants.js'
+import { AGE_SCALE_CUSTOM, AGE_SCALE_LABELS, AGE_SCALES } from '../../utils/constants.js'
 
 const SCALES = Object.keys(AGE_SCALES).map(Number)
-const groupsText = (scale) => AGE_SCALES[scale].map((group) => group.label).join(', ')
+const groupsText = (scale) => (scale === AGE_SCALE_CUSTOM
+  ? 'Armás cada categoría con su nombre y su edad mínima y/o máxima (por ejemplo, una liga recreativa).'
+  : AGE_SCALES[scale].map((group) => group.label).join(', '))
 
 // Alta y edición de una liga. league: la liga a editar (sin league, es un alta). sports: los deportes del alcance.
 // El deporte no se cambia al editar, y la escala queda fija si la liga ya tiene categorías.
@@ -105,7 +107,11 @@ export default function LeagueFormDialog({ open, league, sports, onClose, onSave
               value={form.ageScale}
               onChange={(event) => setField('ageScale', Number(event.target.value))}
               error={Boolean(errors.ageScale)}
-              helperText={errors.ageScale ?? (scaleLocked ? 'La liga ya tiene categorías: la escala no se cambia.' : 'Las categorías de la liga se eligen de esta lista.')}
+              helperText={errors.ageScale ?? (scaleLocked
+                ? 'La liga ya tiene categorías: la escala no se cambia.'
+                : form.ageScale === AGE_SCALE_CUSTOM
+                  ? 'Si ninguna escala te sirve: cada categoría se crea con sus edades.'
+                  : 'Las categorías de la liga se eligen de esta lista.')}
               disabled={scaleLocked}
               required
               fullWidth
