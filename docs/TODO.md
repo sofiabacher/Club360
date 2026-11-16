@@ -127,20 +127,19 @@ Seguimiento de todo lo que falta para entregar el proyecto: desarrollo, entregab
 - [x] Middleware `upload` con dos destinos: disco en desarrollo y Cloudinary en producción, con un borrado común para los dos. Adaptar la foto de Mi cuenta (P05), que hoy borra del disco (D7, contexto sección 11; `CLAUDE.md`, "Imágenes") (P17: deja `req.file.url` en los dos casos; comprobantes como `raw` privado, revisados por sus primeros bytes antes de subirlos; `deleteUpload` borra del disco o de Cloudinary; `receipt-file` descarga con un link firmado. Falta probarlo con una cuenta real de Cloudinary)
 - [x] Helper del front para armar la URL de una imagen: absoluta si viene de Cloudinary, con `VITE_API_URL` si es una ruta local (`getUploadUrl` en `utils/media.js`, ya existía y lo usan todas las imágenes; revisado en el P17)
 - [x] Emails por la API de Brevo en producción, porque Render gratis bloquea SMTP (P17)
-- [ ] Crear las cuentas de Cloudinary y Brevo (con la casilla del equipo verificada como remitente)
-- [ ] Base de datos en Railway
-- [ ] Backend en Render
-- [ ] Frontend en Vercel, con `client/vercel.json` para las rutas de React Router (el `vercel.json` ya está, P17)
-- [ ] Configurar `FRONTEND_URL` y `VITE_API_URL` con las URLs de la demo
-- [ ] Servicio externo que llama a /health cada 10 minutos
-- [ ] Cargar el seed y los datos de la demo en Railway
+- [x] Crear las cuentas de Cloudinary y Brevo (con la casilla del equipo verificada como remitente)
+- [x] Base de datos en Railway
+- [x] Backend en Render
+- [x] Frontend en Vercel, con `client/vercel.json` para las rutas de React Router (el `vercel.json` ya está, P17)
+- [x] Configurar `FRONTEND_URL` y `VITE_API_URL` con las URLs de la demo
+- [x] Servicio externo que llama a /health cada 10 minutos
+- [x] Cargar el seed y los datos de la demo en Railway
 - [ ] Correr `npm run seed:demo -- --reset` el día de la defensa o el anterior (las citaciones Pendientes vencen a las 24 horas)
 - [ ] Cargar los datos de la demo y probar el recorrido completo de cada rol
 - [x] Script de datos de la demo (P18: `npm run seed:demo`)
-- [ ] Aplicar el cambio en el modelo del P19 en Railway (`docs/deploy.md`, sección 11) antes de integrar a `main`
-- [ ] Correr `npm run seed` en Railway después de integrar el P20 (permisos nuevos; `docs/deploy.md`, sección 11, "Si el cambio solo suma tablas o permisos")
+- [x] Aplicar el cambio en el modelo del P19 en Railway (`docs/deploy.md`, sección 11) antes de integrar a `main`
+- [x] Correr `npm run seed` en Railway después de integrar el P20 (permisos nuevos; `docs/deploy.md`, sección 11, "Si el cambio solo suma tablas o permisos")
 - [x] Revisión final del código antes del congelamiento (P22: 18 hallazgos, todos corregidos; informe en `docs/revision-final.md`)
-- [ ] Recorrer a mano en el celular las capturas de la recorrida del P22 (`Club360-capturas-P22/` en el Escritorio)
 - [x] Panel de inicio para todos los roles: Admin del Club, Entrenadora, Preparadora física y Socio (con los endpoints existentes)
 - [x] Accesos rápidos agrupados como el menú, con una descripción por sección
 - [x] Página de bienvenida (`/welcome`) para quien entra sin sesión
@@ -190,7 +189,7 @@ Cada una se resuelve en el chat de Claude y se registra en el documento de conte
 
 ## Si queda tiempo (prioridad 1 de Futuro)
 
-- [ ] Resultados de partidos y campaña por categoría: `ownScore` y `rivalScore` en `game`, carga al marcar el partido como Jugado, campaña en los dashboards de la Jugadora y el Representante (contexto sección 7)
+- [x] Resultados de partidos y campaña por categoría: `ownScore` y `rivalScore` en `game`, carga al marcar el partido como Jugado, campaña en los dashboards de la Jugadora y el Representante (contexto sección 7)
 
 ## Si queda tiempo (prioridad 2 de Futuro)
 
