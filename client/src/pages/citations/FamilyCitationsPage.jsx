@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import Alert from '@mui/material/Alert'
-import Box from '@mui/material/Box'
 import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
-import Typography from '@mui/material/Typography'
 import AssignmentIndRounded from '@mui/icons-material/AssignmentIndRounded'
 
 import { getLinkedCitations } from '../../api/citations.api.js'
@@ -11,6 +9,7 @@ import CitationSections from '../../components/citations/CitationSections.jsx'
 import EmptyState from '../../components/common/EmptyState.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 // Citaciones de las jugadoras vinculadas al adulto (citations.viewLinked), de solo lectura: la citación la responde
 // siempre la jugadora. Con más de una jugadora, un selector arriba
@@ -44,12 +43,7 @@ export default function FamilyCitationsPage() {
 
   return (
     <>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Citaciones</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          {players.length === 1 ? `Las citaciones de ${selected.member.name}.` : 'Las citaciones de tus jugadoras vinculadas.'}
-        </Typography>
-      </Box>
+      <PageHeader title="Citaciones" description={players.length === 1 ? `Las citaciones de ${selected.member.name}.` : 'Las citaciones de tus jugadoras vinculadas.'} />
 
       {players.length > 1 && (
         <TextField select label="Jugadora" value={selected.member.id} onChange={(event) => setSelectedId(event.target.value)} size="small" sx={{ minWidth: 240, mb: 3 }}>

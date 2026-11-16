@@ -32,6 +32,7 @@ import { getErrorMessage } from '../../utils/apiErrors.js'
 import { GAME_STATES } from '../../utils/constants.js'
 import { formatDayHeader } from '../../utils/format.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 // Filtro de los Jugados sin resultado (no es un estado: se manda como withoutResult)
 const NO_RESULT = 'noResult'
@@ -154,17 +155,15 @@ export default function GamesPage() {
 
   return (
     <>
-      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between', gap: 2, mb: 3 }}>
-        <Box>
-          <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Partidos</Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            El fixture de tus categorías. Te avisamos si alguna jugadora queda con partidos superpuestos.
-          </Typography>
-        </Box>
-        <Button variant="contained" color="primary" startIcon={<AddRounded />} onClick={() => setForm({ open: true, game: null })} disabled={!options} sx={{ flexShrink: 0 }}>
-          Nuevo partido
-        </Button>
-      </Stack>
+      <PageHeader
+        title="Partidos"
+        description="El fixture de tus categorías. Te avisamos si alguna jugadora queda con partidos superpuestos."
+        action={
+          <Button variant="contained" color="primary" startIcon={<AddRounded />} onClick={() => setForm({ open: true, game: null })} disabled={!options}>
+            Nuevo partido
+          </Button>
+        }
+      />
 
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 3 }}>
         <TextField select label="Categoría" value={query.categoryId} onChange={setFilter('categoryId')} size="small" sx={{ minWidth: 220, flexGrow: 1 }}>

@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
-import Box from '@mui/material/Box'
 import MenuItem from '@mui/material/MenuItem'
-import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
-import Typography from '@mui/material/Typography'
 import FamilyRestroomRounded from '@mui/icons-material/FamilyRestroomRounded'
 
 import { getLinkedFees } from '../../api/fees.api.js'
@@ -14,6 +11,7 @@ import FeeAccount from '../../components/fees/FeeAccount.jsx'
 import PayFeeDialog from '../../components/fees/PayFeeDialog.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 // Estado de cuenta de la Familia (fees.manageLinked): las cuotas de cada jugadora vinculada, con el pago simulado.
 // Con más de una jugadora, un selector. ?memberId= elige una al entrar (el botón "Pagar" del inicio)
@@ -50,19 +48,19 @@ export default function FamilyFeesPage() {
 
   return (
     <>
-      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2, justifyContent: 'space-between', alignItems: { sm: 'center' }, mb: 3 }}>
-        <Box>
-          <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Estado de cuenta</Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {account ? `Las cuotas de ${account.member.name}.` : 'Las cuotas de tus jugadoras vinculadas.'}
-          </Typography>
-        </Box>
-        {accounts.length > 1 && (
-          <TextField select label="Jugadora" value={account.member.id} onChange={(event) => setSelectedId(event.target.value)} size="small" sx={{ minWidth: 220 }}>
-            {accounts.map((item) => <MenuItem key={item.member.id} value={item.member.id}>{item.member.name}</MenuItem>)}
-          </TextField>
-        )}
-      </Stack>
+      <PageHeader
+        title="Estado de cuenta"
+        description={account ? `Las cuotas de ${account.member.name}.` : 'Las cuotas de tus jugadoras vinculadas.'}
+        action={
+          <>
+            {accounts.length > 1 && (
+              <TextField select label="Jugadora" value={account.member.id} onChange={(event) => setSelectedId(event.target.value)} size="small" sx={{ minWidth: 220 }}>
+                {accounts.map((item) => <MenuItem key={item.member.id} value={item.member.id}>{item.member.name}</MenuItem>)}
+              </TextField>
+            )}
+          </>
+        }
+      />
 
       {account ? (
         <FeeAccount account={account} onPay={setPaying} />

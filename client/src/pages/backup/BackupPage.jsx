@@ -38,6 +38,7 @@ import { BACKUP_TYPE_LABELS, TABLE_LABELS } from '../../utils/constants.js'
 import { saveBlob } from '../../utils/download.js'
 import { formatDateTimeLong, formatFileSize } from '../../utils/format.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024   // 20 MB
 
@@ -180,18 +181,15 @@ export default function BackupPage() {
 
   return (
     <>
-      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: 'space-between', alignItems: { sm: 'flex-start' }, gap: 2, mb: 3 }}>
-        <Box>
-          <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Copias de seguridad</Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', maxWidth: 640 }}>
-            Se hace un backup automático todos los domingos a las 03:00. Se guardan los últimos 7. Descargá los importantes:
-            el servidor de la demo puede borrarlos.
-          </Typography>
-        </Box>
-        <Button variant="contained" color="primary" startIcon={<BackupRounded />} onClick={handleCreate} loading={creating} sx={{ flexShrink: 0 }}>
-          Generar backup
-        </Button>
-      </Stack>
+      <PageHeader
+        title="Copias de seguridad"
+        description="Se hace un backup automático todos los domingos a las 03:00. Se guardan los últimos 7. Descargá los importantes: el servidor de la demo puede borrarlos."
+        action={
+          <Button variant="contained" color="primary" startIcon={<BackupRounded />} onClick={handleCreate} loading={creating}>
+            Generar backup
+          </Button>
+        }
+      />
 
       {result && (
         <Alert severity={result.verification.status === 'OK' ? 'success' : 'warning'} sx={{ mb: 3 }} onClose={() => setResult(null)}>
@@ -279,7 +277,7 @@ export default function BackupPage() {
               border: 2,
               borderStyle: 'dashed',
               borderColor: fileError ? 'error.main' : dragging ? 'secondary.main' : 'divider',
-              borderRadius: 2,
+              borderRadius: 1,
               bgcolor: dragging ? 'action.hover' : 'background.default',
               p: 3,
               textAlign: 'center',

@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import Alert from '@mui/material/Alert'
-import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
 
 import { getMyFees } from '../../api/fees.api.js'
 import FeeAccount from '../../components/fees/FeeAccount.jsx'
@@ -9,6 +7,7 @@ import PayFeeDialog from '../../components/fees/PayFeeDialog.jsx'
 import useAuth from '../../hooks/useAuth.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 // Mis cuotas (fees.viewOwn): estado de cuenta del socio logueado. Pagar solo con fees.payOwn (mayores); los menores ven
 // que el pago lo hace su adulto responsable
@@ -42,12 +41,7 @@ export default function MyFeesPage() {
 
   return (
     <>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Mis cuotas</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          La cuota de cada mes se genera el día 1 y vence el 10: cuota social más la cuota deportiva de cada deporte.
-        </Typography>
-      </Box>
+      <PageHeader title="Mis cuotas" description="La cuota de cada mes se genera el día 1 y vence el 10: cuota social más la cuota deportiva de cada deporte." />
 
       <FeeAccount account={account} onPay={setPaying} />
 

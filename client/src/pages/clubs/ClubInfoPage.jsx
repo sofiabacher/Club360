@@ -20,23 +20,20 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp'
 
 import { getClubInfo } from '../../api/clubs.api.js'
 import AccentStripe from '../../components/common/AccentStripe.jsx'
-import CourtBackground from '../../components/common/CourtBackground.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { formatMoney, getWhatsAppUrl } from '../../utils/format.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 
-// Encabezado de la página: versión baja de CourtBackground con el nombre del club y su franja de acento
+// Encabezado de la página: el nombre del club con su franja de acento
 function ClubHeader({ name, accentColor }) {
   return (
-    <CourtBackground compact sx={{ mb: 3 }}>
-      <Stack direction="row" spacing={2} sx={{ alignItems: 'center', px: { xs: 2.5, sm: 4 }, py: { xs: 3, sm: 4 } }}>
-        <AccentStripe color={accentColor} size={6} sx={{ minHeight: 48 }} />
-        <Box>
-          <Typography variant="overline" sx={{ color: 'navy.contrastText', opacity: 0.7, letterSpacing: '0.2em' }}>El club</Typography>
-          <Typography variant="h4" component="h2" sx={{ color: 'navy.contrastText' }}>{name}</Typography>
-        </Box>
-      </Stack>
-    </CourtBackground>
+    <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 3 }}>
+      <AccentStripe color={accentColor} size={5} sx={{ minHeight: 44 }} />
+      <Box>
+        <Typography variant="overline" sx={{ color: 'text.secondary' }}>El club</Typography>
+        <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>{name}</Typography>
+      </Box>
+    </Stack>
   )
 }
 
@@ -45,7 +42,7 @@ function InfoCard({ icon: Icon, title, children }) {
     <Card sx={{ height: '100%' }}>
       <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 2 }}>
-          <Avatar sx={{ bgcolor: 'cream.main', color: 'navy.main', width: 40, height: 40 }}>
+          <Avatar sx={{ bgcolor: 'tint.main', color: 'navy.main', width: 40, height: 40 }}>
             <Icon />
           </Avatar>
           <Typography variant="h6" component="h3" sx={{ color: 'navy.main' }}>{title}</Typography>
@@ -159,7 +156,7 @@ export default function ClubInfoPage() {
               <Grid container spacing={2}>
                 {info.sports.map((sport) => (
                   <Grid key={sport.clubSportId} size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'cream.main' }}>
+                    <Box sx={{ p: 2, borderRadius: 1, bgcolor: 'tint.main' }}>
                       <Typography sx={{ fontWeight: 600, color: 'navy.main' }}>{sport.name}</Typography>
                       <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                         Cuota deportiva: {formatMoney(sport.priceFee)} por mes

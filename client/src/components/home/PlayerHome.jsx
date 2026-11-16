@@ -1,18 +1,17 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Link as RouterLink } from 'react-router-dom'
+import { useState } from 'react'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
 import Divider from '@mui/material/Divider'
 import Grid from '@mui/material/Grid'
-import Link from '@mui/material/Link'
 import Skeleton from '@mui/material/Skeleton'
 import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import PlaceRounded from '@mui/icons-material/PlaceRounded'
 
+import ActionLink from '../common/ActionLink.jsx'
 import { getMyCitations, respondCitation } from '../../api/citations.api.js'
 import { getMyFees } from '../../api/fees.api.js'
 import { getMyGames } from '../../api/games.api.js'
@@ -27,27 +26,14 @@ import { DayPills } from '../routines/RoutineWeekView.jsx'
 import HomeBlock from './HomeBlock.jsx'
 import QuickAccess from './QuickAccess.jsx'
 import {
-  citationChipOf, citationForGame, feeStatusOf, hasFeeInReview, hasOverdueFee, initialBlock, isSuspended, upcomingGames
+  citationChipOf, citationForGame, feeStatusOf, hasFeeInReview, hasOverdueFee, isSuspended, upcomingGames
 } from './homeData.js'
 import useAuth from '../../hooks/useAuth.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { formatDeadline, formatGameDate, formatMoney, formatShortDateTime, formatTime, formatWeekdayDay } from '../../utils/format.js'
 import { getUploadUrl } from '../../utils/media.js'
 import { pendingLogsOf, weekComplianceOf } from '../../utils/tracking.js'
-
-// Carga un bloque del panel con su propia llamada: { data, error, loading, reload }
-function useBlock(request) {
-  const [block, setBlock] = useState(initialBlock)
-
-  const reload = useCallback(() => {
-    request()
-      .then(({ data }) => setBlock({ data, error: '', loading: false }))
-      .catch((err) => setBlock({ data: null, error: getErrorMessage(err), loading: false }))
-  }, [request])
-
-  useEffect(() => { reload() }, [reload])
-  return { ...block, reload }
-}
+import useBlock from './useBlock.js'
 
 const upcomingCitations = () => getMyCitations('upcoming')
 const myRoutine = () => getMyRoutine()
@@ -111,7 +97,7 @@ function NextGameCard({ category, citations, primaryCitationId, busyId, onConfir
         <Typography sx={{ color: 'text.secondary' }}>No hay partidos programados.</Typography>
       ) : (
         <>
-          <Typography sx={{ fontWeight: 700, fontSize: '0.75rem', letterSpacing: '0.18em', color: 'burgundy.main' }}>PRÓXIMO PARTIDO</Typography>
+          <Typography sx={{ fontWeight: 700, fontSize: '0.75rem', letterSpacing: '0.18em', color: 'text.secondary' }}>PRÓXIMO PARTIDO</Typography>
           <Typography variant="numeric" component="p" sx={{ fontSize: { xs: '2.2rem', sm: '2.6rem' }, color: 'navy.main', lineHeight: 1.1 }}>
             {formatGameDate(next.dateTime)}
           </Typography>
@@ -151,11 +137,11 @@ function NextGameCard({ category, citations, primaryCitationId, busyId, onConfir
       {category.campaign && (
         <>
           <Divider sx={{ my: 2 }} />
-          <Typography variant="overline" component="p" sx={{ color: 'text.secondary', letterSpacing: 1.5 }}>Campaña {category.campaign.season}</Typography>
+          <Typography variant="overline" component="p" sx={{ color: 'text.secondary' }}>Campaña {category.campaign.season}</Typography>
           <CampaignContent campaign={category.campaign} compact />
         </>
       )}
-      <Link component={RouterLink} to="/my-games" color="secondary" sx={{ display: 'inline-block', mt: 2, fontWeight: 600 }}>Ver fixture</Link>
+      <ActionLink to="/my-games" sx={{ mt: 2 }}>Ver fixture</ActionLink>
     </HomeBlock>
   )
 }
@@ -236,7 +222,7 @@ export default function PlayerHome() {
         <Grid size={{ xs: 12, md: 5 }}>
           <Stack spacing={3}>
             {fees.loading
-              ? <Skeleton variant="rounded" height={160} sx={{ borderRadius: 3 }} />
+              ? <Skeleton variant="rounded" height={160} sx={{ borderRadius: 1 }} />
               : fees.data && (
                 <MemberCard
                   clubName={club?.name}
@@ -264,7 +250,7 @@ export default function PlayerHome() {
                       </Typography>
                     )}
                     {isSuspended(fees.data) && <SuspensionAlert delayFee={fees.data.delayFee} sx={{ mt: 1.5 }} />}
-                    <Link component={RouterLink} to="/my-fees" color="secondary" sx={{ display: 'inline-block', mt: 1.5, fontWeight: 600 }}>Ver mis cuotas</Link>
+                    <ActionLink to="/my-fees" sx={{ mt: 1.5 }}>Ver mis cuotas</ActionLink>
                   </>
                 )
               })()}
@@ -299,9 +285,9 @@ export default function PlayerHome() {
                   )}
                   <Stack direction="row" sx={{ gap: 2, mt: 1.5, flexWrap: 'wrap' }}>
                     {routine.data.canTrack && pendingLogsOf(routine.data).length > 0 && (
-                      <Link component={RouterLink} to="/my-routine" color="secondary" sx={{ fontWeight: 600 }}>Registrá cómo te fue</Link>
+                      <ActionLink to="/my-routine">Registrá cómo te fue</ActionLink>
                     )}
-                    <Link component={RouterLink} to="/my-routine" color="secondary" sx={{ fontWeight: 600 }}>Ver rutina</Link>
+                    <ActionLink to="/my-routine">Ver rutina</ActionLink>
                   </Stack>
                 </>
               )}

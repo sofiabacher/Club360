@@ -170,7 +170,7 @@ function TransferForm({ fee, file, setFile, fileError, setFileError, error }) {
             border: 2,
             borderStyle: 'dashed',
             borderColor: fileError ? 'error.main' : dragging ? 'secondary.main' : 'divider',
-            borderRadius: 2,
+            borderRadius: 1,
             bgcolor: dragging ? 'action.hover' : 'background.default',
             p: 2.5,
             textAlign: 'center',

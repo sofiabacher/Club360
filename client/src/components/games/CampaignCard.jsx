@@ -46,7 +46,7 @@ function LastGame({ game, compact }) {
 
   return (
     <Box>
-      <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: 1.5 }}>Último partido</Typography>
+      <Typography variant="overline" sx={{ color: 'text.secondary' }}>Último partido</Typography>
       <Stack direction="row" sx={{ alignItems: 'baseline', gap: 1.25, flexWrap: 'wrap' }}>
         <Typography variant="numeric" sx={{ fontSize: compact ? '1.4rem' : '1.7rem', color: 'navy.main' }}>{game.ownScore} - {game.rivalScore}</Typography>
         <Typography variant="numeric" sx={{ fontSize: compact ? '1rem' : '1.15rem', color: 'text.secondary' }}>{formatGameDate(game.dateTime)}</Typography>
@@ -130,7 +130,7 @@ export default function CampaignCard({ category, league, campaign, compact = fal
   return (
     <Card>
       <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-        <Typography variant="overline" component="h3" sx={{ color: 'text.secondary', letterSpacing: 1.5, display: 'block' }}>
+        <Typography variant="overline" component="h3" sx={{ color: 'text.secondary', display: 'block' }}>
           Campaña {campaign?.season ?? ''}
         </Typography>
         <Typography sx={{ fontWeight: 600, color: 'navy.main', mb: 1.5 }}>{category.name} · {league.name}</Typography>
@@ -154,7 +154,7 @@ export function CategoryCampaign({ categoryId, season, showPending = false }) {
   }, [categoryId, season])
 
   if (state.error) return <Alert severity="error">No pudimos cargar la campaña: {state.error}</Alert>
-  if (!state.data) return <Skeleton variant="rounded" height={180} sx={{ borderRadius: 3 }} />
+  if (!state.data) return <Skeleton variant="rounded" height={180} sx={{ borderRadius: 1 }} />
 
   return <CampaignCard category={state.data.category} league={state.data.league} campaign={state.data} showPending={showPending} />
 }

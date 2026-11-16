@@ -16,7 +16,6 @@ import AddPhotoAlternateRounded from '@mui/icons-material/AddPhotoAlternateRound
 import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded'
 
 import { createRoutine, deleteRoutine, updateRoutine } from '../../api/routines.api.js'
-import ParquetBackground from '../common/ParquetBackground.jsx'
 import { getErrorMessage, getFieldErrors } from '../../utils/apiErrors.js'
 import { DAYS_OF_WEEK } from '../../utils/constants.js'
 import { formatDayMonth } from '../../utils/format.js'
@@ -130,10 +129,10 @@ export default function RoutineEditor({ categoryId, weekStart, day, onSaved }) {
   }
 
   return (
-    <ParquetBackground sx={{ borderRadius: 3, p: { xs: 1.5, sm: 3 } }}>
-      <Card elevation={6} sx={{ borderRadius: 3, maxWidth: 720, mx: 'auto' }}>
+    <Box>
+      <Card sx={{ maxWidth: 760 }}>
         <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-          <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: 1.5 }}>
+          <Typography variant="overline" sx={{ color: 'text.secondary' }}>
             {routine ? 'Editar la rutina del' : 'Nueva rutina para el'} {dayLabel}
           </Typography>
 
@@ -169,7 +168,7 @@ export default function RoutineEditor({ categoryId, weekStart, day, onSaved }) {
               <Typography variant="subtitle2" sx={{ color: 'navy.main', mb: 1 }}>Imagen (opcional)</Typography>
               {currentImage ? (
                 <Box>
-                  <Box component="img" src={currentImage} alt="Vista previa de la imagen" sx={{ width: '100%', maxHeight: 280, objectFit: 'cover', borderRadius: 2, display: 'block' }} />
+                  <Box component="img" src={currentImage} alt="Vista previa de la imagen" sx={{ width: '100%', maxHeight: 280, objectFit: 'cover', borderRadius: 1, display: 'block' }} />
                   <Stack direction="row" sx={{ gap: 1, mt: 1, flexWrap: 'wrap' }}>
                     <Button size="small" color="secondary" onClick={() => inputRef.current?.click()} disabled={sending}>Cambiar imagen</Button>
                     <Button size="small" color="secondary" startIcon={<DeleteOutlineRounded />} onClick={quitImage} disabled={sending}>Quitar imagen</Button>
@@ -187,7 +186,7 @@ export default function RoutineEditor({ categoryId, weekStart, day, onSaved }) {
                     border: 2,
                     borderStyle: 'dashed',
                     borderColor: imageError ? 'error.main' : 'divider',
-                    borderRadius: 2,
+                    borderRadius: 1,
                     p: 2.5,
                     textAlign: 'center',
                     cursor: 'pointer',
@@ -242,6 +241,6 @@ export default function RoutineEditor({ categoryId, weekStart, day, onSaved }) {
           <Button variant="contained" color="error" onClick={handleDelete} loading={sending}>Borrar</Button>
         </DialogActions>
       </Dialog>
-    </ParquetBackground>
+    </Box>
   )
 }

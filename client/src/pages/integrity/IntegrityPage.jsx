@@ -28,12 +28,14 @@ import ExpandLessRounded from '@mui/icons-material/ExpandLessRounded'
 import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded'
 import VerifiedUserRounded from '@mui/icons-material/VerifiedUserRounded'
 
+import ActionLink from '../../components/common/ActionLink.jsx'
 import { downloadIntegrityReport, repairIntegrity, verifyIntegrity } from '../../api/integrity.api.js'
 import StatusChip from '../../components/common/StatusChip.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { saveBlob } from '../../utils/download.js'
 import { formatDateTimeLong } from '../../utils/format.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 const hasErrors = (table) => table.errors.length > 0 || !table.dvvOk
 
@@ -119,18 +121,16 @@ export default function IntegrityPage() {
 
   return (
     <>
-      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' }, gap: 2, mb: 3 }}>
-        <Box>
-          <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Integridad de datos</Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Se revisan los dígitos verificadores de cada registro (DVH) y de cada tabla (DVV). Se verifica sola todas las noches.
-          </Typography>
-        </Box>
-        <Stack direction="row" spacing={1.5} sx={{ flexShrink: 0 }}>
-          <Button variant="contained" color="primary" onClick={verify} loading={verifying}>Verificar ahora</Button>
-          <Button variant="outlined" color="secondary" onClick={handleDownload} loading={downloading} disabled={!report}>Descargar informe</Button>
-        </Stack>
-      </Stack>
+      <PageHeader
+        title="Integridad de datos"
+        description="Se revisan los dígitos verificadores de cada registro (DVH) y de cada tabla (DVV). Se verifica sola todas las noches."
+        action={
+          <Stack direction="row" spacing={1.5}>
+            <Button variant="contained" color="primary" onClick={verify} loading={verifying}>Verificar ahora</Button>
+            <Button variant="outlined" color="secondary" onClick={handleDownload} loading={downloading} disabled={!report}>Descargar informe</Button>
+          </Stack>
+        }
+      />
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
@@ -230,7 +230,7 @@ export default function IntegrityPage() {
                 Reparar recalcula los dígitos verificadores y acepta los datos tal como están ahora. Si creés que alguien
                 modificó datos por fuera del sistema, restaurá un backup en lugar de reparar.
               </DialogContentText>
-              <Link component={RouterLink} to="/backup" color="secondary" sx={{ display: 'inline-block', mt: 1.5, fontWeight: 600 }}>Restaurar un backup</Link>
+              <ActionLink to="/backup" sx={{ mt: 1.5 }}>Restaurar un backup</ActionLink>
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2 }}>
               <Button color="secondary" onClick={() => setRepairing(null)} disabled={sending}>Volver</Button>

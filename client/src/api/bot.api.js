@@ -11,3 +11,8 @@ export const sendBotMessage = (payload) => axiosClient.post('/bot/chat', payload
 
 // payload: { interactionId, useful }
 export const sendBotFeedback = (payload) => axiosClient.post('/bot/feedback', payload).then((res) => res.data)
+
+// Asistente público (bienvenida e inicio de sesión, sin sesión): mismas respuestas, sin interactionId (no hay opinión)
+export const getPublicBotMenu = (screen) => axiosClient.get('/bot/public/menu', { params: { screen: screen || undefined } }).then((res) => res.data)
+
+export const sendPublicBotMessage = (payload) => axiosClient.post('/bot/public/chat', payload).then((res) => res.data)

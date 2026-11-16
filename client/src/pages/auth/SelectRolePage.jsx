@@ -44,7 +44,7 @@ export default function SelectRolePage() {
   }
 
   return (
-    <AuthLayout title={`Hola, ${user.name}`} subtitle="¿Con qué rol querés ingresar?">
+    <AuthLayout title={`Hola, ${user.name}`} subtitle="¿Con qué rol querés ingresar?" assistant={false}>
       <Stack spacing={1.5}>
         {error && <Alert severity="error">{error}</Alert>}
 

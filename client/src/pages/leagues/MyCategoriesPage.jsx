@@ -15,6 +15,7 @@ import EmptyState from '../../components/common/EmptyState.jsx'
 import PlayerStatusChips from '../../components/leagues/PlayerStatusChips.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 // Categorías asignadas a la Entrenadora o la Preparadora física logueada, con sus jugadoras y el resto del staff.
 // Pantalla de leagues.viewAssigned
@@ -50,12 +51,7 @@ export default function MyCategoriesPage() {
 
   return (
     <>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Mis categorías</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Edades de la temporada {year}. Las jugadoras con mora no pueden ser citadas hasta regularizar sus cuotas.
-        </Typography>
-      </Box>
+      <PageHeader title="Mis categorías" description={<>Edades de la temporada {year}. Las jugadoras con mora no pueden ser citadas hasta regularizar sus cuotas.</>} />
 
       <Grid container spacing={3}>
         {categories.map((category) => (

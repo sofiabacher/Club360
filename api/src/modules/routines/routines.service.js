@@ -31,7 +31,7 @@ const {
     MAX_GOALS_IN_PROGRESS, EFFORT_MIN, EFFORT_MAX
 } = require('../../utils/constants')
 const { PERMISSIONS } = require('../../utils/permissions')
-const { routines: m } = require('../../utils/messages')
+const { routines: m, notificationTexts: texts } = require('../../utils/messages')
 
 const actorOf = ({ id: userId, clubId, activeRoleId }) => ({ clubId, userId, roleId: activeRoleId })
 
@@ -208,8 +208,7 @@ async function notifyPlayers(clubId, category, routine, created, transaction) {
         clubId,
         type: 'ROUTINE_PUBLISHED',
         recipientUserIds: players.map(player => player.userId),
-        title: created ? `Nueva rutina de ${category.name}` : `Rutina actualizada de ${category.name}`,
-        message: `Se ${created ? 'publicó' : 'actualizó'} la rutina del ${day} ${date} de ${category.name}.`
+        ...texts.routinePublished({ category: category.name, day, date, created })
     }, { transaction })
 }
 

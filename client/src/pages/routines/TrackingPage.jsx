@@ -33,6 +33,7 @@ import { DAYS_OF_WEEK } from '../../utils/constants.js'
 import { formatDayMonth } from '../../utils/format.js'
 import { LOG_STATUS_INFO, effortText, percentText } from '../../utils/tracking.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 const dayShort = (dayOfWeek) => DAYS_OF_WEEK.find((day) => day.value === dayOfWeek)?.short ?? ''
 
@@ -53,7 +54,7 @@ function LogCell({ log, future }) {
         gap: 0.5,
         px: 1,
         py: 0.25,
-        borderRadius: 2,
+        borderRadius: 1,
         fontWeight: 700,
         bgcolor: theme.status[info.status].bg,
         color: theme.status[info.status].fg,
@@ -68,7 +69,7 @@ function LogCell({ log, future }) {
   if (!log.note) return content
   return (
     <Tooltip title={log.note} enterTouchDelay={0} arrow>
-      <ButtonBase sx={{ borderRadius: 2 }}>{content}</ButtonBase>
+      <ButtonBase sx={{ borderRadius: 1 }}>{content}</ButtonBase>
     </Tooltip>
   )
 }
@@ -143,10 +144,7 @@ export default function TrackingPage() {
   useEffect(() => { load() }, [load])
 
   const header = (
-    <Box sx={{ mb: 3 }}>
-      <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Seguimiento</Typography>
-      <Typography variant="body2" sx={{ color: 'text.secondary' }}>Cómo les fue a las jugadoras con las rutinas de la semana.</Typography>
-    </Box>
+    <PageHeader title="Seguimiento" description="Cómo les fue a las jugadoras con las rutinas de la semana." />
   )
 
   if (error && !data) return <>{header}<Alert severity="error">{error}</Alert></>

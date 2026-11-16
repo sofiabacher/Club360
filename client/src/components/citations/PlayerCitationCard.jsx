@@ -37,7 +37,7 @@ export default function PlayerCitationCard({ citation, readOnly = false, busy = 
           {!canRespond && !notPlaying && <CitationStateChip citation={citation} />}
         </Stack>
 
-        <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: 1.5 }}>
+        <Typography variant="overline" sx={{ color: 'text.secondary' }}>
           {game.category?.name} · {game.league?.name}
         </Typography>
         <Typography variant="numeric" component="p" sx={{ fontSize: { xs: '1.9rem', sm: '2.3rem' }, color: 'navy.main' }}>

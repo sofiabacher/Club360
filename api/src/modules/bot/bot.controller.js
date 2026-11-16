@@ -35,8 +35,31 @@ const feedback = async (req, res, next) => {
     }
 }
 
+const publicMenu = async (req, res, next) => {
+    try {
+        const data = service.getPublicMenu({ screen: req.query.screen })
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const publicChat = async (req, res, next) => {
+    try {
+        const { type, message, intent } = req.body
+        const data = await service.publicChat({ type, message, intent })
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
 module.exports = {
     menu,
     chat,
+    publicMenu,
+    publicChat,
     feedback
 }

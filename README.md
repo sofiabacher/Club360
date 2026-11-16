@@ -15,13 +15,14 @@ contraseñas se piden al equipo).
 - **Entrenadora:** sus categorías, partidos, citaciones (dentro de la ventana de 7 días a 48 horas) y resolución de
   conflictos de horario.
 - **Preparadora física:** rutinas diarias por categoría y seguimiento de cómo le fue a cada jugadora.
-- **Socio:** sus cuotas y pagos (tarjeta simulada o transferencia con comprobante), inscripción a los deportes y la
+- **Socio:** sus cuotas y pagos (tarjeta simulada o transferencia con comprobante, y el comprobante de pago en PDF), inscripción a los deportes y la
   información del club.
 - **Jugadora:** partidos (próximos y jugados), citaciones para confirmar o rechazar, rutina con su registro, objetivos y
   progreso con gráficos, y su panel de inicio.
 - **Familia:** partidos, citaciones y estado de cuenta de las jugadoras menores vinculadas, con el pago de sus cuotas.
-- **Para todos:** notificaciones in-app (y por email las importantes), Mi cuenta y, para Socio, Jugadora y Familia, un
-  asistente de consultas con menú de botones y texto libre que responde dudas generales sin acceder a datos personales.
+- **Para todos:** un panel de inicio propio de cada rol con lo que hay que atender, notificaciones in-app (y por email las
+  importantes), Mi cuenta y, para Socio, Jugadora y Familia, un asistente de consultas con menú de botones y texto libre
+  que responde dudas generales sin acceder a datos personales. Sin sesión, la plataforma abre en una página de bienvenida; el login separa "Ya tengo cuenta" de "Es mi primera vez" (número de socio, código de vínculo o email de activación), y un asistente público explica cómo entrar y qué es la plataforma.
 
 ## Integrantes
 

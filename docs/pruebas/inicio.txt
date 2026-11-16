@@ -147,3 +147,94 @@ Resultado esperado: ese bloque muestra su propio error y el resto del panel carg
   bloque muestra su Skeleton.
 Resultado obtenido: —
 Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-INICIO-10
+Módulo: inicio
+Descripción: Panel del Admin del Club
+Precondiciones: Admin del seed logueado; datos de la demo.
+Pasos:
+  1. Entrar al inicio.
+Datos de entrada: —
+Resultado esperado: la frase de lo más urgente (integridad, transferencias por revisar, cuotas vencidas, suspendidos o "Todo al día en el club."); 4 números (socios, transferencias por revisar, cuotas vencidas del mes y socios suspendidos) con link a su pantalla; el resumen de las cuotas del mes con el porcentaje cobrado; la integridad y los últimos movimientos de la bitácora (solo con integrity.manage y logs.view). Botón Naranja "Revisar transferencias" solo si hay alguna por revisar.
+Resultado obtenido: con la demo: "Hay 3 cuotas vencidas este mes."; 24 socios, 0 transferencias, 3 vencidas, 1 suspendida; 85 % cobrado; integridad "Todo correcto"; 6 movimientos. Sin botón Naranja (no hay transferencias). Sin errores de consola en la compu ni en el celular.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INICIO-11
+Módulo: inicio
+Descripción: Panel de la Entrenadora
+Precondiciones: Carla (cbenitez) logueada; datos de la demo.
+Pasos:
+  1. Entrar al inicio.
+Datos de entrada: —
+Resultado esperado: la frase de lo más urgente (partidos para citar, conflictos, respuestas pendientes o el próximo partido); 4 números (partidos para citar, respuestas pendientes, no pueden ir y conflictos sin resolver); los próximos partidos con el estado de la citación ("Para citar", "Se cita desde el...", o citadas, confirmadas y sin responder) y sus categorías. Botón Naranja "Citar jugadoras" al partido más cercano sin citación.
+Resultado obtenido: "Tenés 1 partido para citar."; 1, 1, 1 y 1; el partido de Sub-18 del viernes "Para citar" y el botón lleva a su citación.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INICIO-12
+Módulo: inicio
+Descripción: Panel de la Preparadora física
+Precondiciones: Valeria (vsosa) logueada como Preparadora física.
+Pasos:
+  1. Entrar al inicio.
+Datos de entrada: —
+Resultado esperado: por categoría, las pastillas de la semana, cuántos días tiene cargados la semana que viene y el cumplimiento promedio (con routines.viewTracking). Botón Naranja "Cargar rutinas" si alguna categoría no tiene la semana que viene.
+Resultado obtenido: "Te falta cargar la rutina de la semana que viene en 3 categorías."; 9 rutinas esta semana de 15 posibles, 3 categorías sin la semana que viene y el cumplimiento promedio; una tarjeta por categoría con "0 de 5 días".
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INICIO-13
+Módulo: inicio
+Descripción: Panel del Socio
+Precondiciones: Florencia (faguirre) logueada; Gabriela (gromero) como Socio.
+Pasos:
+  1. Entrar al inicio con cada una.
+Datos de entrada: —
+Resultado esperado: el carnet, la cuota (con el aviso de suspensión si corresponde), sus deportes con el estado de la inscripción y los datos del club (dirección, teléfono y horarios de secretaría). Botón Naranja "Pagar cuota" solo si hay una cuota para pagar y puede pagarla.
+Resultado obtenido: Florencia: "Tu inscripción a Vóley está esperando la aprobación del club.", cuota al día, Vóley Pendiente, sin botón Naranja. Gabriela como Socio: su panel de socio, no el de Familia.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INICIO-14
+Módulo: inicio
+Descripción: Accesos rápidos agrupados
+Precondiciones: cualquier usuario logueado.
+Pasos:
+  1. Bajar hasta "Accesos rápidos" en el inicio. 2. Probarlo en el celular.
+Datos de entrada: —
+Resultado esperado: las secciones del rol activo agrupadas como en el menú lateral (Gestión, Deportivo, Mi espacio, Familia, Club, Sistema), cada una con su ícono, su nombre y una línea de qué se hace ahí; 3 columnas en la compu, 2 en tablet y 1 en el celular; con un solo grupo no se muestra el título del grupo.
+Resultado obtenido: visto en las capturas de los ocho paneles, en la compu y en el celular, sin scroll horizontal.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INICIO-15
+Módulo: inicio
+Descripción: Página de bienvenida
+Precondiciones: sin sesión.
+Pasos:
+  1. Entrar a la raíz de la plataforma. 2. Entrar a una ruta privada (por ejemplo /fees). 3. Con sesión, entrar a /welcome.
+Datos de entrada: —
+Resultado esperado: 1) la bienvenida (/welcome): presentación, qué puede hacer cada perfil, cómo entrar por primera vez (registro del socio, vínculo de la familia, activación del staff) y los botones "Iniciar sesión" y "Es mi primer ingreso". 2) el login. 3) el inicio (con sesión no se muestra la bienvenida). Desde el login, "¿Qué es Club360?" vuelve a la bienvenida.
+Resultado obtenido: 1) / → /welcome, en la compu y en el celular, sin scroll horizontal. 2 y 3) como se esperaba.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-INICIO-16
+Módulo: inicio
+Descripción: Dirección visual "Pizarra"
+Precondiciones: cualquier usuario logueado.
+Pasos:
+  1. Recorrer el inicio y las pantallas del menú en la compu y en el celular.
+Datos de entrada: —
+Resultado esperado: menú lateral Pizarra con íconos y la entrada activa con fondo; tarjetas con borde fino y sin sombra, radio de 8 px; un encabezado común (título, descripción y acción) en cada pantalla; "Ver ... →" sin subrayado; tablas con encabezado gris; estados vacíos lisos; carnet, comprobante y su PDF con encabezado Pizarra y la franja del club. Sin crema, bordó ni parquet.
+Resultado obtenido: visto en el navegador (compu y celular) sobre el inicio de cada rol, Socios, Cuotas, Bitácora, Roles, El club, rutinas, citaciones y el comprobante con su PDF, sin errores de consola.
+Estado: Aprobado

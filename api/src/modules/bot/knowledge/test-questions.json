@@ -700,6 +700,78 @@
     {
       "text": "cual es el rio mas largo del mundo",
       "intent": "fuera_de_tema"
+    },
+    {
+      "text": "trabajo de entrenadora y no se como entrar",
+      "intent": "acceso_staff"
+    },
+    {
+      "text": "no encuentro el mail para activar mi cuenta",
+      "intent": "acceso_staff"
+    },
+    {
+      "text": "no recuerdo mi contraseña que hago",
+      "intent": "acceso_olvide_contrasena"
+    },
+    {
+      "text": "necesito recuperar la clave",
+      "intent": "acceso_olvide_contrasena"
+    },
+    {
+      "text": "me aparece que la cuenta esta bloqueada",
+      "intent": "acceso_bloqueado"
+    },
+    {
+      "text": "me equivoque muchas veces y no puedo entrar",
+      "intent": "acceso_bloqueado"
+    },
+    {
+      "text": "olvide cual era mi usuario",
+      "intent": "acceso_usuario"
+    },
+    {
+      "text": "puedo ingresar con mi mail",
+      "intent": "acceso_usuario"
+    },
+    {
+      "text": "soy mama y socia como cambio entre las dos",
+      "intent": "acceso_varios_roles"
+    },
+    {
+      "text": "si tengo dos roles con cual entro",
+      "intent": "acceso_varios_roles"
+    },
+    {
+      "text": "para que sirve club 360",
+      "intent": "plataforma_que_es"
+    },
+    {
+      "text": "que es esta pagina",
+      "intent": "plataforma_que_es"
+    },
+    {
+      "text": "que funciones tiene para las jugadoras",
+      "intent": "plataforma_perfiles"
+    },
+    {
+      "text": "que puede hacer cada persona en la plataforma",
+      "intent": "plataforma_perfiles"
+    },
+    {
+      "text": "se puede usar en el telefono",
+      "intent": "plataforma_celular"
+    },
+    {
+      "text": "hay que bajar alguna app",
+      "intent": "plataforma_celular"
+    },
+    {
+      "text": "es seguro pagar con tarjeta aca",
+      "intent": "plataforma_seguridad"
+    },
+    {
+      "text": "quien puede ver mis datos personales",
+      "intent": "plataforma_seguridad"
     }
   ]
 }

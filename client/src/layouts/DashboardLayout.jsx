@@ -102,7 +102,8 @@ export default function DashboardLayout() {
           </Toolbar>
         </AppBar>
 
-        <Box component="main" sx={{ flexGrow: 1, px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, sm: 3 }, '@media print': { p: 0 } }}>
+        {/* Con el asistente, espacio abajo para que su botón flotante no tape el final de la pantalla */}
+        <Box component="main" sx={{ flexGrow: 1, px: { xs: 2, sm: 3, md: 4 }, pt: { xs: 2, sm: 3 }, pb: hasPermission('bot.use') ? 11 : { xs: 2, sm: 3 }, '@media print': { p: 0 } }}>
           <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
             {integrityError && (
               <Alert

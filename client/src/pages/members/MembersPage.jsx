@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
-import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardActionArea from '@mui/material/CardActionArea'
@@ -31,6 +30,7 @@ import { MEMBER_STATES } from '../../utils/constants.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 import EmptyState from '../../components/common/EmptyState.jsx'
 import GroupsRounded from '@mui/icons-material/GroupsRounded'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 const STATE_OPTIONS = [
   { value: '', label: 'Todos' },
@@ -89,17 +89,15 @@ export default function MembersPage() {
 
   return (
     <>
-      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between', gap: 2, mb: 3 }}>
-        <Box>
-          <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Socios</Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {result ? `${result.total} ${result.total === 1 ? 'socio' : 'socios'}` : 'Altas, datos y estado de los socios del club.'}
-          </Typography>
-        </Box>
-        <Button component={RouterLink} to="/members/new" variant="contained" color="primary" startIcon={<PersonAddRounded />} sx={{ flexShrink: 0 }}>
-          Nuevo socio
-        </Button>
-      </Stack>
+      <PageHeader
+        title="Socios"
+        description={result ? `${result.total} ${result.total === 1 ? 'socio' : 'socios'}` : 'Altas, datos y estado de los socios del club.'}
+        action={
+          <Button component={RouterLink} to="/members/new" variant="contained" color="primary" startIcon={<PersonAddRounded />}>
+            Nuevo socio
+          </Button>
+        }
+      />
 
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 3 }}>
         <TextField

@@ -321,9 +321,13 @@ const BOT_MAX_SUGGESTIONS = 3
 const BOT_AMBIGUITY_MARGIN = 0.1
 const BOT_MAX_MESSAGE_LENGTH = 300
 const BOT_RATE_LIMIT_PER_MINUTE = 30
+// Asistente público (bienvenida e inicio de sesión, sin sesión): límite por IP
+const BOT_PUBLIC_RATE_LIMIT_PER_MINUTE = 20
 
-// Grupos del menú del bot (se calculan por permisos, nunca por el nombre del rol)
-const BOT_GROUPS = ['socio', 'jugadora', 'familia']
+// Grupos del menú del bot (se calculan por permisos, nunca por el nombre del rol). visitante: el asistente público, sin
+// sesión (cómo entrar y qué es la plataforma; sin datos de ningún club)
+const BOT_GROUPS = ['socio', 'jugadora', 'familia', 'visitante']
+const BOT_PUBLIC_GROUP = 'visitante'
 
 // Seguimiento personal (P20): la jugadora registra una rutina desde su día hasta 7 días después; hasta 10 objetivos En
 // curso a la vez; esfuerzo percibido de 1 a 5
@@ -424,7 +428,9 @@ module.exports = {
     BOT_AMBIGUITY_MARGIN,
     BOT_MAX_MESSAGE_LENGTH,
     BOT_RATE_LIMIT_PER_MINUTE,
+    BOT_PUBLIC_RATE_LIMIT_PER_MINUTE,
     BOT_GROUPS,
+    BOT_PUBLIC_GROUP,
     MAX_GOALS_IN_PROGRESS,
     EFFORT_MIN,
     EFFORT_MAX,

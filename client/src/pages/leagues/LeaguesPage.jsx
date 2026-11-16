@@ -37,6 +37,7 @@ import CategoryFormDialog from '../../components/leagues/CategoryFormDialog.jsx'
 import LeagueFormDialog from '../../components/leagues/LeagueFormDialog.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`
 
@@ -133,23 +134,21 @@ export default function LeaguesPage() {
 
   return (
     <>
-      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between', gap: 2, mb: 3 }}>
-        <Box>
-          <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Ligas y categorías</Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Las jugadoras y el staff se asignan a cada categoría. Edades de la temporada {year}.
-          </Typography>
-        </Box>
-        <Stack direction="row" sx={{ alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <FormControlLabel
-            control={<Switch checked={includeInactive} onChange={(event) => setIncludeInactive(event.target.checked)} color="secondary" />}
-            label="Mostrar dadas de baja"
-          />
-          <Button variant="contained" color="primary" startIcon={<AddRounded />} onClick={() => setLeagueDialog({ open: true, league: null })}>
-            Nueva liga
-          </Button>
-        </Stack>
-      </Stack>
+      <PageHeader
+        title="Ligas y categorías"
+        description={<>Las jugadoras y el staff se asignan a cada categoría. Edades de la temporada {year}.</>}
+        action={
+          <Stack direction="row" sx={{ alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+            <FormControlLabel
+              control={<Switch checked={includeInactive} onChange={(event) => setIncludeInactive(event.target.checked)} color="secondary" />}
+              label="Mostrar dadas de baja"
+            />
+            <Button variant="contained" color="primary" startIcon={<AddRounded />} onClick={() => setLeagueDialog({ open: true, league: null })}>
+              Nueva liga
+            </Button>
+          </Stack>
+        }
+      />
 
       {loadError && <Alert severity="error" sx={{ mb: 2 }}>{loadError}</Alert>}
 

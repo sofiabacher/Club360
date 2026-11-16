@@ -14,6 +14,7 @@ import HomePage from '../pages/HomePage.jsx'
 import AccountPage from '../pages/account/AccountPage.jsx'
 import ComingSoonPage from '../pages/ComingSoonPage.jsx'
 import NotFoundPage from '../pages/NotFoundPage.jsx'
+import WelcomePage from '../pages/WelcomePage.jsx'
 import RolesPage from '../pages/access/RolesPage.jsx'
 import UsersRolesPage from '../pages/access/UsersRolesPage.jsx'
 import ClubInfoPage from '../pages/clubs/ClubInfoPage.jsx'
@@ -120,6 +121,7 @@ const menuRoutes = getMenuRoutes()
 export default function AppRouter() {
   return (
     <Routes>
+      <Route path="/welcome" element={<PublicRoute><WelcomePage /></PublicRoute>} />
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><RegisterMemberPage /></PublicRoute>} />
       <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />

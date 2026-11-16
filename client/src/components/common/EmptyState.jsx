@@ -1,30 +1,31 @@
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
-import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 
-import ParquetBackground from './ParquetBackground.jsx'
-
-// Estado vacío sobre la textura de parquet: ícono, título, texto y una acción opcional (por ejemplo, un botón).
-// icon: el componente del ícono (ej. ConstructionRounded), no el elemento.
+// Estado vacío sobre el fondo de la pantalla, con un borde punteado: ícono, título, texto y una acción opcional
+// (por ejemplo, un botón). icon: el componente del ícono (ej. ConstructionRounded), no el elemento.
 export default function EmptyState({ icon: Icon, title, description, action }) {
   return (
-    <ParquetBackground
+    <Box
       sx={{
-        borderRadius: 3,
-        minHeight: { xs: 360, sm: 420 },
+        border: 1,
+        borderStyle: 'dashed',
+        borderColor: 'divider',
+        borderRadius: 1,
+        minHeight: { xs: 280, sm: 320 },
         display: 'grid',
         placeItems: 'center',
-        p: { xs: 2, sm: 4 }
+        px: { xs: 2, sm: 4 },
+        py: { xs: 4, sm: 5 }
       }}
     >
-      <Paper elevation={6} sx={{ p: { xs: 3, sm: 4 }, maxWidth: 440, textAlign: 'center', borderRadius: 3 }}>
+      <Box sx={{ maxWidth: 440, textAlign: 'center' }}>
         {Icon && (
-          <Avatar sx={{ width: 64, height: 64, mx: 'auto', mb: 2, bgcolor: 'cream.main', color: 'navy.main' }}>
+          <Avatar variant="rounded" sx={{ width: 56, height: 56, mx: 'auto', mb: 2, borderRadius: 1, bgcolor: 'tint.main', color: 'navy.main' }}>
             <Icon fontSize="large" />
           </Avatar>
         )}
-        <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>
+        <Typography variant="h6" component="h2" sx={{ color: 'navy.main' }}>
           {title}
         </Typography>
         {description && (
@@ -33,7 +34,7 @@ export default function EmptyState({ icon: Icon, title, description, action }) {
           </Typography>
         )}
         {action && <Box sx={{ mt: 3 }}>{action}</Box>}
-      </Paper>
-    </ParquetBackground>
+      </Box>
+    </Box>
   )
 }

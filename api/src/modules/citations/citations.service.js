@@ -28,7 +28,7 @@ const {
     CITATION_RESPONSE_HOURS,
     LOG_ACTIONS
 } = require('../../utils/constants')
-const { citations: m } = require('../../utils/messages')
+const { citations: m, notificationTexts: texts } = require('../../utils/messages')
 
 const HOUR_MS = 60 * 60 * 1000
 const DAY_MS = 24 * HOUR_MS
@@ -299,9 +299,7 @@ async function createCitations(actor, gameId, { memberIds }) {
             clubId: actor.clubId,
             type: 'CITATION_NEW',
             recipientUserIds: candidates.map(player => player.userId),
-            title: `Te citaron para ${game.category.name} vs. ${game.rival}`,
-            message: `Te citaron para ${game.category.name} vs. ${game.rival}, ${whenText(game.dateTime)}. `
-                + `Tenés tiempo de responder hasta el ${whenText(deadline)}.`,
+            ...texts.citationNew({ category: game.category.name, rival: game.rival, when: whenText(game.dateTime), deadline: whenText(deadline) }),
             includeFamily: true
         }, { transaction })
 
@@ -337,8 +335,7 @@ async function cancelCitation(actor, citationId) {
             clubId: actor.clubId,
             type: 'CITATION_CANCELLED',
             recipientUserIds: [member.user.id],
-            title: `Se canceló tu citación para ${game.category.name}`,
-            message: `Se canceló tu citación para ${game.category.name} vs. ${game.rival} del ${weekday} ${dayMonth}.`,
+            ...texts.citationCancelled({ category: game.category.name, rival: game.rival, weekday, dayMonth }),
             includeFamily: true
         }, { transaction })
 
@@ -418,10 +415,9 @@ async function notifyCoaches(clubId, playerName, game, { confirmed, justificatio
         clubId,
         type: 'CITATION_RESPONSE',
         recipientUserIds: coaches,
-        title: confirmed ? `${playerName} confirmó su citación` : `${playerName} no puede ir`,
-        message: confirmed
-            ? `${playerName} confirmó la citación para ${match} (${shortWhenText(game.dateTime)}).`
-            : `${playerName} no puede ir a ${match} (${weekdayShort} ${dayMonth}): «${justification}».`
+        ...(confirmed
+            ? texts.citationConfirmed({ player: playerName, match, when: shortWhenText(game.dateTime) })
+            : texts.citationRejected({ player: playerName, match, weekdayShort, dayMonth, justification }))
     }, { transaction })
 }
 

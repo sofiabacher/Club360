@@ -16,6 +16,7 @@ import { getClubSports, updateClubSport } from '../../api/clubs.api.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { formatMoney } from '../../utils/format.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 // Borrador de cada fila: lo que se está editando antes de guardar
 const toDraft = (sport) => ({ isActive: sport.isActive, priceFee: sport.priceFee === null ? '' : String(sport.priceFee) })
@@ -106,13 +107,7 @@ export default function ClubSportsPage() {
 
   return (
     <>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Deportes del club</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Activá los deportes que ofrece el club y fijá la cuota deportiva de cada uno. Un deporte con inscripciones
-          pendientes o aprobadas no se puede desactivar.
-        </Typography>
-      </Box>
+      <PageHeader title="Deportes del club" description="Activá los deportes que ofrece el club y fijá la cuota deportiva de cada uno. Un deporte con inscripciones pendientes o aprobadas no se puede desactivar." />
 
       <Card>
         {sports.map((sport, index) => (

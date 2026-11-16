@@ -1,12 +1,16 @@
 const express = require('express')
 const path = require('path')
 
+const config = require('./config')
 const cors = require('./middlewares/cors')
 const errorHandler = require('./middlewares/errorHandler')
 const { isPrivateUploadPath } = require('./utils/files')
 const { general } = require('./utils/messages')
 
 const app = express()
+
+// En Render la API está detrás de un proxy: así req.ip es la IP real (el límite del asistente público cuenta por IP)
+if (config.app.isProd) app.set('trust proxy', 1)
 
 app.use(cors)
 app.use(express.json())

@@ -17,6 +17,7 @@ import StatusChip from '../../components/common/StatusChip.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { MEMBER_STATES } from '../../utils/constants.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 const STATUS_CHIPS = {
   ok: { status: 'ok', label: 'Al día' },
@@ -60,12 +61,7 @@ export default function PlayersFeesPage() {
 
   return (
     <>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Cuotas de jugadoras</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          La situación de cada jugadora con sus cuotas.{result ? ` Con más de ${result.delayFee} días de atraso no se la puede citar.` : ''}
-        </Typography>
-      </Box>
+      <PageHeader title="Cuotas de jugadoras" description={<>La situación de cada jugadora con sus cuotas.{result ? ` Con más de ${result.delayFee} días de atraso no se la puede citar.` : ''}</>} />
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
         <TextField

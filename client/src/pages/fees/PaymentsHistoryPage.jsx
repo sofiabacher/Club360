@@ -45,6 +45,7 @@ import { getErrorMessage } from '../../utils/apiErrors.js'
 import { PAYMENT_METHODS, TRANSACTION_STATES } from '../../utils/constants.js'
 import { formatDate, formatMoney, formatPeriod, formatShortDateTime } from '../../utils/format.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 const TABS = { REVIEW: 'review', ALL: 'all' }
 
@@ -256,12 +257,7 @@ export default function PaymentsHistoryPage() {
 
   return (
     <>
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Pagos</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Todos los pagos del club: con tarjeta, por transferencia y en secretaría. Las transferencias se aprueban después de comparar el comprobante.
-        </Typography>
-      </Box>
+      <PageHeader title="Pagos" description="Todos los pagos del club: con tarjeta, por transferencia y en secretaría. Las transferencias se aprueban después de comparar el comprobante." sx={{ mb: 2 }} />
 
       <Tabs value={tab} onChange={changeTab} textColor="secondary" indicatorColor="secondary" variant="scrollable" allowScrollButtonsMobile sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Tab

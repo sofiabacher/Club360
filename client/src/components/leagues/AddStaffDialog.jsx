@@ -79,7 +79,7 @@ export default function AddStaffDialog({ open, category, onClose, onSaved }) {
         {staff && staff.length > 0 && (
           <List dense>
             {staff.map((person) => (
-              <ListItemButton key={person.staffId} onClick={() => toggle(person.staffId)} sx={{ borderRadius: 2 }}>
+              <ListItemButton key={person.staffId} onClick={() => toggle(person.staffId)} sx={{ borderRadius: 1 }}>
                 <ListItemIcon sx={{ minWidth: 40 }}>
                   <Checkbox edge="start" checked={selected.includes(person.staffId)} tabIndex={-1} disableRipple color="secondary" />
                 </ListItemIcon>

@@ -603,3 +603,16 @@ Resultado esperado: payment tiene method, receiptUrl y note; los pagos SEC- qued
 Resultado obtenido: columnas presentes; SEC-QKAG4CF6 con method 3 y su nota de la bitácora; PAY-58B6SB45 con method 1
   y "Tarjeta ****1111"; DVH y DVV correctos en las tres verificaciones.
 Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-FEES-38
+Módulo: fees
+Descripción: Descargar el comprobante de pago en PDF
+Precondiciones: Florencia (faguirre) con un pago Aprobado.
+Pasos:
+  1. Mis cuotas → Pagos → comprobante. 2. "Descargar PDF". 3. "Imprimir".
+Datos de entrada: —
+Resultado esperado: 2) se descarga comprobante-<código>.pdf con el encabezado Bordó del club, la franja del color del club, el código, el detalle, el total y el pie, sin abrir la impresión. 3) la ventana de impresión del navegador, solo con el comprobante. Si el PDF no se puede generar, un aviso que sugiere imprimir y elegir "Guardar como PDF".
+Resultado obtenido: se descargó comprobante-PAY-WBBH69G5.pdf (PDF válido de una página, con todos los datos). Falta probar "Imprimir" a mano.
+Estado: Aprobado

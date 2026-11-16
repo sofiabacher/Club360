@@ -23,7 +23,7 @@ const { toCsv } = require('../../utils/csv')
 const { today: todayAR } = require('../../utils/dates')
 const { INTEGRITY_CACHE_MINUTES, TABLE_LABELS, LOG_ACTIONS } = require('../../utils/constants')
 const { PERMISSIONS } = require('../../utils/permissions')
-const { integrity: m } = require('../../utils/messages')
+const { integrity: m, notificationTexts: texts } = require('../../utils/messages')
 
 const STATUS = { OK: 'OK', ERROR: 'ERROR' }
 
@@ -137,8 +137,7 @@ async function onBecameError(report) {
         clubId: report.clubId,
         type: 'INTEGRITY_ALERT',
         recipientUserIds: recipients,
-        title: 'Errores de integridad en los datos del club',
-        message: `Se detectaron ${report.alteredRows} registros alterados en ${tablesText(report)}. Los demás usuarios no pueden entrar hasta que se reparen.`
+        ...texts.integrityAlert({ count: report.alteredRows, tables: tablesText(report) })
     })
 }
 

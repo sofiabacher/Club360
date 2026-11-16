@@ -8,6 +8,8 @@
 // - Los datos del club (contacto, horarios, dirección y canchas) salen de club y club.extraInfo.
 // - Privacidad: un texto con 7 o más dígitos seguidos o un email se bloquea y no se guarda. BOT_INTERACTION va a la
 //   bitácora sin el texto; BOT_UNANSWERED (solo los fallbacks) guarda el texto sin userId ni roleId.
+// - Asistente público (grupo visitante, P23): en la bienvenida y el inicio de sesión, sin sesión. Responde cómo entrar y
+//   qué es la plataforma, sin datos de ningún club, y no escribe en la bitácora (no hay club ni usuario).
 const fs = require('fs')
 const path = require('path')
 const crypto = require('crypto')
@@ -21,7 +23,7 @@ const logger = require('../../utils/logger')
 const { createError } = require('../../utils/errors')
 const { PERMISSIONS } = require('../../utils/permissions')
 const {
-    LOG_ACTIONS, BOT_GROUPS, BOT_THRESHOLD, BOT_SUGGEST_THRESHOLD, BOT_MAX_SUGGESTIONS, BOT_AMBIGUITY_MARGIN
+    LOG_ACTIONS, BOT_GROUPS, BOT_PUBLIC_GROUP, BOT_THRESHOLD, BOT_SUGGEST_THRESHOLD, BOT_MAX_SUGGESTIONS, BOT_AMBIGUITY_MARGIN
 } = require('../../utils/constants')
 const { bot: m } = require('../../utils/messages')
 
@@ -68,6 +70,7 @@ function validateKnowledge(data) {
         if (!Array.isArray(intent.patterns) || intent.patterns.length === 0) problems.push(`${name}: no tiene patrones`)
         ;(intent.followUps ?? []).filter(tag => !tagSet.has(tag)).forEach(tag => problems.push(`${name}: el followUp "${tag}" no existe`))
         Object.keys(intent.responsesByGroup ?? {}).filter(group => !BOT_GROUPS.includes(group)).forEach(group => problems.push(`${name}: responsesByGroup tiene el grupo "${group}", que no existe`))
+        Object.keys(intent.labelByGroup ?? {}).filter(group => !BOT_GROUPS.includes(group)).forEach(group => problems.push(`${name}: labelByGroup tiene el grupo "${group}", que no existe`))
 
         const texts = [intent.response, ...(intent.responses ?? []), ...Object.values(intent.responsesByGroup ?? {})].filter(text => typeof text === 'string')
         if (intent.tag !== FALLBACK_INTENT && !texts.some(Boolean)) problems.push(`${name}: no tiene respuesta`)
@@ -124,11 +127,15 @@ async function groupOf(user) {
 
 const isVisible = (intent, group) => Boolean(intent) && intent.groups.includes(group)
 
+// El texto del botón de una intención: el del grupo, si tiene uno propio (labelByGroup), o el general
+const labelOf = (intent, group) => intent.labelByGroup?.[group] ?? intent.label
+
 // "a, b y c"
 const listText = (items) => (items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} y ${items[items.length - 1]}`)
 
-// Valor de cada marcador con los datos del club, o null si el dato no está cargado
+// Valor de cada marcador con los datos del club, o null si el dato no está cargado. Sin club (asistente público), ninguno
 async function clubMarkers(clubId) {
+    if (!clubId) return {}
     const club = await Club.findByPk(clubId, { attributes: ['name', 'address', 'phone', 'email', 'extraInfo'] })
     const extra = club?.extraInfo ?? {}
 
@@ -169,13 +176,15 @@ function responseOf(intent, group) {
 
 const menuButton = () => ({ type: 'menu', value: 'menu', label: m.backToMenu })
 const contactButton = () => ({ type: 'intent', value: CONTACT_INTENT, label: m.contactClub })
-const intentButton = (intent) => ({ type: 'intent', value: intent.tag, label: intent.label })
+const intentButton = (intent, group) => ({ type: 'intent', value: intent.tag, label: labelOf(intent, group) })
 
 // Botones después de una respuesta: los de seguimiento visibles para el grupo, "Volver al menú" y "Contactar al club"
+// (este último no en el asistente público: no hay un club)
 function answerButtons(intent, group) {
     const { byTag } = knowledge()
-    const followUps = (intent.followUps ?? []).map(tag => byTag.get(tag)).filter(item => isVisible(item, group) && item.label).map(intentButton)
-    return [...followUps, menuButton(), ...(intent.tag === CONTACT_INTENT ? [] : [contactButton()])]
+    const followUps = (intent.followUps ?? []).map(tag => byTag.get(tag)).filter(item => isVisible(item, group) && item.label).map(item => intentButton(item, group))
+    const contact = intent.tag === CONTACT_INTENT || group === BOT_PUBLIC_GROUP ? [] : [contactButton()]
+    return [...followUps, menuButton(), ...contact]
 }
 
 // Un texto con 7 o más dígitos seguidos (también con puntos, espacios o guiones entre ellos, como un DNI "40.123.456")
@@ -209,7 +218,7 @@ function menuOf(group, screen) {
             label: category.label,
             questions: intents
                 .filter(intent => intent.button && intent.category === category.id && isVisible(intent, group))
-                .map(intent => ({ intent: intent.tag, label: intent.label }))
+                .map(intent => ({ intent: intent.tag, label: labelOf(intent, group) }))
         }))
         .filter(category => category.questions.length > 0)
 
@@ -227,28 +236,21 @@ async function getMenu(user, { screen }) {
     return { group, greeting: m.greeting(me?.name ?? '', markers.club_nombre ?? 'tu club'), categories: menuOf(group, screen) }
 }
 
+// Menú del asistente público (sin sesión)
+function getPublicMenu({ screen }) {
+    return { group: BOT_PUBLIC_GROUP, greeting: m.publicGreeting, categories: menuOf(BOT_PUBLIC_GROUP, screen) }
+}
+
 // ---------- Chat ----------
 
 // POST /bot/chat: un botón va directo a la intención; el texto libre pasa por el clasificador. Responde
 // { responseType, response, intent, confidence, buttons, interactionId }
 async function chat(user, { type, message, intent: requestedTag, screen }) {
-    const { byTag, classifier } = knowledge()
     const group = await groupOf(user)
     const interactionId = crypto.randomUUID()
     const cleanScreen = String(screen ?? '').slice(0, 100) || null
 
-    let result
-
-    if (type === 'button') {
-        const intent = byTag.get(requestedTag)
-        result = isVisible(intent, group) && intent.tag !== FALLBACK_INTENT
-            ? await answerOf(intent, group, user.clubId, null)
-            : otherProfile(requestedTag)
-    } else if (hasPersonalData(message)) {
-        result = { responseType: 'blocked', response: m.blocked, intent: null, confidence: null, buttons: [menuButton()] }
-    } else {
-        result = await classifyText(message, group, user.clubId, classifier, byTag)
-    }
+    const result = await respond(group, user.clubId, { type, message, intent: requestedTag })
 
     await logger(actorOf(user), LOG_ACTIONS.BOT_INTERACTION, JSON.stringify({
         interactionId,
@@ -268,17 +270,44 @@ async function chat(user, { type, message, intent: requestedTag, screen }) {
     return { ...result, interactionId }
 }
 
+// POST /bot/public/chat: lo mismo, con el grupo visitante y sin club. Sin bitácora ni interactionId (no hay opinión)
+async function publicChat({ type, message, intent }) {
+    return respond(BOT_PUBLIC_GROUP, null, { type, message, intent })
+}
+
+// La respuesta a un botón o a un texto, para un grupo. clubId null: asistente público
+async function respond(group, clubId, { type, message, intent: requestedTag }) {
+    const { byTag, classifier } = knowledge()
+
+    if (type === 'button') {
+        const intent = byTag.get(requestedTag)
+        return isVisible(intent, group) && intent.tag !== FALLBACK_INTENT
+            ? answerOf(intent, group, clubId, null)
+            : otherProfile(group, requestedTag)
+    }
+    if (hasPersonalData(message)) {
+        return { responseType: 'blocked', response: m.blocked, intent: null, confidence: null, buttons: [menuButton()] }
+    }
+    return classifyText(message, group, clubId, classifier, byTag)
+}
+
 async function answerOf(intent, group, clubId, confidence) {
     const response = render(responseOf(intent, group), await clubMarkers(clubId))
     const buttons = intent.tag === 'saludo' || intent.tag === 'despedida' ? [menuButton()] : answerButtons(intent, group)
     return { responseType: 'answer', response, intent: intent.tag, confidence, buttons }
 }
 
-const otherProfile = (tag, confidence = null) => ({
-    responseType: 'other_profile', response: m.otherProfile, intent: tag ?? null, confidence, buttons: [menuButton()]
+// Una intención que no es del grupo. En el asistente público, el aviso de que eso está adentro de la plataforma
+const otherProfile = (group, tag, confidence = null) => ({
+    responseType: 'other_profile',
+    response: group === BOT_PUBLIC_GROUP ? m.otherProfilePublic : m.otherProfile,
+    intent: tag ?? null,
+    confidence,
+    buttons: [menuButton()]
 })
 
 async function fallback(clubId, confidence, tag = null) {
+    if (!clubId) return { responseType: 'fallback', response: m.fallbackPublic, intent: tag, confidence, buttons: [menuButton()] }
     const { club_contacto: contact } = await clubMarkers(clubId)
     return { responseType: 'fallback', response: m.fallback(contact ?? m.missingData), intent: tag, confidence, buttons: [menuButton(), contactButton()] }
 }
@@ -303,7 +332,7 @@ async function classifyText(message, group, clubId, classifier, byTag) {
 
     if (decision === 'answer') {
         const intent = byTag.get(top.tag)
-        return isVisible(intent, group) ? answerOf(intent, group, clubId, top.confidence) : otherProfile(top.tag, top.confidence)
+        return isVisible(intent, group) ? answerOf(intent, group, clubId, top.confidence) : otherProfile(group, top.tag, top.confidence)
     }
 
     // Confianza media: hasta 3 intenciones visibles para el grupo, sin las de sistema
@@ -312,6 +341,7 @@ async function classifyText(message, group, clubId, classifier, byTag) {
         .map(({ tag }) => byTag.get(tag))
         .filter(intent => isVisible(intent, group) && intent.label)
         .slice(0, BOT_MAX_SUGGESTIONS)
+        .map(intent => intentButton(intent, group))
 
     if (suggestions.length === 0) return fallback(clubId, top.confidence)
 
@@ -320,7 +350,7 @@ async function classifyText(message, group, clubId, classifier, byTag) {
         response: m.suggestions,
         intent: top.tag,
         confidence: top.confidence,
-        buttons: [...suggestions.map(intentButton), menuButton()]
+        buttons: [...suggestions, menuButton()]
     }
 }
 
@@ -347,6 +377,8 @@ module.exports = {
     decide,
     groupOf,
     getMenu,
+    getPublicMenu,
     chat,
+    publicChat,
     saveFeedback
 }

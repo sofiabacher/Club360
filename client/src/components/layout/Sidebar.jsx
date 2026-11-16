@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import List from '@mui/material/List'
 import ListItemButton from '@mui/material/ListItemButton'
+import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
 import Typography from '@mui/material/Typography'
 import { alpha } from '@mui/material/styles'
@@ -10,8 +11,8 @@ import AccentStripe from '../common/AccentStripe.jsx'
 import BrandLogo from '../common/BrandLogo.jsx'
 import { groupMenu } from '../../navigation/menu.js'
 
-// Contenido del menú lateral Marino (moodboard): logo, nombre del club con la franja de su color propio
-// (club.accentColor) y las entradas agrupadas. La entrada activa queda resaltada con fondo claro y un punto.
+// Contenido del menú lateral Pizarra: logo, nombre del club con la franja de su color propio (club.accentColor) y las
+// entradas agrupadas, cada una con su ícono. La entrada activa queda resaltada con fondo claro y texto en negrita.
 export default function Sidebar({ items, club, onNavigate }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -38,7 +39,7 @@ export default function Sidebar({ items, club, onNavigate }) {
                   mb: 0.5,
                   fontSize: '0.68rem',
                   fontWeight: 600,
-                  letterSpacing: '0.14em',
+                  letterSpacing: '0.08em',
                   textTransform: 'uppercase',
                   color: 'navy.contrastText',
                   opacity: 0.5
@@ -57,26 +58,21 @@ export default function Sidebar({ items, club, onNavigate }) {
                   end
                   onClick={onNavigate}
                   sx={(theme) => ({
-                    borderRadius: 2,
+                    borderRadius: 1,
                     mb: 0.25,
                     py: 0.75,
-                    color: alpha(theme.palette.navy.contrastText, 0.78),
+                    px: 1.25,
+                    color: alpha(theme.palette.navy.contrastText, 0.72),
+                    '& .MuiListItemIcon-root': { color: 'inherit', minWidth: 34 },
                     '&:hover': { bgcolor: alpha(theme.palette.common.white, 0.06) },
                     '&.active': {
-                      bgcolor: alpha(theme.palette.common.white, 0.12),
+                      bgcolor: alpha(theme.palette.common.white, 0.1),
                       color: theme.palette.navy.contrastText,
-                      '& .MuiListItemText-primary': { fontWeight: 600 },
-                      '&::before': {
-                        content: '""',
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        bgcolor: theme.palette.navy.contrastText,
-                        mr: 1.25
-                      }
+                      '& .MuiListItemText-primary': { fontWeight: 600 }
                     }
                   })}
                 >
+                  {item.icon && <ListItemIcon><item.icon fontSize="small" /></ListItemIcon>}
                   <ListItemText primary={item.label} slotProps={{ primary: { variant: 'body2' } }} />
                 </ListItemButton>
               ))}

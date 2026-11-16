@@ -39,7 +39,7 @@ export default function ReceiptViewer({ paymentId }) {
 
   return (
     <Box>
-      <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, overflow: 'hidden', bgcolor: 'background.default' }}>
+      <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, overflow: 'hidden', bgcolor: 'background.default' }}>
         {isPdf ? (
           <Box component="iframe" src={file.url} title="Comprobante adjunto" sx={{ width: '100%', height: { xs: 360, sm: 480 }, border: 0, display: 'block' }} />
         ) : (

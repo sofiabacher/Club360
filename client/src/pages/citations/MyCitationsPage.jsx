@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import Alert from '@mui/material/Alert'
-import Box from '@mui/material/Box'
 import Snackbar from '@mui/material/Snackbar'
-import Typography from '@mui/material/Typography'
 
 import { getMyCitations, respondCitation } from '../../api/citations.api.js'
 import CitationSections from '../../components/citations/CitationSections.jsx'
 import RejectCitationDialog from '../../components/citations/RejectCitationDialog.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 // Mis citaciones (citations.respond): las Pendientes arriba para confirmar o rechazar dentro de las 24 horas, las
 // próximas ya respondidas y el historial. Rechazar pide una justificación de 10 a 300 caracteres
@@ -54,12 +53,7 @@ export default function MyCitationsPage() {
 
   return (
     <>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Mis citaciones</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Tenés 24 horas para responder cada citación. Si no respondés, queda confirmada.
-        </Typography>
-      </Box>
+      <PageHeader title="Mis citaciones" description="Tenés 24 horas para responder cada citación. Si no respondés, queda confirmada." />
 
       <CitationSections
         upcoming={data.upcoming}

@@ -44,6 +44,16 @@
       "id": "club",
       "order": 9,
       "label": "El club"
+    },
+    {
+      "id": "acceso",
+      "order": 10,
+      "label": "Cuenta y acceso"
+    },
+    {
+      "id": "plataforma",
+      "order": 11,
+      "label": "Sobre Club360"
     }
   ],
   "screenPriority": {
@@ -60,7 +70,14 @@
     "notifications": "notificaciones",
     "account": "empezar",
     "club": "club",
-    "family": "familia"
+    "family": "familia",
+    "welcome": "plataforma",
+    "login": "empezar",
+    "register": "empezar",
+    "family-link": "empezar",
+    "activate": "empezar",
+    "forgot-password": "acceso",
+    "reset-password": "acceso"
   },
   "intents": [
     {
@@ -70,7 +87,8 @@
       "groups": [
         "socio",
         "jugadora",
-        "familia"
+        "familia",
+        "visitante"
       ],
       "label": "¿Cómo se hace socia otra persona?",
       "patterns": [
@@ -95,7 +113,13 @@
       "response": "Para hacerse socia, la persona se acerca al club: el Admin la da de alta y le entrega su número de socio. Con ese número y su fecha de nacimiento entra en \"Registrate con tu número de socio\", desde el inicio de sesión, y crea su usuario y su contraseña.",
       "followUps": [
         "empezar_codigo_vinculo"
-      ]
+      ],
+      "labelByGroup": {
+        "visitante": "Soy socio, ¿cómo entro la primera vez?"
+      },
+      "responsesByGroup": {
+        "visitante": "Si ya sos socio o socia, en el inicio de sesión tocá \"Es mi primera vez\" y elegí \"Un número de socio\": con el número que te dieron en la secretaría y tu fecha de nacimiento creás tu usuario y tu contraseña. Si todavía no sos socio, acercate al club: el alta se hace en la secretaría."
+      }
     },
     {
       "tag": "empezar_codigo_vinculo",
@@ -104,7 +128,8 @@
       "groups": [
         "socio",
         "jugadora",
-        "familia"
+        "familia",
+        "visitante"
       ],
       "label": "¿Qué es el código de vínculo familiar?",
       "patterns": [
@@ -130,7 +155,13 @@
       "followUps": [
         "familia_varios_hijos",
         "empezar_mayoria_edad"
-      ]
+      ],
+      "labelByGroup": {
+        "visitante": "Soy familia de una jugadora, ¿cómo entro?"
+      },
+      "responsesByGroup": {
+        "visitante": "Si sos el adulto responsable de una jugadora menor, en el inicio de sesión tocá \"Es mi primera vez\" y elegí \"Un código de vínculo\". El código (por ejemplo, ABCD-EFGH) viene en el comprobante del alta de la menor y sirve una sola vez. Podés crear una cuenta nueva o usar la que ya tenés."
+      }
     },
     {
       "tag": "empezar_mayoria_edad",
@@ -871,7 +902,8 @@
       "groups": [
         "socio",
         "jugadora",
-        "familia"
+        "familia",
+        "visitante"
       ],
       "label": "¿Cómo contacto al club?",
       "patterns": [
@@ -897,7 +929,13 @@
       "followUps": [
         "club_horarios",
         "club_direccion"
-      ]
+      ],
+      "labelByGroup": {
+        "visitante": "¿Cómo contacto a mi club?"
+      },
+      "responsesByGroup": {
+        "visitante": "Los datos de contacto de tu club (teléfono, WhatsApp, email y horarios de secretaría) están en \"Información del club\", adentro de la plataforma. Si todavía no podés entrar, acercate a la secretaría de tu club."
+      }
     },
     {
       "tag": "club_horarios",
@@ -1069,13 +1107,266 @@
       ]
     },
     {
+      "tag": "acceso_staff",
+      "category": "empezar",
+      "button": true,
+      "groups": [
+        "visitante"
+      ],
+      "label": "Soy del staff, ¿cómo activo mi cuenta?",
+      "patterns": [
+        "soy entrenadora como entro",
+        "soy del staff como activo mi cuenta",
+        "me llego un mail para activar la cuenta",
+        "activar la cuenta",
+        "soy preparadora fisica como ingreso",
+        "soy representante como entro a la plataforma",
+        "el link de activacion no funciona",
+        "se vencio el link de activacion",
+        "no me llego el mail de activacion",
+        "como activo mi usuario de staff",
+        "trabajo en el club como entro",
+        "soy profe como ingreso",
+        "me dieron de alta como entrenadora",
+        "activacion de la cuenta del staff"
+      ],
+      "response": "Cuando el club te da de alta como entrenadora, preparadora física o representante, te llega un email \"Activá tu cuenta\". Desde ese link elegís tu usuario y tu contraseña. El link vence a las 48 horas: si venció o no te llegó (revisá también el correo no deseado), pedile al club que te lo reenvíe.",
+      "followUps": [
+        "acceso_usuario"
+      ]
+    },
+    {
+      "tag": "acceso_olvide_contrasena",
+      "category": "acceso",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia",
+        "visitante"
+      ],
+      "label": "Me olvidé la contraseña",
+      "patterns": [
+        "me olvide la contraseña",
+        "no me acuerdo la contraseña",
+        "olvide mi clave",
+        "recuperar la contraseña",
+        "como recupero mi contraseña",
+        "perdi la contraseña",
+        "restablecer la contraseña",
+        "no puedo entrar me olvide la clave",
+        "resetear la contraseña",
+        "contraseña olvidada",
+        "no se cual es mi contraseña",
+        "me olvide la clave para entrar",
+        "recuperar la clave",
+        "necesito una clave nueva"
+      ],
+      "response": "En el inicio de sesión tocá \"¿Olvidaste tu contraseña?\", escribí tu usuario o tu email y te mandamos un link para elegir una nueva. El link sirve una sola vez. Si no tenés un email cargado, pedile ayuda a la secretaría del club.",
+      "followUps": [
+        "acceso_bloqueado",
+        "acceso_usuario"
+      ]
+    },
+    {
+      "tag": "acceso_bloqueado",
+      "category": "acceso",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia",
+        "visitante"
+      ],
+      "label": "Mi usuario está bloqueado",
+      "patterns": [
+        "mi usuario esta bloqueado",
+        "me bloquearon la cuenta",
+        "cuenta bloqueada",
+        "puse mal la contraseña muchas veces",
+        "dice que mi usuario esta bloqueado",
+        "no me deja entrar dice bloqueado",
+        "como desbloqueo mi cuenta",
+        "desbloquear el usuario",
+        "me equivoque varias veces de contraseña",
+        "se bloqueo mi cuenta"
+      ],
+      "response": "Después de 5 intentos fallidos el usuario se bloquea, para protegerlo. Para desbloquearlo, tocá \"¿Olvidaste tu contraseña?\" en el inicio de sesión y elegí una nueva: al restablecerla, la cuenta se desbloquea.",
+      "followUps": [
+        "acceso_olvide_contrasena"
+      ]
+    },
+    {
+      "tag": "acceso_usuario",
+      "category": "acceso",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia",
+        "visitante"
+      ],
+      "label": "No me acuerdo mi usuario",
+      "patterns": [
+        "no me acuerdo mi usuario",
+        "cual es mi usuario",
+        "olvide mi nombre de usuario",
+        "con que usuario entro",
+        "puedo entrar con el email",
+        "entro con el dni",
+        "mi usuario es el mail",
+        "no se mi usuario",
+        "perdi mi usuario",
+        "como se cual es mi usuario",
+        "se puede entrar con el correo",
+        "ingresar con el mail en vez del usuario"
+      ],
+      "response": "Se entra con el usuario que elegiste al registrarte o al activar tu cuenta, no con el email ni con el DNI. Si no lo recordás, pedíselo a la secretaría del club. Si lo que olvidaste es la contraseña, la podés recuperar con tu usuario o con tu email.",
+      "followUps": [
+        "acceso_olvide_contrasena"
+      ]
+    },
+    {
+      "tag": "acceso_varios_roles",
+      "category": "acceso",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia",
+        "visitante"
+      ],
+      "label": "Tengo más de un rol, ¿cómo cambio?",
+      "patterns": [
+        "tengo mas de un rol",
+        "elegir el rol al entrar",
+        "me pide elegir un rol",
+        "como paso de un rol a otro",
+        "quiero ver lo de mi hija y lo mio",
+        "como cambio el rol con el que entre",
+        "cambiar el rol activo",
+        "entrar con otro rol",
+        "cambio de rol en la plataforma",
+        "con que rol entro si tengo varios",
+        "tengo varios roles en el club",
+        "elegir con que rol ingresar"
+      ],
+      "response": "Si tenés más de un rol (por ejemplo, socia y familia de una jugadora), al entrar elegís con cuál ingresar. Después podés cambiar desde tu foto, arriba a la derecha, con \"Cambiar de rol\". Cada rol ve sus propias pantallas."
+    },
+    {
+      "tag": "plataforma_que_es",
+      "category": "plataforma",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia",
+        "visitante"
+      ],
+      "label": "¿Qué es Club360?",
+      "patterns": [
+        "que es club360",
+        "para que sirve esta pagina",
+        "que es esta plataforma",
+        "de que se trata club 360",
+        "para que sirve club360",
+        "que es esto",
+        "que hace esta aplicacion",
+        "quien hizo club360",
+        "club 360 que es"
+      ],
+      "response": "Club360 es la plataforma de gestión del club: cuotas y pagos, inscripciones a deportes, partidos y citaciones, rutinas, avisos y la información del club, en un solo lugar y desde la compu o el celular. Es un proyecto integrador escolar.",
+      "followUps": [
+        "plataforma_perfiles",
+        "plataforma_celular"
+      ]
+    },
+    {
+      "tag": "plataforma_perfiles",
+      "category": "plataforma",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia",
+        "visitante"
+      ],
+      "label": "¿Qué puede hacer cada perfil?",
+      "patterns": [
+        "que puedo hacer si soy socio",
+        "que hace una jugadora en la plataforma",
+        "que puede hacer cada perfil",
+        "que roles hay",
+        "que hace la entrenadora aca",
+        "perfiles de usuario",
+        "para que me sirve si soy jugadora",
+        "que funciones tiene",
+        "que puede hacer cada usuario segun su rol",
+        "que hace cada rol en club360"
+      ],
+      "response": "Socios: estado de cuenta, pago de cuotas y comprobantes. Jugadoras: partidos, citaciones y rutinas con su seguimiento. Familias: lo mismo de sus jugadoras menores y el pago de sus cuotas. Entrenadoras: citaciones y categorías. Preparadoras físicas: rutinas. Representantes: ligas, fixture e inscripciones. El club: socios, staff, cuotas, avisos, roles y permisos."
+    },
+    {
+      "tag": "plataforma_celular",
+      "category": "plataforma",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia",
+        "visitante"
+      ],
+      "label": "¿Funciona en el celular?",
+      "patterns": [
+        "funciona en el celular",
+        "hay app para el celu",
+        "se puede usar desde el telefono",
+        "tengo que descargar una aplicacion",
+        "anda en el celular",
+        "esta en la play store",
+        "puedo entrar desde el celu",
+        "hay que instalar algo",
+        "app de club360",
+        "version para el celular"
+      ],
+      "response": "Sí. Club360 es una página web que se adapta al celular: no hay que instalar nada. Entrá desde el navegador con tu usuario y tu contraseña."
+    },
+    {
+      "tag": "plataforma_seguridad",
+      "category": "plataforma",
+      "button": true,
+      "groups": [
+        "socio",
+        "jugadora",
+        "familia",
+        "visitante"
+      ],
+      "label": "¿Mis datos están seguros?",
+      "patterns": [
+        "mis datos estan seguros",
+        "es seguro poner mi tarjeta",
+        "guardan los datos de la tarjeta",
+        "quien ve mis datos",
+        "es segura la pagina",
+        "protegen mi informacion",
+        "privacidad de mis datos",
+        "guardan mi contraseña",
+        "se guarda el numero de tarjeta",
+        "seguridad de la plataforma",
+        "quien puede ver mi informacion personal",
+        "mis datos personales estan protegidos"
+      ],
+      "response": "Sí. Las contraseñas se guardan cifradas y nadie del club puede verlas, el teléfono también va cifrado y de la tarjeta solo queda registrado el final (los últimos 4 números). Cada club ve solo sus propios datos y cada persona, solo lo que le corresponde según su rol."
+    },
+    {
       "tag": "saludo",
       "category": null,
       "button": false,
       "groups": [
         "socio",
         "jugadora",
-        "familia"
+        "familia",
+        "visitante"
       ],
       "patterns": [
         "hola",
@@ -1108,7 +1399,8 @@
       "groups": [
         "socio",
         "jugadora",
-        "familia"
+        "familia",
+        "visitante"
       ],
       "patterns": [
         "chau",
@@ -1141,7 +1433,8 @@
       "groups": [
         "socio",
         "jugadora",
-        "familia"
+        "familia",
+        "visitante"
       ],
       "patterns": [
         "receta de milanesas",

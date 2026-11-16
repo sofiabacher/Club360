@@ -19,6 +19,7 @@ import AccentStripe from '../../components/common/AccentStripe.jsx'
 import useAuth from '../../hooks/useAuth.js'
 import { getErrorMessage, getFieldErrors } from '../../utils/apiErrors.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/
 
@@ -207,12 +208,7 @@ export default function ClubSettingsPage() {
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Configuración del club</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Los cambios rigen para todo el club desde que los guardás.
-        </Typography>
-      </Box>
+      <PageHeader title="Configuración del club" description="Los cambios rigen para todo el club desde que los guardás." />
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, lg: 6 }}>
@@ -339,7 +335,7 @@ export default function ClubSettingsPage() {
 
               <Box>
                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>Vista previa</Typography>
-                <Box sx={{ mt: 0.5, p: 2, borderRadius: 2, bgcolor: 'navy.main' }}>
+                <Box sx={{ mt: 0.5, p: 2, borderRadius: 1, bgcolor: 'navy.main' }}>
                   <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
                     <AccentStripe color={validColor ? form.accentColor : null} size={4} sx={{ height: 22 }} />
                     <Typography variant="body2" sx={{ color: 'navy.contrastText', fontWeight: 500 }}>{settings.name}</Typography>

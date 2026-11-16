@@ -27,7 +27,7 @@ const {
     GAME_STATES, CITATION_STATES, MEMBER_STATES, BASE_ROLES, GAME_DURATION_MINUTES, VALID_SET_RESULTS, CAMPAIGN_STREAK_LENGTH, LOG_ACTIONS
 } = require('../../utils/constants')
 const { PERMISSIONS } = require('../../utils/permissions')
-const { games: m } = require('../../utils/messages')
+const { games: m, notificationTexts: texts } = require('../../utils/messages')
 
 const GAMES_PAGE_SIZE = 20
 const MINUTE_MS = 60 * 1000
@@ -378,17 +378,13 @@ async function notifyFixture(clubId, game, categoryName, { changed = false, tran
     const players = await getActivePlayersOfCategory(clubId, game.categoryId, { transaction })
     if (players.length === 0) return
 
-    const label = `${categoryName} vs. ${game.rival}`
-    const message = changed
-        ? `Cambió el partido de ${label}: ahora es el ${whenText(game.dateTime)} (${homeText(game.isHome)}), en ${game.address}.`
-        : `Nuevo partido: ${label}, ${whenText(game.dateTime)} (${homeText(game.isHome)}). Dirección: ${game.address}.`
+    const data = { category: categoryName, rival: game.rival, when: whenText(game.dateTime), home: homeText(game.isHome), address: game.address }
 
     await notify({
         clubId,
         type: 'FIXTURE_PUBLISHED',
         recipientUserIds: players.map(player => player.userId),
-        title: changed ? `Cambió un partido de ${categoryName}` : `Nuevo partido de ${categoryName}`,
-        message,
+        ...(changed ? texts.fixtureChanged(data) : texts.fixturePublished(data)),
         includeFamily: true
     }, { transaction })
 }
@@ -408,8 +404,13 @@ async function notifyConflicts(clubId, conflicts, transaction) {
             clubId,
             type: 'SCHEDULE_CONFLICT',
             recipientUserIds: coaches,
-            title: `Partidos superpuestos: ${conflict.member.name}`,
-            message: `${conflict.member.name} tiene dos partidos superpuestos: ${first.category.name} (${shortWhen(first.dateTime)}) y ${second.category.name} (${shortWhen(second.dateTime)}).`
+            ...texts.scheduleConflict({
+                player: conflict.member.name,
+                first: first.category.name,
+                firstWhen: shortWhen(first.dateTime),
+                second: second.category.name,
+                secondWhen: shortWhen(second.dateTime)
+            })
         }, { transaction })
     }
 }
@@ -680,8 +681,7 @@ async function cancelGame(actor, gameId, { reason }) {
                 clubId: scope.clubId,
                 type: 'GAME_CANCELLED',
                 recipientUserIds: citations.map(citation => citation.member.userId),
-                title: `Se canceló el partido de ${game.category.name}`,
-                message: `Se canceló el partido de ${game.category.name} vs. ${game.rival} del ${weekday} ${dayMonth}. Tu citación quedó cancelada.`,
+                ...texts.gameCancelled({ category: game.category.name, rival: game.rival, weekday, dayMonth }),
                 includeFamily: true
             }, { transaction })
         }
@@ -899,9 +899,14 @@ async function resolveConflict(actor, { memberId, gameIds, chosenGameId, note })
             clubId,
             type: 'CONFLICT_RESOLVED',
             recipientUserIds: [member.userId],
-            title: 'Se resolvió un conflicto de horario',
-            message: `Tenías dos partidos superpuestos el ${weekday} ${dayMonth}. Se decidió que juegues ${chosen.category.name} vs. ${chosen.rival} (${time}). `
-                + `No jugás ${other.category.name} vs. ${other.rival} (${dateTimeParts(other.dateTime).time}).`,
+            ...texts.conflictResolved({
+                weekday,
+                dayMonth,
+                chosen: `${chosen.category.name} vs. ${chosen.rival}`,
+                chosenTime: time,
+                other: `${other.category.name} vs. ${other.rival}`,
+                otherTime: dateTimeParts(other.dateTime).time
+            }),
             includeFamily: true
         }, { transaction })
     })

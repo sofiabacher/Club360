@@ -1,4 +1,4 @@
-// Módulo bot: asistente de consultas generales (P21). Solo con bot.use.
+// Módulo bot: asistente de consultas generales (P21). Solo con bot.use, salvo el asistente público (/public, P23).
 // Cada ruta encadena: isAuth → checkPermission('módulo.acción') → reglas del validator → validateFields → controller
 // El chat suma el límite de mensajes por usuario (express-rate-limit), después de isAuth para contar por usuario
 const express = require('express')
@@ -10,7 +10,7 @@ const validateFields = require('../../middlewares/validateFields')
 const controller = require('./bot.controller')
 const validator = require('./bot.validator')
 const { PERMISSIONS } = require('../../utils/permissions')
-const { BOT_RATE_LIMIT_PER_MINUTE } = require('../../utils/constants')
+const { BOT_RATE_LIMIT_PER_MINUTE, BOT_PUBLIC_RATE_LIMIT_PER_MINUTE } = require('../../utils/constants')
 const { bot: m } = require('../../utils/messages')
 
 const router = express.Router()
@@ -26,6 +26,18 @@ const chatLimit = rateLimit({
     keyGenerator: (req) => `user-${req.user.id}`,
     handler: (req, res) => res.status(429).json({ success: false, message: m.rateLimited })
 })
+
+// Asistente público (bienvenida e inicio de sesión): sin sesión, 20 mensajes por minuto por IP
+const publicLimit = rateLimit({
+    windowMs: 60 * 1000,
+    limit: BOT_PUBLIC_RATE_LIMIT_PER_MINUTE,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    handler: (req, res) => res.status(429).json({ success: false, message: m.rateLimited })
+})
+
+router.get('/public/menu', publicLimit, validator.menu, validateFields, controller.publicMenu)
+router.post('/public/chat', publicLimit, validator.chat, validateFields, controller.publicChat)
 
 router.get('/menu', ...use, validator.menu, validateFields, controller.menu)
 router.post('/chat', ...use, chatLimit, validator.chat, validateFields, controller.chat)

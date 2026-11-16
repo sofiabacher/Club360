@@ -29,6 +29,7 @@ import { getErrorMessage } from '../../utils/apiErrors.js'
 import { INSCRIPTION_STATES, MEMBER_STATES } from '../../utils/constants.js'
 import { formatDate } from '../../utils/format.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 const TABS = { PENDING: String(INSCRIPTION_STATES.PENDING), HISTORY: 'history' }
 
@@ -165,12 +166,7 @@ export default function InscriptionsPage() {
 
   return (
     <>
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Inscripciones</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Las solicitudes de inscripción a {sports.length === 1 ? sports[0].name : 'los deportes del club'}. Al aprobar una, la socia pasa a ser Jugadora.
-        </Typography>
-      </Box>
+      <PageHeader title="Inscripciones" description={<>Las solicitudes de inscripción a {sports.length === 1 ? sports[0].name : 'los deportes del club'}. Al aprobar una, la socia pasa a ser Jugadora.</>} sx={{ mb: 2 }} />
 
       <Tabs value={query.state} onChange={setFilter('state')} textColor="secondary" indicatorColor="secondary" sx={{ mb: 2 }}>
         <Tab value={TABS.PENDING} label="Pendientes" />

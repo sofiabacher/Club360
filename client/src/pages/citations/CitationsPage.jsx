@@ -19,6 +19,7 @@ import { getErrorMessage } from '../../utils/apiErrors.js'
 import { CITATION_MIN_HOURS, CITATION_WINDOW_OPEN_DAYS } from '../../utils/constants.js'
 import { formatGameDate, formatShortDateTime } from '../../utils/format.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 // Chip de la ventana para citar: todavía no abrió (con la fecha) o ya cerró. Abierta, sin chip
 function WindowChip({ game }) {
@@ -49,12 +50,7 @@ export default function CitationsPage() {
 
   return (
     <>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Citaciones</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Los próximos partidos de tus categorías. Se cita desde {CITATION_WINDOW_OPEN_DAYS} días hasta {CITATION_MIN_HOURS / 24} días antes del partido.
-        </Typography>
-      </Box>
+      <PageHeader title="Citaciones" description={<>Los próximos partidos de tus categorías. Se cita desde {CITATION_WINDOW_OPEN_DAYS} días hasta {CITATION_MIN_HOURS / 24} días antes del partido.</>} />
 
       {games.length === 0 ? (
         <EmptyState icon={AssignmentIndRounded} title="Sin partidos" description="No hay partidos próximos en tus categorías." />

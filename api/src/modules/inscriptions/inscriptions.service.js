@@ -20,7 +20,7 @@ const { createError } = require('../../utils/errors')
 const { generateLoginToken } = require('../../utils/token')
 const { getSeasonAge, dateTimeParts } = require('../../utils/dates')
 const { INSCRIPTION_STATES, MEMBER_STATES, CITATION_STATES, BASE_ROLES, LOG_ACTIONS } = require('../../utils/constants')
-const { inscriptions: m } = require('../../utils/messages')
+const { inscriptions: m, notificationTexts: texts } = require('../../utils/messages')
 
 const INSCRIPTIONS_PAGE_SIZE = 20
 
@@ -163,8 +163,7 @@ async function requestInscription(actor, { clubSportId }) {
                 clubId: actor.clubId,
                 type: 'INSCRIPTION_REQUEST',
                 recipientUserIds: representatives,
-                title: `Nueva solicitud de inscripción a ${sportName}`,
-                message: `Nueva solicitud de inscripción a ${sportName}: ${memberLabel(member)}.`
+                ...texts.inscriptionRequest({ sport: sportName, member: memberLabel(member) })
             }, { transaction })
         }
 
@@ -206,8 +205,7 @@ async function notifyCoachesOfCancelledConfirmation(clubId, playerName, sportNam
         clubId,
         type: 'CITATION_RESPONSE',
         recipientUserIds: coaches,
-        title: `${playerName} se dio de baja de ${sportName}`,
-        message: `${playerName} se dio de baja de ${sportName}: se canceló su citación confirmada para ${game.category.name} vs. ${game.rival} (${weekdayShort} ${dayMonth}).`
+        ...texts.withdrawalCitationCancelled({ player: playerName, sport: sportName, match: `${game.category.name} vs. ${game.rival}`, weekdayShort, dayMonth })
     }, { transaction })
 }
 
@@ -275,8 +273,7 @@ async function withdraw(actor, inscriptionId) {
                 clubId: actor.clubId,
                 type: 'SPORT_WITHDRAWAL',
                 recipientUserIds: representatives,
-                title: `Baja de ${sportName}: ${fullNameOf(member.user)}`,
-                message: `${memberLabel(member)} se dio de baja de ${sportName}.`
+                ...texts.sportWithdrawal({ sport: sportName, fullName: fullNameOf(member.user), member: memberLabel(member) })
             }, { transaction })
         }
 
@@ -402,8 +399,7 @@ async function approveInscription(actor, inscriptionId) {
             clubId: actor.clubId,
             type: 'INSCRIPTION_RESULT',
             recipientUserIds: [member.userId],
-            title: `Se aprobó tu inscripción a ${sportName}`,
-            message: `¡Se aprobó tu inscripción a ${sportName}! Ya sos jugadora del club. Desde el menú podés cambiar al rol Jugadora.`
+            ...texts.inscriptionApproved({ sport: sportName })
         }, { transaction })
 
         return { inscription, member, sportName }
@@ -431,8 +427,7 @@ async function rejectInscription(actor, inscriptionId, { reason }) {
             clubId: actor.clubId,
             type: 'INSCRIPTION_RESULT',
             recipientUserIds: [member.userId],
-            title: `Tu inscripción a ${sportName} no fue aprobada`,
-            message: `Tu inscripción a ${sportName} no fue aprobada.${cleanReason ? ` Motivo: ${cleanReason}.` : ''}`
+            ...texts.inscriptionRejected({ sport: sportName, reason: cleanReason })
         }, { transaction })
 
         return { inscription, member, sportName }

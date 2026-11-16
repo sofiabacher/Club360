@@ -20,6 +20,7 @@ import SentNoticeDrawer, { ReadProgress } from '../../components/notifications/S
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { formatDateTimeLong } from '../../utils/format.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 // Historial de avisos enviados: una tarjeta por envío con cuántos lo leyeron. El Admin (notifications.sendAll) ve todos
 // los del club, con un filtro por remitente; el resto, solo los suyos. Tocar una tarjeta abre el detalle.
@@ -53,17 +54,15 @@ export default function SentNoticesPage() {
 
   return (
     <>
-      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between', gap: 2, mb: 3 }}>
-        <Box>
-          <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Avisos enviados</Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {result?.canSeeAll ? 'Todos los avisos generales del club y cuántos los leyeron.' : 'Tus avisos y cuántos los leyeron.'}
-          </Typography>
-        </Box>
-        <Button component={RouterLink} to="/notifications/send" color="secondary" startIcon={<CampaignRounded />} sx={{ flexShrink: 0 }}>
-          Enviar un aviso
-        </Button>
-      </Stack>
+      <PageHeader
+        title="Avisos enviados"
+        description={result?.canSeeAll ? 'Todos los avisos generales del club y cuántos los leyeron.' : 'Tus avisos y cuántos los leyeron.'}
+        action={
+          <Button component={RouterLink} to="/notifications/send" color="secondary" startIcon={<CampaignRounded />}>
+            Enviar un aviso
+          </Button>
+        }
+      />
 
       {result?.canSeeAll && result.senders.length > 0 && (
         <TextField

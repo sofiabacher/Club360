@@ -16,15 +16,15 @@ import useMediaQuery from '@mui/material/useMediaQuery'
 import { keyframes } from '@mui/material/styles'
 import CloseRounded from '@mui/icons-material/CloseRounded'
 import SendRounded from '@mui/icons-material/SendRounded'
-import SmartToyRounded from '@mui/icons-material/SmartToyRounded'
 import ThumbDownRounded from '@mui/icons-material/ThumbDownRounded'
 import ThumbUpRounded from '@mui/icons-material/ThumbUpRounded'
 
-import { getBotMenu, sendBotFeedback, sendBotMessage } from '../../api/bot.api.js'
+import { getBotMenu, getPublicBotMenu, sendBotFeedback, sendBotMessage, sendPublicBotMessage } from '../../api/bot.api.js'
 import useAuth from '../../hooks/useAuth.js'
+import LylaAvatar from './LylaAvatar.jsx'
 
 const MAX_LENGTH = 300
-const UNAVAILABLE = 'El asistente no está disponible en este momento. Reintentá en unos minutos.'
+const UNAVAILABLE = 'Lyla no está disponible en este momento. Reintentá en unos minutos.'
 
 const blink = keyframes`
   0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
@@ -43,7 +43,7 @@ const errorText = (err) => (err?.response?.status === 429 && err.response.data?.
 // "Escribiendo…" con tres puntos animados
 function Typing() {
   return (
-    <Stack direction="row" sx={{ alignItems: 'center', gap: 0.75, px: 1.5, py: 1, bgcolor: 'background.paper', borderRadius: 3, alignSelf: 'flex-start', boxShadow: 1 }} aria-live="polite">
+    <Stack direction="row" sx={{ alignItems: 'center', gap: 0.75, px: 1.5, py: 1, bgcolor: 'background.paper', borderRadius: 1, alignSelf: 'flex-start', boxShadow: 1 }} aria-live="polite">
       <Typography variant="caption" sx={{ color: 'text.secondary' }}>Escribiendo</Typography>
       {[0, 1, 2].map((dot) => (
         <Box key={dot} sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'text.secondary', animation: `${blink} 1.2s infinite`, animationDelay: `${dot * 0.2}s` }} />
@@ -53,7 +53,7 @@ function Typing() {
 }
 
 // Burbuja de un mensaje. Las del usuario a la derecha en Azul; las del bot a la izquierda en blanco (el fallback y los
-// avisos, en Crema)
+// avisos, en el tono tenue)
 function Bubble({ from, warm, children }) {
   const mine = from === 'user'
   return (
@@ -63,10 +63,10 @@ function Bubble({ from, warm, children }) {
         maxWidth: '88%',
         px: 1.5,
         py: 1,
-        borderRadius: 3,
+        borderRadius: 1,
         borderBottomRightRadius: mine ? 4 : 12,
         borderBottomLeftRadius: mine ? 12 : 4,
-        bgcolor: mine ? 'secondary.main' : warm ? 'cream.main' : 'background.paper',
+        bgcolor: mine ? 'secondary.main' : warm ? 'tint.main' : 'background.paper',
         color: mine ? 'secondary.contrastText' : 'text.primary',
         boxShadow: mine ? 0 : 1,
         whiteSpace: 'pre-line',
@@ -78,11 +78,13 @@ function Bubble({ from, warm, children }) {
   )
 }
 
-// Asistente de consultas (P21): Fab Marino abajo a la derecha y una ventana de chat (panel en la compu, pantalla completa
+// Asistente de consultas (P21): Fab Pizarra abajo a la derecha y una ventana de chat (panel en la compu, pantalla completa
 // en el celular). Al abrir, el saludo y las categorías del menú (la de la pantalla actual primero); los botones van
 // directo a una respuesta y el texto libre lo clasifica el back. El historial vive en el estado: se pierde al recargar.
-// Se monta en DashboardLayout solo con bot.use, con key del rol activo (al cambiar de rol, empieza de cero)
-export default function ChatBot() {
+// Se monta en DashboardLayout solo con bot.use, con key del rol activo (al cambiar de rol, empieza de cero).
+// publicMode (P23): el asistente público de la bienvenida y del inicio de sesión, sin sesión: usa /bot/public, se
+// presenta como Lyla, la asistente de Club360 y no pide opinión de las respuestas
+export default function ChatBot({ publicMode = false }) {
   const isMobile = useMediaQuery((theme) => theme.breakpoints.down('sm'))
   const location = useLocation()
   const { club } = useAuth()
@@ -103,7 +105,7 @@ export default function ChatBot() {
   const showMenu = async () => {
     setWaiting(true)
     try {
-      const { data } = await getBotMenu(screen)
+      const { data } = await (publicMode ? getPublicBotMenu : getBotMenu)(screen)
       push({ from: 'bot', kind: 'menu', text: data.greeting, categories: data.categories })
     } catch (err) {
       push({ from: 'bot', kind: 'error', text: errorText(err) })
@@ -121,7 +123,7 @@ export default function ChatBot() {
     push({ from: 'user', text: userText })
     setWaiting(true)
     try {
-      const { data } = await sendBotMessage({ ...payload, screen })
+      const { data } = await (publicMode ? sendPublicBotMessage : sendBotMessage)({ ...payload, screen })
       push({ from: 'bot', kind: data.responseType, text: data.response, buttons: data.buttons, interactionId: data.interactionId })
     } catch (err) {
       push({ from: 'bot', kind: 'error', text: errorText(err) })
@@ -164,9 +166,14 @@ export default function ChatBot() {
 
   const header = (
     <Stack direction="row" sx={{ alignItems: 'center', gap: 1, px: 2, py: 1.25, bgcolor: 'navy.main', color: 'navy.contrastText', flexShrink: 0 }}>
-      <SmartToyRounded />
-      <Typography sx={{ fontWeight: 600, flexGrow: 1 }} noWrap>Asistente de {club?.name ?? 'tu club'}</Typography>
-      <IconButton onClick={() => setOpen(false)} aria-label="Cerrar el asistente" sx={{ color: 'inherit' }}>
+      <LylaAvatar size={36} />
+      <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+        <Typography sx={{ fontWeight: 600, lineHeight: 1.2 }} noWrap>Lyla</Typography>
+        <Typography variant="caption" sx={{ display: 'block', opacity: 0.75, lineHeight: 1.3 }} noWrap>
+          Asistente de {publicMode ? 'Club360' : club?.name ?? 'tu club'}
+        </Typography>
+      </Box>
+      <IconButton onClick={() => setOpen(false)} aria-label="Cerrar el chat con Lyla" sx={{ color: 'inherit' }}>
         <CloseRounded />
       </IconButton>
     </Stack>
@@ -187,7 +194,7 @@ export default function ChatBot() {
                   key={category.id}
                   onClick={() => handleCategory(category)}
                   focusRipple
-                  sx={{ p: 1.25, borderRadius: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', color: 'navy.main', fontWeight: 600, fontSize: '0.85rem', textAlign: 'center', '&:hover': { borderColor: 'secondary.main' } }}
+                  sx={{ p: 1.25, borderRadius: 1, bgcolor: 'background.paper', border: 1, borderColor: 'divider', color: 'navy.main', fontWeight: 600, fontSize: '0.85rem', textAlign: 'center', '&:hover': { borderColor: 'secondary.main' } }}
                 >
                   {category.label}
                 </ButtonBase>
@@ -271,13 +278,13 @@ export default function ChatBot() {
   return (
     <Box sx={{ displayPrint: 'none' }}>
       {!open && (
-        <Tooltip title="Asistente" placement="left">
+        <Tooltip title="Preguntale a Lyla" placement="left">
           <Fab
             onClick={handleOpen}
-            aria-label="Abrir el asistente"
+            aria-label="Abrir el chat con Lyla, la asistente"
             sx={{ position: 'fixed', right: { xs: 16, sm: 24 }, bottom: { xs: 16, sm: 24 }, zIndex: (theme) => theme.zIndex.speedDial, bgcolor: 'navy.main', color: 'navy.contrastText', '&:hover': { bgcolor: 'navy.dark' } }}
           >
-            <SmartToyRounded />
+            <LylaAvatar size={48} />
           </Fab>
         </Tooltip>
       )}
@@ -291,8 +298,8 @@ export default function ChatBot() {
           <Paper
             elevation={12}
             role="dialog"
-            aria-label="Asistente"
-            sx={{ position: 'fixed', right: 24, bottom: 24, width: 380, height: 560, maxHeight: 'calc(100dvh - 48px)', borderRadius: 3, overflow: 'hidden', zIndex: (theme) => theme.zIndex.modal - 1 }}
+            aria-label="Chat con Lyla"
+            sx={{ position: 'fixed', right: 24, bottom: 24, width: 380, height: 560, maxHeight: 'calc(100dvh - 48px)', borderRadius: 1.5, overflow: 'hidden', zIndex: (theme) => theme.zIndex.modal - 1 }}
           >
             {chatWindow}
           </Paper>

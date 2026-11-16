@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
 import Alert from '@mui/material/Alert'
-import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
 import SportsVolleyballRounded from '@mui/icons-material/SportsVolleyballRounded'
 
 import { getMyGames } from '../../api/games.api.js'
@@ -11,6 +9,7 @@ import GamesTabs, { useGamesTab } from '../../components/games/GamesTabs.jsx'
 import PlayerGamesList from '../../components/games/PlayerGamesList.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 const TABS = [{ value: 'proximos', label: 'Próximos' }, { value: 'jugados', label: 'Jugados' }]
 
@@ -36,10 +35,7 @@ export default function MyGamesPage() {
 
   return (
     <>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Mis partidos</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>La campaña, los próximos partidos y los ya jugados de tus categorías.</Typography>
-      </Box>
+      <PageHeader title="Mis partidos" description="La campaña, los próximos partidos y los ya jugados de tus categorías." />
 
       <GamesTabs tabs={TABS} value={tab} onChange={setTab} />
 

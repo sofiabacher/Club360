@@ -1,24 +1,30 @@
 EVALUACIÓN DEL BOT DE CONSULTAS (P21)
 ======================================================================
 
-Fecha: 15/11/2026 18:19 (hora de Argentina). Generado con npm run bot:eval.
+Fecha: 15/11/2026 23:56 (hora de Argentina). Generado con npm run bot:eval.
 Umbrales: BOT_THRESHOLD = 0.45 (responde), BOT_SUGGEST_THRESHOLD = 0.25 (sugiere) y BOT_AMBIGUITY_MARGIN = 0.1 (una palabra ambigua).
-Conocimiento: 33 intenciones, 552 patrones.
-Set de prueba: 175 preguntas (160 de intenciones y 15 fuera de tema), distintas de los patrones.
+Conocimiento: 42 intenciones, 655 patrones.
+Set de prueba: 193 preguntas (178 de intenciones y 15 fuera de tema), distintas de los patrones.
 Acierto: el bot responde (con la misma regla del back) y la intención ganadora es la esperada. Fuera de tema:
 termina en fallback o en sugerencias. "Top-1": la intención ganadora, sin mirar los umbrales.
 
 RESULTADO
 ----------------------------------------------------------------------
-Precisión total:        92,0 % (161 de 175)  — meta: 90 % o más
-Precisión top-1:        88,0 %
+Precisión total:        92,7 % (179 de 193)  — meta: 90 % o más
+Precisión top-1:        88,6 %
 Fuera de tema:          9 en fallback, 6 en sugerencias, 0 respondidas (de 15)  — meta: ninguna respondida
+ATENCIÓN: 1 preguntas son iguales a un patrón: "se puede usar en el telefono"
 
 PRECISIÓN POR INTENCIÓN
 ----------------------------------------------------------------------
+acceso_bloqueado           2/2    100,0 %
+acceso_olvide_contrasena   2/2    100,0 %
+acceso_staff               2/2    100,0 %
+acceso_usuario             2/2    100,0 %
+acceso_varios_roles        2/2    100,0 %
 citacion_que_es            2/5    40,0 %
 citacion_responder         4/5    80,0 %
-club_contacto              4/5    80,0 %
+club_contacto              5/5    100,0 %
 club_direccion             5/5    100,0 %
 club_horarios              5/5    100,0 %
 cuenta_mis_datos           4/5    80,0 %
@@ -44,6 +50,10 @@ partidos_resultados        5/5    100,0 %
 personal_citacion          5/5    100,0 %
 personal_cuotas            5/5    100,0 %
 personal_rutina            5/5    100,0 %
+plataforma_celular         2/2    100,0 %
+plataforma_perfiles        2/2    100,0 %
+plataforma_que_es          2/2    100,0 %
+plataforma_seguridad       1/2    50,0 %
 rutina_donde_ver           5/5    100,0 %
 saludo                     4/5    80,0 %
 seguimiento_objetivos      5/5    100,0 %
@@ -55,48 +65,51 @@ MATRIZ DE CONFUSIÓN (solo las celdas fuera de la diagonal: esperada → obtenid
 3   citacion_que_es → personal_citacion
 2   cuotas_transferencia → (sugerencias)
 1   citacion_responder → citacion_que_es
-1   club_contacto → (sugerencias)
 1   cuenta_mis_datos → (sugerencias)
 1   cuotas_vencimiento → personal_cuotas
 1   deporte_baja → fixture_donde_ver
 1   empezar_codigo_vinculo → empezar_mayoria_edad
 1   empezar_hacerme_socio → (sugerencias)
+1   plataforma_seguridad → cuenta_mis_datos
 1   saludo → (sugerencias)
 1   seguimiento_progreso → rutina_donde_ver
 
 ERRORES
 ----------------------------------------------------------------------
 "me dieron el numero de socio y ahora como entro"
-    esperada: empezar_hacerme_socio · obtenida: (sugerencias) (ganadora empezar_hacerme_socio, confianza 0,43)
+    esperada: empezar_hacerme_socio · obtenida: (sugerencias) (ganadora empezar_hacerme_socio, confianza 0,441)
 "mi mama quiere vincularse conmigo como hace"
-    esperada: empezar_codigo_vinculo · obtenida: empezar_mayoria_edad (ganadora empezar_mayoria_edad, confianza 0,48)
+    esperada: empezar_codigo_vinculo · obtenida: empezar_mayoria_edad (ganadora empezar_mayoria_edad, confianza 0,501)
 "puedo subir una foto"
-    esperada: cuenta_mis_datos · obtenida: (sugerencias) (ganadora cuenta_mis_datos, confianza 0,433)
+    esperada: cuenta_mis_datos · obtenida: (sugerencias) (ganadora cuenta_mis_datos, confianza 0,441)
 "a que cuenta transfiero"
-    esperada: cuotas_transferencia · obtenida: (sugerencias) (ganadora cuotas_transferencia, confianza 0,391)
+    esperada: cuotas_transferencia · obtenida: (sugerencias) (ganadora cuotas_transferencia, confianza 0,368)
 "pago por trasnferencia"
-    esperada: cuotas_transferencia · obtenida: (sugerencias) (ganadora cuotas_como_pagar, confianza 0,352)
+    esperada: cuotas_transferencia · obtenida: (sugerencias) (ganadora cuotas_como_pagar, confianza 0,367)
 "cuando sale la cuota nueva"
-    esperada: cuotas_vencimiento · obtenida: personal_cuotas (ganadora personal_cuotas, confianza 0,596)
+    esperada: cuotas_vencimiento · obtenida: personal_cuotas (ganadora personal_cuotas, confianza 0,622)
 "me quiero ir del equipo"
-    esperada: deporte_baja · obtenida: fixture_donde_ver (ganadora fixture_donde_ver, confianza 0,504)
+    esperada: deporte_baja · obtenida: fixture_donde_ver (ganadora fixture_donde_ver, confianza 0,501)
 "como me avisan que me convocaron"
-    esperada: citacion_que_es · obtenida: personal_citacion (ganadora personal_citacion, confianza 0,75)
+    esperada: citacion_que_es · obtenida: personal_citacion (ganadora personal_citacion, confianza 0,747)
 "quien hace las citaciones"
-    esperada: citacion_que_es · obtenida: personal_citacion (ganadora personal_citacion, confianza 0,643)
+    esperada: citacion_que_es · obtenida: personal_citacion (ganadora personal_citacion, confianza 0,672)
 "que es estar convocada"
-    esperada: citacion_que_es · obtenida: personal_citacion (ganadora personal_citacion, confianza 0,751)
+    esperada: citacion_que_es · obtenida: personal_citacion (ganadora personal_citacion, confianza 0,765)
 "decir que no a una citacion"
-    esperada: citacion_responder · obtenida: citacion_que_es (ganadora citacion_que_es, confianza 0,56)
+    esperada: citacion_responder · obtenida: citacion_que_es (ganadora citacion_que_es, confianza 0,556)
 "graficos de las rutinas"
-    esperada: seguimiento_progreso · obtenida: rutina_donde_ver (ganadora rutina_donde_ver, confianza 0,587)
-"quiero comunicarme con la secretaria"
-    esperada: club_contacto · obtenida: (sugerencias) (ganadora club_contacto, confianza 0,439)
+    esperada: seguimiento_progreso · obtenida: rutina_donde_ver (ganadora rutina_donde_ver, confianza 0,593)
 "holis"
-    esperada: saludo · obtenida: (sugerencias) (ganadora saludo, confianza 0,379)
+    esperada: saludo · obtenida: (sugerencias) (ganadora saludo, confianza 0,378)
+"quien puede ver mis datos personales"
+    esperada: plataforma_seguridad · obtenida: cuenta_mis_datos (ganadora cuenta_mis_datos, confianza 0,681)
 
 HISTORIAL DE CORRIDAS
 ----------------------------------------------------------------------
 - 15/11/2026 15:43 · umbrales 0.5 / 0.25 · precisión 78,3 % (137/175) · top-1 76,6 % · fuera de tema sin respuesta 7/15
 - 15/11/2026 15:50 · umbrales 0.45 / 0.25 · precisión 92,0 % (161/175) · top-1 88,0 % · fuera de tema sin respuesta 15/15
 - 15/11/2026 18:19 · umbrales 0.45 / 0.25 · precisión 92,0 % (161/175) · top-1 88,0 % · fuera de tema sin respuesta 15/15
+- 15/11/2026 23:55 · umbrales 0.45 / 0.25 · precisión 89,1 % (172/193) · top-1 85,0 % · fuera de tema sin respuesta 15/15
+- 15/11/2026 23:56 · umbrales 0.45 / 0.25 · precisión 91,7 % (177/193) · top-1 87,6 % · fuera de tema sin respuesta 15/15
+- 15/11/2026 23:56 · umbrales 0.45 / 0.25 · precisión 92,7 % (179/193) · top-1 88,6 % · fuera de tema sin respuesta 15/15

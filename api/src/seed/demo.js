@@ -35,6 +35,7 @@ const {
 } = require('../utils/constants')
 const { CLUB_SEED } = require('./data/club')
 const DATA = require('./data/demo')
+const { notificationTexts: texts } = require('../utils/messages')
 
 const {
     User, Role, ClubSport, Sport, Member, Staff, Inscription, Fee, Payment, League, Category, CategoryPlayer,
@@ -549,8 +550,7 @@ async function loadDemo({ club, admin, people, transaction }) {
         const { game } = citationNotices[key]
         await notice(key, {
             type: 'CITATION_NEW',
-            title: `Te citaron para ${game.categoryName} vs. ${game.rival}`,
-            message: `Te citaron para ${game.categoryName} vs. ${game.rival}, ${whenText(game.dateTime)}. Tenés tiempo de responder hasta el ${whenText(responseDeadline)}.`,
+            ...texts.citationNew({ category: game.categoryName, rival: game.rival, when: whenText(game.dateTime), deadline: whenText(responseDeadline) }),
             at: now
         })
     }
@@ -559,8 +559,13 @@ async function loadDemo({ club, admin, people, transaction }) {
     const mayoresGame = gameOf.get('MAYORES:5')
     await notice('ctorres', {
         type: 'FIXTURE_PUBLISHED',
-        title: `Nuevo partido de ${mayoresGame.categoryName}`,
-        message: `Nuevo partido: ${mayoresGame.categoryName} vs. ${mayoresGame.rival}, ${whenText(mayoresGame.dateTime)} (${mayoresGame.isHome ? 'Local' : 'Visitante'}). Dirección: ${mayoresGame.address}.`,
+        ...texts.fixturePublished({
+            category: mayoresGame.categoryName,
+            rival: mayoresGame.rival,
+            when: whenText(mayoresGame.dateTime),
+            home: mayoresGame.isHome ? 'Local' : 'Visitante',
+            address: mayoresGame.address
+        }),
         isRead: true,
         at: mayoresGame.createdAt
     })
@@ -570,8 +575,11 @@ async function loadDemo({ club, admin, people, transaction }) {
     if (sofiaOverdue) {
         await notice('gromero', {
             type: 'FEE_OVERDUE',
-            title: `Tu cuota de ${monthNameOf(sofiaOverdue.period)} ${sofiaOverdue.period.slice(0, 4)} venció`,
-            message: `Tu cuota de ${monthNameOf(sofiaOverdue.period)} venció el ${dateTimeParts(atAR(sofiaOverdue.expirationDate)).dayMonth}. Regularizá tu situación desde Mis cuotas.`,
+            ...texts.feeOverdue({
+                month: monthNameOf(sofiaOverdue.period),
+                year: sofiaOverdue.period.slice(0, 4),
+                dayMonth: dateTimeParts(atAR(sofiaOverdue.expirationDate)).dayMonth
+            }),
             at: atAR(addDays(sofiaOverdue.expirationDate, 1), '00:15')
         })
     }
@@ -580,9 +588,7 @@ async function loadDemo({ club, admin, people, transaction }) {
     const abrilOldest = unpaidFees.get('acastro')[0]
     await notice('acastro', {
         type: 'MEMBER_SUSPENDED',
-        title: 'Perdiste tu condición de socio',
-        message: `Por tener cuotas impagas hace más de ${club.delayFee} días, perdiste tu condición de socio. `
-            + 'Mientras tanto no podés ser citada ni inscribirte a deportes. Se recupera sola cuando regularices tus cuotas.',
+        ...texts.memberSuspended({ delayFee: club.delayFee }),
         isRead: true,
         at: atAR(addDays(abrilOldest.expirationDate, club.delayFee + 1), '00:15')
     })
@@ -592,8 +598,13 @@ async function loadDemo({ club, admin, people, transaction }) {
     for (const key of ['cbenitez', 'lquiroga']) {
         await notice(key, {
             type: 'SCHEDULE_CONFLICT',
-            title: `Partidos superpuestos: ${conflicts[0].member.name}`,
-            message: `${conflicts[0].member.name} tiene dos partidos superpuestos: ${first.categoryName} (${shortWhen(first.dateTime)}) y ${second.categoryName} (${shortWhen(second.dateTime)}).`,
+            ...texts.scheduleConflict({
+                player: conflicts[0].member.name,
+                first: first.categoryName,
+                firstWhen: shortWhen(first.dateTime),
+                second: second.categoryName,
+                secondWhen: shortWhen(second.dateTime)
+            }),
             at: second.createdAt
         })
     }
@@ -602,8 +613,7 @@ async function loadDemo({ club, admin, people, transaction }) {
     const florencia = memberOf.get('faguirre')
     await notice('mferreyra', {
         type: 'INSCRIPTION_REQUEST',
-        title: `Nueva solicitud de inscripción a ${sport.name}`,
-        message: `Nueva solicitud de inscripción a ${sport.name}: Florencia Aguirre (Nº ${florencia.numMember}).`,
+        ...texts.inscriptionRequest({ sport: sport.name, member: `Florencia Aguirre (Nº ${florencia.numMember})` }),
         at: florenciaInscription.createdAt
     })
 
@@ -612,8 +622,13 @@ async function loadDemo({ club, admin, people, transaction }) {
     const { weekdayShort, dayMonth } = dateTimeParts(rejection.game.dateTime)
     await notice(rejection.coach, {
         type: 'CITATION_RESPONSE',
-        title: `${fullNameOf(rejection.person)} no puede ir`,
-        message: `${fullNameOf(rejection.person)} no puede ir a ${rejection.game.categoryName} vs. ${rejection.game.rival} (${weekdayShort} ${dayMonth}): «${rejection.citation.justification}».`,
+        ...texts.citationRejected({
+            player: fullNameOf(rejection.person),
+            match: `${rejection.game.categoryName} vs. ${rejection.game.rival}`,
+            weekdayShort,
+            dayMonth,
+            justification: rejection.citation.justification
+        }),
         isRead: true,
         at: rejection.citation.dateResponse
     })

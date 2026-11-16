@@ -8,7 +8,7 @@ export function formatDate(value) {
   return format(typeof value === 'string' ? parseISO(value) : value, 'dd/MM/yyyy')
 }
 
-const moneyFormat = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 2 })
+const moneyFormat = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0, maximumFractionDigits: 2 })
 
 // 15000 → '$ 15.000'
 export function formatMoney(value) {

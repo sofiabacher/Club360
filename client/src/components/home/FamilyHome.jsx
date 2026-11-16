@@ -1,4 +1,3 @@
-import { useCallback, useEffect, useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
@@ -8,12 +7,12 @@ import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
 import Divider from '@mui/material/Divider'
 import Grid from '@mui/material/Grid'
-import Link from '@mui/material/Link'
 import Skeleton from '@mui/material/Skeleton'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import FamilyRestroomRounded from '@mui/icons-material/FamilyRestroomRounded'
 
+import ActionLink from '../common/ActionLink.jsx'
 import { getLinkedCitations } from '../../api/citations.api.js'
 import { getLinkedFees } from '../../api/fees.api.js'
 import { getLinkedGames } from '../../api/games.api.js'
@@ -23,24 +22,11 @@ import { HomeChip } from '../games/GameChips.jsx'
 import { outcomeChip } from '../../utils/results.js'
 import QuickAccess from './QuickAccess.jsx'
 import {
-  citationChipOf, citationForGame, feeStatusOf, hasFeeInReview, hasOverdueFee, initialBlock, nextGameOf, oldestPayableFee
+  citationChipOf, citationForGame, feeStatusOf, hasFeeInReview, hasOverdueFee, nextGameOf, oldestPayableFee
 } from './homeData.js'
 import useAuth from '../../hooks/useAuth.js'
-import { getErrorMessage } from '../../utils/apiErrors.js'
 import { formatGameDate, formatMoney, formatWeekdayDay } from '../../utils/format.js'
-
-function useBlock(request) {
-  const [block, setBlock] = useState(initialBlock)
-
-  const load = useCallback(() => {
-    request()
-      .then(({ data }) => setBlock({ data, error: '', loading: false }))
-      .catch((err) => setBlock({ data: null, error: getErrorMessage(err), loading: false }))
-  }, [request])
-
-  useEffect(() => { load() }, [load])
-  return block
-}
+import useBlock from './useBlock.js'
 
 const upcomingLinkedCitations = () => getLinkedCitations('upcoming')
 
@@ -95,7 +81,7 @@ function PlayerCard({ member, account, gamesOf, citationsOf, games, citations, f
 
   return (
     <Card sx={{ height: '100%' }}>
-      <Box sx={{ bgcolor: 'burgundy.main', color: 'burgundy.contrastText', px: 2.5, py: 1.25 }}>
+      <Box sx={{ bgcolor: 'tint.main', color: 'navy.main', borderBottom: 1, borderColor: 'divider', px: 2.5, py: 1.25 }}>
         <Typography sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>{member.name}</Typography>
         <Typography variant="numeric" sx={{ fontSize: '1.1rem', opacity: 0.9 }}>
           {account ? `SOCIO Nº ${account.member.numMember}` : ''}
@@ -104,7 +90,7 @@ function PlayerCard({ member, account, gamesOf, citationsOf, games, citations, f
       </Box>
 
       <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
-        <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: 1.5 }}>Próximo partido</Typography>
+        <Typography variant="overline" sx={{ color: 'text.secondary' }}>Próximo partido</Typography>
         {games.loading && <SectionSkeleton />}
         {!games.loading && games.error && <Alert severity="error">{games.error}</Alert>}
         {!games.loading && !games.error && (next ? (
@@ -137,7 +123,7 @@ function PlayerCard({ member, account, gamesOf, citationsOf, games, citations, f
 
         {!games.loading && !games.error && categories.some((item) => item.campaign) && (
           <Box sx={{ mt: 2 }}>
-            <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: 1.5 }}>Resultados</Typography>
+            <Typography variant="overline" sx={{ color: 'text.secondary' }}>Resultados</Typography>
             <Stack spacing={0.5}>
               {categories.map((item) => <CampaignLine key={item.category.id} item={item} />)}
             </Stack>
@@ -146,7 +132,7 @@ function PlayerCard({ member, account, gamesOf, citationsOf, games, citations, f
 
         <Divider sx={{ my: 2 }} />
 
-        <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: 1.5 }}>Cuota</Typography>
+        <Typography variant="overline" sx={{ color: 'text.secondary' }}>Cuota</Typography>
         {fees.loading && <SectionSkeleton height={40} />}
         {!fees.loading && fees.error && <Alert severity="error">{fees.error}</Alert>}
         {!fees.loading && !fees.error && account && (
@@ -162,9 +148,9 @@ function PlayerCard({ member, account, gamesOf, citationsOf, games, citations, f
               </Button>
             )}
             {!payFirst && debt && (
-              <Link component={RouterLink} to={`/family/fees?memberId=${member.id}`} color="secondary" sx={{ display: 'inline-block', mt: 1.5, fontWeight: 600 }}>
+              <ActionLink to={`/family/fees?memberId=${member.id}`} sx={{ mt: 1.5 }}>
                 Ver cuotas
-              </Link>
+              </ActionLink>
             )}
           </Box>
         )}
@@ -226,7 +212,7 @@ export default function FamilyHome() {
 
       {noneLoaded && (
         <Grid container spacing={3}>
-          {[0, 1].map((key) => <Grid key={key} size={{ xs: 12, md: 6 }}><Skeleton variant="rounded" height={320} sx={{ borderRadius: 3 }} /></Grid>)}
+          {[0, 1].map((key) => <Grid key={key} size={{ xs: 12, md: 6 }}><Skeleton variant="rounded" height={320} sx={{ borderRadius: 1 }} /></Grid>)}
         </Grid>
       )}
 

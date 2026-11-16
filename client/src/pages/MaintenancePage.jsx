@@ -22,7 +22,7 @@ export default function MaintenancePage() {
   }
 
   return (
-    <AuthLayout title="Sistema en mantenimiento">
+    <AuthLayout title="Sistema en mantenimiento" assistant={false}>
       <Stack spacing={2.5} sx={{ alignItems: 'center', textAlign: 'center' }}>
         <BuildCircleRounded sx={{ fontSize: 64, color: 'secondary.main' }} />
         <Typography sx={{ color: 'navy.main' }}>El sistema está en mantenimiento. Probá de nuevo más tarde.</Typography>

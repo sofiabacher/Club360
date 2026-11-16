@@ -17,8 +17,8 @@ export default function MemberCard({ clubName, accentColor, fullName, numMember,
   const small = size === 'small'
 
   return (
-    <Paper elevation={4} sx={{ overflow: 'hidden', borderRadius: 3, bgcolor: 'cream.main', ...keepColors, '@media print': { boxShadow: 'none', border: 1, borderColor: 'divider' } }}>
-      <Box sx={{ bgcolor: 'burgundy.main', color: 'burgundy.contrastText', px: small ? 2 : 3, py: small ? 1 : 1.5, ...keepColors }}>
+    <Paper variant="outlined" sx={{ overflow: 'hidden', borderRadius: 1, ...keepColors }}>
+      <Box sx={{ bgcolor: 'navy.main', color: 'navy.contrastText', px: small ? 2 : 3, py: small ? 1 : 1.5, ...keepColors }}>
         <Typography sx={{ fontWeight: 600, fontSize: small ? '0.75rem' : '0.85rem', letterSpacing: '0.25em', textTransform: 'uppercase' }}>
           {clubName}
         </Typography>
@@ -29,7 +29,7 @@ export default function MemberCard({ clubName, accentColor, fullName, numMember,
         <Avatar
           src={photoUrl}
           alt={fullName}
-          sx={{ width: small ? 56 : 72, height: small ? 56 : 72, bgcolor: 'background.paper', color: 'burgundy.main', border: 2, borderColor: 'burgundy.light', ...keepColors }}
+          sx={{ width: small ? 56 : 72, height: small ? 56 : 72, bgcolor: 'tint.main', color: 'navy.main', border: 2, borderColor: 'tint.dark', ...keepColors }}
         >
           <PersonOutlineRounded fontSize="large" />
         </Avatar>

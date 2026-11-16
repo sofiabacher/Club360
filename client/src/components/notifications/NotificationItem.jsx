@@ -16,7 +16,7 @@ export function NotificationIcon({ type, size = 40 }) {
       sx={(theme) => ({
         width: size,
         height: size,
-        bgcolor: tone ? theme.status[tone].bg : 'cream.main',
+        bgcolor: tone ? theme.status[tone].bg : 'tint.main',
         color: tone ? theme.status[tone].fg : 'navy.main'
       })}
     >
@@ -31,7 +31,7 @@ export default function NotificationItem({ notification, clubName, compact = fal
   const unread = !notification.isRead
 
   return (
-    <ListItemButton onClick={onClick} alignItems="flex-start" sx={{ gap: 1.5, py: 1.5, borderRadius: 2 }}>
+    <ListItemButton onClick={onClick} alignItems="flex-start" sx={{ gap: 1.5, py: 1.5, borderRadius: 1 }}>
       <NotificationIcon type={notification.type} size={compact ? 34 : 40} />
       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

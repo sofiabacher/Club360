@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import Alert from '@mui/material/Alert'
-import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardActions from '@mui/material/CardActions'
@@ -25,6 +24,7 @@ import RoleFormDialog from '../../components/access/RoleFormDialog.jsx'
 import useAuth from '../../hooks/useAuth.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 const plural = (count, singular, pluralForm) => `${count} ${count === 1 ? singular : pluralForm}`
 
@@ -40,7 +40,7 @@ function RoleCard({ role, onEdit, onDelete }) {
       <CardContent sx={{ flexGrow: 1 }}>
         <Stack direction="row" sx={{ alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 1 }}>
           <Typography variant="h6" component="h3" sx={{ color: 'navy.main' }}>{role.name}</Typography>
-          {role.isBase && <Chip label="Rol base" size="small" sx={{ bgcolor: 'cream.main', color: 'navy.main', fontWeight: 600 }} />}
+          {role.isBase && <Chip label="Rol base" size="small" sx={{ bgcolor: 'tint.main', color: 'navy.main', fontWeight: 600 }} />}
         </Stack>
         <Typography variant="body2" sx={{ color: 'text.secondary', minHeight: '2.5em' }}>
           {role.description || 'Sin descripción'}
@@ -126,17 +126,15 @@ export default function RolesPage() {
 
   return (
     <>
-      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between', gap: 2, mb: 3 }}>
-        <Box>
-          <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Roles y permisos</Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Cada rol es un conjunto de permisos. Los roles base no se eliminan ni se renombran.
-          </Typography>
-        </Box>
-        <Button variant="contained" color="primary" startIcon={<AddRounded />} onClick={() => setForm({ open: true, roleId: null })} sx={{ flexShrink: 0 }}>
-          Nuevo rol
-        </Button>
-      </Stack>
+      <PageHeader
+        title="Roles y permisos"
+        description="Cada rol es un conjunto de permisos. Los roles base no se eliminan ni se renombran."
+        action={
+          <Button variant="contained" color="primary" startIcon={<AddRounded />} onClick={() => setForm({ open: true, roleId: null })}>
+            Nuevo rol
+          </Button>
+        }
+      />
 
       <Grid container spacing={2}>
         {roles.map((role) => (

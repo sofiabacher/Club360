@@ -63,7 +63,7 @@ function WeeksHistory({ weeks, selected, onSelect }) {
         ) : (
           <List dense sx={{ mx: -1, maxHeight: 320, overflowY: 'auto' }}>
             {weeks.map((week) => (
-              <ListItemButton key={week.weekStart} selected={week.weekStart === selected} onClick={() => onSelect(week.weekStart)} sx={{ borderRadius: 2 }}>
+              <ListItemButton key={week.weekStart} selected={week.weekStart === selected} onClick={() => onSelect(week.weekStart)} sx={{ borderRadius: 1 }}>
                 <ListItemText
                   primary={`Semana del ${formatDayMonth(week.weekStart)} al ${formatDayMonth(week.weekEnd)}`}
                   secondary={week.days === 1 ? '1 día cargado' : `${week.days} días cargados`}

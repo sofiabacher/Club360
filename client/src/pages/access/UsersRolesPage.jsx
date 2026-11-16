@@ -30,6 +30,7 @@ import { USER_STATES } from '../../utils/constants.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 import EmptyState from '../../components/common/EmptyState.jsx'
 import ManageAccountsRounded from '@mui/icons-material/ManageAccountsRounded'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 // Estado del usuario en StatusChip (los DELETED no llegan a esta lista)
 const USER_STATE_CHIPS = {
@@ -104,25 +105,25 @@ export default function UsersRolesPage() {
 
   return (
     <>
-      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between', gap: 2, mb: 3 }}>
-        <Box>
-          <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Usuarios y roles</Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Tocá un usuario para asignarle roles o permisos directos.
-          </Typography>
-        </Box>
-        <TextField
-          placeholder="Buscar por nombre, usuario o email"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          size="small"
-          sx={{ width: { xs: '100%', sm: 320 } }}
-          slotProps={{
-            input: { startAdornment: <InputAdornment position="start"><SearchRounded /></InputAdornment> },
-            htmlInput: { maxLength: 100, 'aria-label': 'Buscar usuarios' }
-          }}
-        />
-      </Stack>
+      <PageHeader
+        title="Usuarios y roles"
+        description="Tocá un usuario para asignarle roles o permisos directos."
+        action={
+          <>
+            <TextField
+              placeholder="Buscar por nombre, usuario o email"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              size="small"
+              sx={{ width: { xs: '100%', sm: 320 } }}
+              slotProps={{
+                input: { startAdornment: <InputAdornment position="start"><SearchRounded /></InputAdornment> },
+                htmlInput: { maxLength: 100, 'aria-label': 'Buscar usuarios' }
+              }}
+            />
+          </>
+        }
+      />
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 

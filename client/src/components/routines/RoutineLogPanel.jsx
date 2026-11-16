@@ -73,7 +73,7 @@ function StatusButton({ status, selected, onClick, disabled }) {
         minWidth: 96,
         py: 1.5,
         px: 1,
-        borderRadius: 2,
+        borderRadius: 1,
         border: 2,
         borderColor: selected ? theme.status[info.status].fg : 'divider',
         bgcolor: selected ? theme.status[info.status].bg : 'background.paper',
@@ -124,7 +124,7 @@ export default function RoutineLogPanel({ routine, onSaved }) {
     }
   }
 
-  const header = <Typography variant="overline" component="h4" sx={{ color: 'text.secondary', letterSpacing: 1.5 }}>¿Cómo te fue?</Typography>
+  const header = <Typography variant="overline" component="h4" sx={{ color: 'text.secondary' }}>¿Cómo te fue?</Typography>
 
   if (!editing) {
     if (!log) {

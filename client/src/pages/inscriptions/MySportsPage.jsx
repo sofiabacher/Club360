@@ -23,6 +23,7 @@ import { getErrorMessage } from '../../utils/apiErrors.js'
 import { INSCRIPTION_STATES, MEMBER_STATES } from '../../utils/constants.js'
 import { formatDate, formatMoney } from '../../utils/format.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 // Chip de la inscripción: Pendiente, Aprobada o Rechazada. Sin inscripción (o Cancelada), sin chip
 const STATE_CHIPS = {
@@ -158,12 +159,7 @@ export default function MySportsPage() {
 
   return (
     <>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Deportes</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Los deportes del club. Cada deporte en el que estás inscripto suma su cuota deportiva a tu cuota mensual.
-        </Typography>
-      </Box>
+      <PageHeader title="Deportes" description="Los deportes del club. Cada deporte en el que estás inscripto suma su cuota deportiva a tu cuota mensual." />
 
       {data.memberStateId === MEMBER_STATES.SUSPENDED && (
         <Alert severity="warning" sx={{ mb: 2 }}>Tenés cuotas atrasadas: regularizá tu situación para inscribirte a un deporte.</Alert>

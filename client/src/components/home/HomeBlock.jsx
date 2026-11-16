@@ -11,7 +11,7 @@ export default function HomeBlock({ title, loading, error, height = 140, childre
   return (
     <Card sx={sx}>
       <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-        {title && <Typography variant="overline" component="h3" sx={{ color: 'text.secondary', letterSpacing: 1.5, display: 'block', mb: 0.5 }}>{title}</Typography>}
+        {title && <Typography variant="overline" component="h3" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>{title}</Typography>}
         {loading && (
           <Stack spacing={1}>
             <Skeleton variant="text" width="60%" />

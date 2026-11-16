@@ -345,7 +345,7 @@ export default function AccountPage() {
                 </Stack>
 
                 {member.codeFamily && (
-                  <Paper variant="outlined" sx={{ mt: 3, p: 2.5, bgcolor: 'cream.main', textAlign: 'center' }}>
+                  <Paper variant="outlined" sx={{ mt: 3, p: 2.5, bgcolor: 'tint.main', textAlign: 'center' }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>Código de vínculo familiar</Typography>
                     <Typography variant="numeric" component="p" sx={{ fontSize: '2.4rem', color: 'navy.main', letterSpacing: '0.1em', my: 0.5 }}>
                       {member.codeFamily}

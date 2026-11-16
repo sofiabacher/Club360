@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import Alert from '@mui/material/Alert'
-import Box from '@mui/material/Box'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
-import Typography from '@mui/material/Typography'
 import FitnessCenterRounded from '@mui/icons-material/FitnessCenterRounded'
 
 import { getMyRoutine } from '../../api/routines.api.js'
@@ -12,6 +10,7 @@ import RoutineLogPanel from '../../components/routines/RoutineLogPanel.jsx'
 import RoutineWeekView, { RoutineDayCard, defaultDayOf } from '../../components/routines/RoutineWeekView.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 // Mi rutina (routines.viewOwn): la semana actual con el día de hoy elegido. Si está en más de una categoría, una
 // pestaña por categoría con el nombre de la liga. Se puede ir a semanas pasadas y futuras. Con routines.trackOwn, debajo
@@ -41,10 +40,7 @@ export default function MyRoutinePage() {
   if (!data) return <LoadingSkeleton />
 
   const header = (
-    <Box sx={{ mb: 3 }}>
-      <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Mi rutina</Typography>
-      <Typography variant="body2" sx={{ color: 'text.secondary' }}>La rutina de cada día de entrenamiento, que carga la preparadora física.</Typography>
-    </Box>
+    <PageHeader title="Mi rutina" description="La rutina de cada día de entrenamiento, que carga la preparadora física." />
   )
 
   if (data.categories.length === 0) {

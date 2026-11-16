@@ -15,7 +15,6 @@ import FitnessCenterRounded from '@mui/icons-material/FitnessCenterRounded'
 import OndemandVideoRounded from '@mui/icons-material/OndemandVideoRounded'
 
 import EmptyState from '../common/EmptyState.jsx'
-import ParquetBackground from '../common/ParquetBackground.jsx'
 import { DAYS_OF_WEEK } from '../../utils/constants.js'
 import { formatDayMonth } from '../../utils/format.js'
 import { getUploadUrl } from '../../utils/media.js'
@@ -149,15 +148,15 @@ export function RoutineDayCard({ day, footer }) {
   const imageSrc = getUploadUrl(routine.imageUrl)
 
   return (
-    <ParquetBackground sx={{ borderRadius: 3, p: { xs: 1.5, sm: 3 } }}>
-      <Card elevation={6} sx={{ borderRadius: 3, maxWidth: 720, mx: 'auto' }}>
+    <Box>
+      <Card sx={{ maxWidth: 760 }}>
         <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-          <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: 1.5 }}>{heading}</Typography>
+          <Typography variant="overline" sx={{ color: 'text.secondary' }}>{heading}</Typography>
           <Typography variant="h6" component="h3" sx={{ color: 'navy.main', overflowWrap: 'anywhere' }}>{routine.title}</Typography>
           <Typography sx={{ mt: 1.5, whiteSpace: 'pre-line', overflowWrap: 'anywhere' }}>{routine.description}</Typography>
 
           {imageSrc && (
-            <ButtonBase onClick={() => setZoom(true)} aria-label="Ver la imagen en grande" sx={{ mt: 2, borderRadius: 2, overflow: 'hidden', display: 'block', width: '100%' }}>
+            <ButtonBase onClick={() => setZoom(true)} aria-label="Ver la imagen en grande" sx={{ mt: 2, borderRadius: 1, overflow: 'hidden', display: 'block', width: '100%' }}>
               <Box component="img" src={imageSrc} alt={`Imagen de la rutina: ${routine.title}`} sx={{ width: '100%', maxHeight: 360, objectFit: 'cover', display: 'block' }} />
             </ButtonBase>
           )}
@@ -187,7 +186,7 @@ export function RoutineDayCard({ day, footer }) {
           <Box component="img" src={imageSrc} alt={`Imagen de la rutina: ${routine.title}`} sx={{ maxWidth: '100%', maxHeight: '85vh', display: 'block' }} />
         </Dialog>
       )}
-    </ParquetBackground>
+    </Box>
   )
 }
 

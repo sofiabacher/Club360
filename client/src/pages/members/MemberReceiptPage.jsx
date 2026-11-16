@@ -67,9 +67,9 @@ export default function MemberReceiptPage() {
         )}
 
         {receipt.familyCode && (
-          <Paper variant="outlined" sx={{ p: 3, borderStyle: 'dashed', borderWidth: 2, borderColor: 'burgundy.main', breakInside: 'avoid' }}>
+          <Paper variant="outlined" sx={{ p: 3, borderStyle: 'dashed', borderWidth: 2, borderColor: 'secondary.main', breakInside: 'avoid' }}>
             <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 1.5 }}>
-              <FamilyRestroomRounded sx={{ color: 'burgundy.main' }} />
+              <FamilyRestroomRounded sx={{ color: 'secondary.main' }} />
               <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'navy.main' }}>Para el adulto responsable</Typography>
             </Stack>
             <Typography variant="numeric" component="p" sx={{ fontSize: '2.6rem', color: 'navy.main', letterSpacing: '0.1em', textAlign: 'center', my: 1 }}>

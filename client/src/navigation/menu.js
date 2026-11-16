@@ -3,7 +3,7 @@
 // IMPORTANTE: toda pantalla nueva se agrega acá con su permiso, y su ruta va en routes/AppRouter.jsx protegida con
 // PermissionRoute y el mismo permiso (las rutas de estas entradas ya se generan solas recorriendo este archivo).
 //
-// Cada entrada: { label, path, icon, permission, group }. El menú muestra solo las entradas cuyo permiso está en
+// Cada entrada: { label, description, path, icon, permission, group }. description: una línea para los accesos rápidos. El menú muestra solo las entradas cuyo permiso está en
 // session.permissions (Inicio no lleva permiso: se muestra siempre). Si en un mismo grupo hay dos entradas con el mismo
 // label, se muestra la primera que tenga permiso.
 import AccountBalanceWalletRounded from '@mui/icons-material/AccountBalanceWalletRounded'
@@ -36,50 +36,50 @@ import VerifiedUserRounded from '@mui/icons-material/VerifiedUserRounded'
 export const MENU_GROUPS = ['Gestión', 'Deportivo', 'Mi espacio', 'Familia', 'Club', 'Sistema']
 
 export const MENU_ITEMS = [
-  { label: 'Inicio', path: '/', icon: HomeRounded, permission: null, group: null },
+  { label: 'Inicio', description: 'Tu panel con lo más importante', path: '/', icon: HomeRounded, permission: null, group: null },
 
-  { label: 'Socios', path: '/members', icon: GroupsRounded, permission: 'members.manage', group: 'Gestión' },
-  { label: 'Staff', path: '/staff', icon: BadgeRounded, permission: 'staff.manage', group: 'Gestión' },
-  { label: 'Cuotas', path: '/fees', icon: PaymentsRounded, permission: 'fees.manage', group: 'Gestión' },
-  { label: 'Pagos', path: '/fees/payments', icon: ReceiptLongRounded, permission: 'fees.manage', group: 'Gestión' },
-  { label: 'Inscripciones', path: '/inscriptions', icon: HowToRegRounded, permission: 'inscriptions.approve', group: 'Gestión' },
-  { label: 'Ligas y categorías', path: '/leagues', icon: EmojiEventsRounded, permission: 'leagues.manage', group: 'Gestión' },
-  { label: 'Partidos', path: '/games', icon: SportsVolleyballRounded, permission: 'games.manage', group: 'Gestión' },
-  { label: 'Cuotas de jugadoras', path: '/fees/players', icon: RequestQuoteRounded, permission: 'fees.viewPlayers', group: 'Gestión' },
+  { label: 'Socios', description: 'Altas, bajas y datos de los socios', path: '/members', icon: GroupsRounded, permission: 'members.manage', group: 'Gestión' },
+  { label: 'Staff', description: 'Entrenadoras, preparadoras y representantes', path: '/staff', icon: BadgeRounded, permission: 'staff.manage', group: 'Gestión' },
+  { label: 'Cuotas', description: 'Cuotas del mes y estado de cuenta', path: '/fees', icon: PaymentsRounded, permission: 'fees.manage', group: 'Gestión' },
+  { label: 'Pagos', description: 'Pagos y transferencias por revisar', path: '/fees/payments', icon: ReceiptLongRounded, permission: 'fees.manage', group: 'Gestión' },
+  { label: 'Inscripciones', description: 'Solicitudes para aprobar o rechazar', path: '/inscriptions', icon: HowToRegRounded, permission: 'inscriptions.approve', group: 'Gestión' },
+  { label: 'Ligas y categorías', description: 'Ligas, categorías y planteles', path: '/leagues', icon: EmojiEventsRounded, permission: 'leagues.manage', group: 'Gestión' },
+  { label: 'Partidos', description: 'Fixture, resultados y superposiciones', path: '/games', icon: SportsVolleyballRounded, permission: 'games.manage', group: 'Gestión' },
+  { label: 'Cuotas de jugadoras', description: 'Cómo están las cuotas de las jugadoras', path: '/fees/players', icon: RequestQuoteRounded, permission: 'fees.viewPlayers', group: 'Gestión' },
 
-  { label: 'Mis categorías', path: '/my-categories', icon: CategoryRounded, permission: 'leagues.viewAssigned', group: 'Deportivo' },
-  { label: 'Partidos', path: '/games/assigned', icon: EventRounded, permission: 'games.viewAssigned', group: 'Deportivo' },
-  { label: 'Citaciones', path: '/citations', icon: AssignmentIndRounded, permission: 'citations.create', group: 'Deportivo' },
-  { label: 'Rutinas', path: '/routines', icon: FitnessCenterRounded, permission: 'routines.manage', group: 'Deportivo' },
-  { label: 'Rutinas', path: '/routines/assigned', icon: FitnessCenterRounded, permission: 'routines.viewAssigned', group: 'Deportivo' },
-  { label: 'Seguimiento', path: '/routines/tracking', icon: InsightsRounded, permission: 'routines.viewTracking', group: 'Deportivo' },
+  { label: 'Mis categorías', description: 'Tus categorías y sus jugadoras', path: '/my-categories', icon: CategoryRounded, permission: 'leagues.viewAssigned', group: 'Deportivo' },
+  { label: 'Partidos', description: 'Partidos de tus categorías y conflictos', path: '/games/assigned', icon: EventRounded, permission: 'games.viewAssigned', group: 'Deportivo' },
+  { label: 'Citaciones', description: 'Citá jugadoras y seguí las respuestas', path: '/citations', icon: AssignmentIndRounded, permission: 'citations.create', group: 'Deportivo' },
+  { label: 'Rutinas', description: 'Cargá las rutinas de cada día', path: '/routines', icon: FitnessCenterRounded, permission: 'routines.manage', group: 'Deportivo' },
+  { label: 'Rutinas', description: 'Las rutinas de tus categorías', path: '/routines/assigned', icon: FitnessCenterRounded, permission: 'routines.viewAssigned', group: 'Deportivo' },
+  { label: 'Seguimiento', description: 'Cómo cumplen las jugadoras sus rutinas', path: '/routines/tracking', icon: InsightsRounded, permission: 'routines.viewTracking', group: 'Deportivo' },
 
-  { label: 'Mis partidos', path: '/my-games', icon: EventRounded, permission: 'games.viewOwn', group: 'Mi espacio' },
-  { label: 'Mis citaciones', path: '/my-citations', icon: AssignmentIndRounded, permission: 'citations.respond', group: 'Mi espacio' },
-  { label: 'Mi rutina', path: '/my-routine', icon: FitnessCenterRounded, permission: 'routines.viewOwn', group: 'Mi espacio' },
-  { label: 'Mi progreso', path: '/my-progress', icon: InsightsRounded, permission: 'routines.trackOwn', group: 'Mi espacio' },
-  { label: 'Mis cuotas', path: '/my-fees', icon: PaymentsRounded, permission: 'fees.viewOwn', group: 'Mi espacio' },
-  { label: 'Deportes', path: '/my-sports', icon: SportsRounded, permission: 'inscriptions.request', group: 'Mi espacio' },
+  { label: 'Mis partidos', description: 'Próximos partidos y resultados', path: '/my-games', icon: EventRounded, permission: 'games.viewOwn', group: 'Mi espacio' },
+  { label: 'Mis citaciones', description: 'Confirmá o rechazá tus citaciones', path: '/my-citations', icon: AssignmentIndRounded, permission: 'citations.respond', group: 'Mi espacio' },
+  { label: 'Mi rutina', description: 'La rutina del día y tu registro', path: '/my-routine', icon: FitnessCenterRounded, permission: 'routines.viewOwn', group: 'Mi espacio' },
+  { label: 'Mi progreso', description: 'Tu cumplimiento, esfuerzo y objetivos', path: '/my-progress', icon: InsightsRounded, permission: 'routines.trackOwn', group: 'Mi espacio' },
+  { label: 'Mis cuotas', description: 'Tu estado de cuenta y pagos', path: '/my-fees', icon: PaymentsRounded, permission: 'fees.viewOwn', group: 'Mi espacio' },
+  { label: 'Deportes', description: 'Inscripciones a los deportes del club', path: '/my-sports', icon: SportsRounded, permission: 'inscriptions.request', group: 'Mi espacio' },
 
-  { label: 'Partidos', path: '/family/games', icon: EventRounded, permission: 'games.viewLinked', group: 'Familia' },
-  { label: 'Citaciones', path: '/family/citations', icon: AssignmentIndRounded, permission: 'citations.viewLinked', group: 'Familia' },
-  { label: 'Estado de cuenta', path: '/family/fees', icon: AccountBalanceWalletRounded, permission: 'fees.manageLinked', group: 'Familia' },
+  { label: 'Partidos', description: 'Partidos de tus jugadoras', path: '/family/games', icon: EventRounded, permission: 'games.viewLinked', group: 'Familia' },
+  { label: 'Citaciones', description: 'Citaciones de tus jugadoras', path: '/family/citations', icon: AssignmentIndRounded, permission: 'citations.viewLinked', group: 'Familia' },
+  { label: 'Estado de cuenta', description: 'Cuotas de tus jugadoras y pagos', path: '/family/fees', icon: AccountBalanceWalletRounded, permission: 'fees.manageLinked', group: 'Familia' },
 
-  { label: 'El club', path: '/club', icon: StadiumRounded, permission: 'clubs.viewInfo', group: 'Club' },
-  { label: 'Configuración del club', path: '/club/settings', icon: SettingsRounded, permission: 'clubs.manageSettings', group: 'Club' },
-  { label: 'Deportes del club', path: '/club/sports', icon: SportsVolleyballRounded, permission: 'clubs.manageSports', group: 'Club' },
-  { label: 'Enviar avisos', path: '/notifications/send', icon: CampaignRounded, permission: 'notifications.sendAll', group: 'Club' },
-  { label: 'Enviar avisos', path: '/notifications/send', icon: CampaignRounded, permission: 'notifications.sendSport', group: 'Club' },
-  { label: 'Enviar avisos', path: '/notifications/send', icon: CampaignRounded, permission: 'notifications.sendCategory', group: 'Club' },
-  { label: 'Avisos enviados', path: '/notifications/sent', icon: ManageHistoryRounded, permission: 'notifications.sendAll', group: 'Club' },
-  { label: 'Avisos enviados', path: '/notifications/sent', icon: ManageHistoryRounded, permission: 'notifications.sendSport', group: 'Club' },
-  { label: 'Avisos enviados', path: '/notifications/sent', icon: ManageHistoryRounded, permission: 'notifications.sendCategory', group: 'Club' },
+  { label: 'El club', description: 'Contacto, horarios y canchas', path: '/club', icon: StadiumRounded, permission: 'clubs.viewInfo', group: 'Club' },
+  { label: 'Configuración del club', description: 'Datos, cuota social y plazos del club', path: '/club/settings', icon: SettingsRounded, permission: 'clubs.manageSettings', group: 'Club' },
+  { label: 'Deportes del club', description: 'Deportes activos y su cuota', path: '/club/sports', icon: SportsVolleyballRounded, permission: 'clubs.manageSports', group: 'Club' },
+  { label: 'Enviar avisos', description: 'Mandá un aviso por la plataforma o email', path: '/notifications/send', icon: CampaignRounded, permission: 'notifications.sendAll', group: 'Club' },
+  { label: 'Enviar avisos', description: 'Mandá un aviso por la plataforma o email', path: '/notifications/send', icon: CampaignRounded, permission: 'notifications.sendSport', group: 'Club' },
+  { label: 'Enviar avisos', description: 'Mandá un aviso por la plataforma o email', path: '/notifications/send', icon: CampaignRounded, permission: 'notifications.sendCategory', group: 'Club' },
+  { label: 'Avisos enviados', description: 'Lo que mandaste y quién lo leyó', path: '/notifications/sent', icon: ManageHistoryRounded, permission: 'notifications.sendAll', group: 'Club' },
+  { label: 'Avisos enviados', description: 'Lo que mandaste y quién lo leyó', path: '/notifications/sent', icon: ManageHistoryRounded, permission: 'notifications.sendSport', group: 'Club' },
+  { label: 'Avisos enviados', description: 'Lo que mandaste y quién lo leyó', path: '/notifications/sent', icon: ManageHistoryRounded, permission: 'notifications.sendCategory', group: 'Club' },
 
-  { label: 'Roles y permisos', path: '/access/roles', icon: AdminPanelSettingsRounded, permission: 'access.manageRoles', group: 'Sistema' },
-  { label: 'Usuarios y roles', path: '/access/users', icon: ManageAccountsRounded, permission: 'access.assignRoles', group: 'Sistema' },
-  { label: 'Bitácora', path: '/logs', icon: HistoryRounded, permission: 'logs.view', group: 'Sistema' },
-  { label: 'Integridad de datos', path: '/integrity', icon: VerifiedUserRounded, permission: 'integrity.manage', group: 'Sistema' },
-  { label: 'Copias de seguridad', path: '/backup', icon: BackupRounded, permission: 'backup.manage', group: 'Sistema' }
+  { label: 'Roles y permisos', description: 'Roles y qué puede hacer cada uno', path: '/access/roles', icon: AdminPanelSettingsRounded, permission: 'access.manageRoles', group: 'Sistema' },
+  { label: 'Usuarios y roles', description: 'Roles y permisos de cada usuario', path: '/access/users', icon: ManageAccountsRounded, permission: 'access.assignRoles', group: 'Sistema' },
+  { label: 'Bitácora', description: 'Registro de todo lo que pasa en el sistema', path: '/logs', icon: HistoryRounded, permission: 'logs.view', group: 'Sistema' },
+  { label: 'Integridad de datos', description: 'Verificá que los datos no se alteraron', path: '/integrity', icon: VerifiedUserRounded, permission: 'integrity.manage', group: 'Sistema' },
+  { label: 'Copias de seguridad', description: 'Copias de los datos del club', path: '/backup', icon: BackupRounded, permission: 'backup.manage', group: 'Sistema' }
 ]
 
 // Pantallas que no están en el menú, para el título de la barra superior: [patrón del path, título]

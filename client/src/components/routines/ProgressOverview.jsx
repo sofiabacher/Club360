@@ -12,7 +12,7 @@ function SummaryCard({ label, value, hint }) {
   return (
     <Card sx={{ height: '100%' }}>
       <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
-        <Typography variant="overline" component="p" sx={{ color: 'text.secondary', letterSpacing: 1.5 }}>{label}</Typography>
+        <Typography variant="overline" component="p" sx={{ color: 'text.secondary' }}>{label}</Typography>
         <Typography variant="numeric" component="p" sx={{ fontSize: { xs: '2.2rem', sm: '2.6rem' }, color: 'navy.main' }}>{value}</Typography>
         {hint && <Typography variant="body2" sx={{ color: 'text.secondary' }}>{hint}</Typography>}
       </CardContent>

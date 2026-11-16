@@ -115,7 +115,7 @@ export default function AddPlayersDialog({ open, category, onClose, onSaved }) {
         {players && players.length > 0 && (
           <List dense sx={{ mt: 1, maxHeight: 360, overflowY: 'auto' }}>
             {players.map((player) => (
-              <ListItemButton key={player.memberId} onClick={() => toggle(player.memberId)} sx={{ borderRadius: 2 }}>
+              <ListItemButton key={player.memberId} onClick={() => toggle(player.memberId)} sx={{ borderRadius: 1 }}>
                 <ListItemIcon sx={{ minWidth: 40 }}>
                   <Checkbox edge="start" checked={selected.includes(player.memberId)} tabIndex={-1} disableRipple color="secondary" />
                 </ListItemIcon>

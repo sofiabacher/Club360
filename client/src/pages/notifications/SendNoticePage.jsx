@@ -29,6 +29,7 @@ import ManageHistoryRounded from '@mui/icons-material/ManageHistoryRounded'
 import { getSendOptions, previewNotice, sendNotice } from '../../api/notifications.api.js'
 import { getErrorMessage, getFieldErrors } from '../../utils/apiErrors.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 const TITLE_MAX = 150
 const MESSAGE_MAX = 2000
@@ -176,17 +177,15 @@ export default function SendNoticePage() {
 
   return (
     <Box sx={{ maxWidth: 820 }}>
-      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between', gap: 1, mb: 3 }}>
-        <Box>
-          <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Enviar avisos</Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Llegan como notificación en Club360 y, si lo elegís, también por email.
-          </Typography>
-        </Box>
-        <Button component={RouterLink} to="/notifications/sent" color="secondary" startIcon={<ManageHistoryRounded />} sx={{ flexShrink: 0, alignSelf: { xs: 'flex-start', sm: 'center' } }}>
-          Ver avisos enviados
-        </Button>
-      </Stack>
+      <PageHeader
+        title="Enviar avisos"
+        description="Llegan como notificación en Club360 y, si lo elegís, también por email."
+        action={
+          <Button component={RouterLink} to="/notifications/sent" color="secondary" startIcon={<ManageHistoryRounded />} sx={{ flexShrink: 0, alignSelf: { xs: 'flex-start', sm: 'center' } }}>
+            Ver avisos enviados
+          </Button>
+        }
+      />
 
       <Card>
         <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
@@ -312,7 +311,7 @@ export default function SendNoticePage() {
             />
           </Stack>
 
-          <Box sx={{ mt: 2, p: 2, borderRadius: 2, bgcolor: 'background.default' }}>
+          <Box sx={{ mt: 2, p: 2, borderRadius: 1, bgcolor: 'background.default' }}>
             {!audience && <Typography variant="body2" sx={{ color: 'text.secondary' }}>Elegí a quién le llega el aviso.</Typography>}
             {audience && !preview && !previewError && <Typography variant="body2" sx={{ color: 'text.secondary' }}>Calculando destinatarios…</Typography>}
             {previewError && <Typography variant="body2" sx={{ color: 'error.main' }}>{previewError}</Typography>}

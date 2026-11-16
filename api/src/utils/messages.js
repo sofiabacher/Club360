@@ -446,11 +446,14 @@ module.exports = {
 
     bot: {
         otherProfile: 'Esa consulta corresponde a otro perfil de usuario.',
+        otherProfilePublic: 'Eso lo vas a encontrar adentro de la plataforma, después de iniciar sesión. Si todavía no podés entrar, elegí "Empezar" en el menú.',
         blocked: 'Por tu seguridad, no compartas datos personales en el chat.',
-        suggestions: 'No estoy seguro de haber entendido. ¿Quisiste decir…?',
+        suggestions: 'No estoy segura de haber entendido. ¿Quisiste decir…?',
         fallback: (contact) => `No tengo una respuesta para eso. Podés consultarlo directamente en el club: ${contact} También podés elegir un tema del menú.`,
         missingData: 'Todavía no tengo ese dato cargado; consultalo directamente en el club.',
-        greeting: (name, club) => `¡Hola, ${name}! Soy el asistente de ${club}. Elegí un tema o escribime tu consulta.`,
+        greeting: (name, club) => `¡Hola, ${name}! Soy Lyla, la asistente de ${club}. Elegí un tema o escribime tu consulta.`,
+        publicGreeting: '¡Hola! Soy Lyla, la asistente de Club360. Te ayudo a entrar por primera vez y te cuento qué podés hacer en la plataforma. Elegí un tema o escribime tu consulta.',
+        fallbackPublic: 'No tengo una respuesta para eso. Si es algo de tu club (cuotas, partidos, horarios), consultalo en la secretaría o adentro de la plataforma. También podés elegir un tema del menú.',
         rateLimited: 'Esperá un momento antes de seguir escribiendo.',
         backToMenu: 'Volver al menú',
         contactClub: 'Contactar al club',
@@ -512,5 +515,106 @@ module.exports = {
         passwordChangedFailed: 'No se pudo enviar el aviso de cambio de contraseña',
         activationFailed: 'No se pudo enviar el email de activación',
         notificationFailed: 'No se pudo enviar el email de la notificación'
+    },
+
+    // Título y mensaje de cada notificación automática (los avisos generales los escribe quien envía). Reciben los datos
+    // ya formateados (fechas, montos, nombres) y devuelven { title, message }. Los usan los services y seed/demo.js.
+    // Ojo: el job de cuotas busca avisos ya enviados por el título, así que cambiar un título los vuelve a mandar
+    notificationTexts: {
+        citationNew: ({ category, rival, when, deadline }) => ({
+            title: `Te citaron para ${category} vs. ${rival}`,
+            message: `Te citaron para ${category} vs. ${rival}, ${when}. Tenés tiempo de responder hasta el ${deadline}.`
+        }),
+        citationCancelled: ({ category, rival, weekday, dayMonth }) => ({
+            title: `Se canceló tu citación para ${category}`,
+            message: `Se canceló tu citación para ${category} vs. ${rival} del ${weekday} ${dayMonth}.`
+        }),
+        citationConfirmed: ({ player, match, when }) => ({
+            title: `${player} confirmó su citación`,
+            message: `${player} confirmó la citación para ${match} (${when}).`
+        }),
+        citationRejected: ({ player, match, weekdayShort, dayMonth, justification }) => ({
+            title: `${player} no puede ir`,
+            message: `${player} no puede ir a ${match} (${weekdayShort} ${dayMonth}): «${justification}».`
+        }),
+        feeDueSoon: ({ month, year, weekday, dayMonth, amount }) => ({
+            title: `Tu cuota de ${month} ${year} vence pronto`,
+            message: `Tu cuota de ${month} vence el ${weekday} ${dayMonth} (${amount}).`
+        }),
+        feeOverdue: ({ month, year, dayMonth }) => ({
+            title: `Tu cuota de ${month} ${year} venció`,
+            message: `Tu cuota de ${month} venció el ${dayMonth}. Regularizá tu situación desde Mis cuotas.`
+        }),
+        feeOverdueReminder: ({ days, count, amount, delayFee }) => ({
+            title: `Recordatorio: ${days} días de atraso en tus cuotas`,
+            message: `Tenés ${count === 1 ? '1 cuota vencida' : `${count} cuotas vencidas`} por ${amount}. La más vieja tiene ${days} días de atraso. `
+                + `Si superás los ${delayFee} días, perdés tu condición de socio.`
+        }),
+        memberSuspended: ({ delayFee }) => ({
+            title: 'Perdiste tu condición de socio',
+            message: `Por tener cuotas impagas hace más de ${delayFee} días, perdiste tu condición de socio. `
+                + 'Mientras tanto no podés ser citada ni inscribirte a deportes. Se recupera sola cuando regularices tus cuotas.'
+        }),
+        paymentReviewRequest: ({ payer, amount, month, forWhom }) => ({
+            title: 'Transferencia para revisar',
+            message: `${payer} informó una transferencia de ${amount} por la cuota de ${month}${forWhom}.`
+        }),
+        transferApproved: ({ month }) => ({
+            title: `Se aprobó tu transferencia de ${month}`,
+            message: `Se aprobó tu transferencia por la cuota de ${month}. Ya podés descargar el comprobante.`
+        }),
+        transferRejected: ({ month, reason }) => ({
+            title: `Se rechazó tu transferencia de ${month}`,
+            message: `Se rechazó tu transferencia por la cuota de ${month}: ${reason}. Podés volver a pagarla.`
+        }),
+        fixturePublished: ({ category, rival, when, home, address }) => ({
+            title: `Nuevo partido de ${category}`,
+            message: `Nuevo partido: ${category} vs. ${rival}, ${when} (${home}). Dirección: ${address}.`
+        }),
+        fixtureChanged: ({ category, rival, when, home, address }) => ({
+            title: `Cambió un partido de ${category}`,
+            message: `Cambió el partido de ${category} vs. ${rival}: ahora es el ${when} (${home}), en ${address}.`
+        }),
+        scheduleConflict: ({ player, first, firstWhen, second, secondWhen }) => ({
+            title: `Partidos superpuestos: ${player}`,
+            message: `${player} tiene dos partidos superpuestos: ${first} (${firstWhen}) y ${second} (${secondWhen}).`
+        }),
+        gameCancelled: ({ category, rival, weekday, dayMonth }) => ({
+            title: `Se canceló el partido de ${category}`,
+            message: `Se canceló el partido de ${category} vs. ${rival} del ${weekday} ${dayMonth}. Tu citación quedó cancelada.`
+        }),
+        conflictResolved: ({ weekday, dayMonth, chosen, chosenTime, other, otherTime }) => ({
+            title: 'Se resolvió un conflicto de horario',
+            message: `Tenías dos partidos superpuestos el ${weekday} ${dayMonth}. Se decidió que juegues ${chosen} (${chosenTime}). `
+                + `No jugás ${other} (${otherTime}).`
+        }),
+        inscriptionRequest: ({ sport, member }) => ({
+            title: `Nueva solicitud de inscripción a ${sport}`,
+            message: `Nueva solicitud de inscripción a ${sport}: ${member}.`
+        }),
+        withdrawalCitationCancelled: ({ player, sport, match, weekdayShort, dayMonth }) => ({
+            title: `${player} se dio de baja de ${sport}`,
+            message: `${player} se dio de baja de ${sport}: se canceló su citación confirmada para ${match} (${weekdayShort} ${dayMonth}).`
+        }),
+        sportWithdrawal: ({ sport, fullName, member }) => ({
+            title: `Baja de ${sport}: ${fullName}`,
+            message: `${member} se dio de baja de ${sport}.`
+        }),
+        inscriptionApproved: ({ sport }) => ({
+            title: `Se aprobó tu inscripción a ${sport}`,
+            message: `¡Se aprobó tu inscripción a ${sport}! Ya sos jugadora del club. Desde el menú podés cambiar al rol Jugadora.`
+        }),
+        inscriptionRejected: ({ sport, reason }) => ({
+            title: `Tu inscripción a ${sport} no fue aprobada`,
+            message: `Tu inscripción a ${sport} no fue aprobada.${reason ? ` Motivo: ${reason}.` : ''}`
+        }),
+        integrityAlert: ({ count, tables }) => ({
+            title: 'Errores de integridad en los datos del club',
+            message: `Se detectaron ${count} registros alterados en ${tables}. Los demás usuarios no pueden entrar hasta que se reparen.`
+        }),
+        routinePublished: ({ category, day, date, created }) => ({
+            title: created ? `Nueva rutina de ${category}` : `Rutina actualizada de ${category}`,
+            message: `Se ${created ? 'publicó' : 'actualizó'} la rutina del ${day} ${date} de ${category}.`
+        })
     }
 }

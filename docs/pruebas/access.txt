@@ -298,3 +298,29 @@ Resultado esperado: después del seed, Jugadora sigue sin routines.trackOwn (el 
   aparece ninguna línea "Permiso nuevo".
 Resultado obtenido: Jugadora con 12 permisos antes y después del seed, sin la línea; al devolvérselo, 13.
 Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ACCESS-18
+Módulo: access
+Descripción: Login con pestañas "Ya tengo cuenta" y "Es mi primera vez"
+Precondiciones: sin sesión.
+Pasos:
+  1. Entrar a /login. 2. Tocar "Es mi primera vez". 3. Tocar cada opción. 4. Desde la bienvenida, "Es mi primer ingreso".
+Datos de entrada: —
+Resultado esperado: 1) usuario, contraseña, "¿Olvidaste tu contraseña?" debajo de la contraseña y "Ingresar" (único botón Naranja). 2) "¿Qué te dieron en el club?" con tres opciones: número de socio, código de vínculo y email de activación. 3) número → /register; código → /family-link; email → se despliega la explicación de la activación (sin cambiar de pantalla). 4) /login?primera=1 con la segunda pestaña abierta.
+Resultado obtenido: como se esperaba en la compu y en el celular, sin scroll horizontal ni errores de consola (capturas login, login-primera, register y family-link).
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ACCESS-19
+Módulo: access
+Descripción: Marco nuevo de las pantallas de sesión
+Precondiciones: sin sesión.
+Pasos:
+  1. Entrar a /login, /register, /family-link y /forgot-password en la compu y en el celular.
+Datos de entrada: —
+Resultado esperado: en la compu, panel Pizarra a la izquierda con el logo, la frase, la red de vóley y "¿Qué es Club360?"; en el celular, una franja con el logo y la red chica arriba del formulario. Fondo blanco, sin la cancha naranja. El asistente público abajo a la derecha (no en elegir rol ni en mantenimiento).
+Resultado obtenido: como se esperaba en la compu y en el celular, sin errores de consola.
+Estado: Aprobado

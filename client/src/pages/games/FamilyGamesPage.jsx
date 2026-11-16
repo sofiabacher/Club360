@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import Alert from '@mui/material/Alert'
-import Box from '@mui/material/Box'
 import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
-import Typography from '@mui/material/Typography'
 import SportsVolleyballRounded from '@mui/icons-material/SportsVolleyballRounded'
 
 import { getLinkedGames } from '../../api/games.api.js'
@@ -13,6 +11,7 @@ import GamesTabs, { useGamesTab } from '../../components/games/GamesTabs.jsx'
 import PlayerGamesList from '../../components/games/PlayerGamesList.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 const TABS = [{ value: 'proximos', label: 'Próximos' }, { value: 'jugados', label: 'Jugados' }]
 
@@ -48,12 +47,7 @@ export default function FamilyGamesPage() {
 
   return (
     <>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Partidos</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          {players.length === 1 ? `Los partidos de ${selected.member.name}.` : 'Los partidos de tus jugadoras vinculadas.'}
-        </Typography>
-      </Box>
+      <PageHeader title="Partidos" description={players.length === 1 ? `Los partidos de ${selected.member.name}.` : 'Los partidos de tus jugadoras vinculadas.'} />
 
       {players.length > 1 && (
         <TextField select label="Jugadora" value={selected.member.id} onChange={(event) => setSelectedId(event.target.value)} size="small" sx={{ minWidth: 240, mb: 3 }}>

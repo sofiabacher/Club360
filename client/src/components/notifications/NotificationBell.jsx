@@ -100,7 +100,7 @@ export default function NotificationBell() {
         onClose={close}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        slotProps={{ paper: { sx: { width: 360, maxWidth: 'calc(100vw - 32px)', borderRadius: 3 } } }}
+        slotProps={{ paper: { sx: { width: 360, maxWidth: 'calc(100vw - 32px)', borderRadius: 1.5 } } }}
       >
         <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1.5 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'navy.main' }}>Notificaciones</Typography>

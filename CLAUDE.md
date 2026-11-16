@@ -5,7 +5,7 @@ Plataforma web de gestión para clubes deportivos (proyecto integrador escolar).
 ## Documentación de referencia
 
 - `docs/contexto.md`: documento de contexto del proyecto (roles, reglas de negocio, módulos del MVP, decisiones de modelado). Es una copia del documento que se mantiene en claude.ai; si se actualiza allá, se reemplaza esta copia.
-- `docs/moodboard.png`: referencia visual del front (ver "Diseño visual" más abajo).
+- `docs/moodboard.png`: referencia visual original del front. Desde el P23 manda la dirección "Pizarra" (ver "Diseño visual" más abajo).
 - `docs/DER_logico.jpg`: DER lógico (24 entidades en la imagen; 26 con `routineLog` y `goal`). **Si la imagen y `docs/contexto.md` no coinciden, manda el contexto.** Diferencias conocidas (la imagen quedó desactualizada):
   - `fee`: `memberId` y `period` **no** son únicos por separado. La restricción es un índice único compuesto `(memberId, period)`.
   - `role`: `name` **no** es único en toda la base. La restricción es un índice único compuesto `(clubId, name)`, para que cada club pueda tener sus propios roles base ("Socio", "Jugadora", etc.).
@@ -145,6 +145,7 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
 ## Notificaciones
 
 - **Todo aviso a un usuario pasa por `notify()`** (`modules/notifications/notifications.service.js`): ningún módulo crea `notification` ni manda emails de notificación por su cuenta.
+- **Textos:** el título y el mensaje de cada aviso automático salen de `notificationTexts` en `utils/messages.js` (reciben los datos ya formateados y devuelven `{ title, message }`); también los usa `seed/demo.js`. El job de cuotas detecta avisos ya enviados por el título: cambiar un título los vuelve a mandar.
 - **El tipo define el canal:** `NOTIFICATION_TYPES` (en `utils/constants.js`) dice qué tipos van también por email, según la tabla del contexto, sección 6. `GENERAL` va por email solo si quien envía lo elige.
 - `includeFamily: true` suma al adulto Familia de los socios menores vinculados (para "Socio, y Familia si es menor").
 - **Momento del envío:** los emails salen **después de confirmar la transacción** (`afterCommit`) y en segundo plano. Un error de email se registra en la bitácora y no deshace la notificación in-app.
@@ -181,19 +182,26 @@ Formato de respuesta: `{ success: true, data }` o `{ success: false, message }`.
 
 ## Diseño visual (front)
 
-Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/theme.js`); **no** se escriben colores ni fuentes sueltos en los componentes.
+Dirección **"Pizarra"** (P23, elegida por el equipo; reemplaza la paleta del moodboard): base neutra y fría, un color de estructura y un solo color de acción. Todo lo visual sale del tema (`client/src/theme.js`); **no** se escriben colores ni fuentes sueltos en los componentes.
 
 - **Colores:**
-  - `primary` = Naranja `#EA6A1F`, **reservado para lo urgente y la acción principal** de cada pantalla (un solo botón naranja por vista).
-  - `secondary` = Azul `#1E40AF` para acciones secundarias, links y selección.
-  - `palette.navy` = Marino `#0F1B3D` para la estructura (menú lateral, encabezados) y los títulos.
-  - `palette.cream` `#FBF4E6` y `palette.burgundy` `#8E2C3A` para los toques de club de barrio.
-  - Fondo de trabajo `#F6F7FB`, tarjetas blancas.
+  - `primary` = Naranja `#DD5F1C`, **reservado para lo urgente y la acción principal** de cada pantalla (un solo botón naranja por vista).
+  - `secondary` = Azul pizarra `#2D4A86` para acciones secundarias, links y selección.
+  - `palette.navy` = Pizarra `#172033` para la estructura (menú lateral, encabezados del carnet y del comprobante) y los títulos. Conserva el nombre `navy`.
+  - `palette.tint` (`#EEF1F6`) para íconos, bloques de datos y vistas previas. **No** hay crema, bordó ni parquet.
+  - Fondo de trabajo `#F5F6F8`, tarjetas blancas, `divider` `#E1E4EA`.
+- **Forma:** radio base de 8 px (`borderRadius: 1` en `sx`); 12 px (`1.5`) solo en diálogos y ventanas flotantes. Las tarjetas van con **borde fino y sin sombra** (`MuiCard` es `outlined` por defecto); la sombra queda para lo que flota (menús, diálogos, el botón del asistente).
+- **Encabezado de pantalla:** `PageHeader` (`components/common/PageHeader.jsx`): título, una línea de descripción y la acción principal a la derecha (abajo en el celular).
+- **Links:** sin subrayado salvo al pasar el mouse. Las acciones al pie de una tarjeta ("Ver cuotas →") usan `ActionLink`.
+- **Tablas:** encabezado gris claro, filas con `hover`, montos y tamaños alineados a la derecha con cifras tabulares (en el tema).
+- **Menú lateral:** cada entrada con su ícono de `menu.js`; la activa, con fondo y en negrita.
+- **Carnet y comprobante** (`MemberCard`, `PaymentVoucherPage`, `utils/voucherPdf.js`): encabezado Pizarra con el nombre del club, la franja del color propio y cuerpo blanco con borde.
 - **Acento del club:** se guarda en `club.accentColor` (D13) y llega al front en `session.club.accentColor`. Para Valencia, Celeste `#2E9BD6` (provisorio). Es solo un acento, por ejemplo una franja junto al nombre del club en el menú o en el carnet de socio, y no reemplaza ningún color de la paleta. Se usa desde la sesión, nunca escrito a mano en un componente.
 - **Estados:** siempre con el componente `StatusChip` (`components/common/StatusChip.jsx`): `ok` verde (al día, confirmada, aprobada), `pending` ámbar (pendiente), `overdue` rojo (vencida, rechazada, cancelada), `urgent` naranja (requiere acción ya, ej. citación sin responder).
-- **Tipografía:** Poppins para todo. Los números destacados (resultados, fecha y hora de un partido, número de socio) usan la variante `numeric` (Barlow Condensed): `<Typography variant="numeric">`.
+- **Tipografía:** Poppins para todo, con escala baja (h4 28 px y h5 20 px; más chicos en el celular). Los números destacados (resultados, fecha y hora de un partido, número de socio) usan la variante `numeric` (Barlow Condensed): `<Typography variant="numeric">`.
 - **Íconos:** `@mui/icons-material` en variante Rounded (ej. `NotificationsRounded`).
-- **Texturas:** `CourtBackground` (líneas de cancha) en el login y los encabezados; trama de red para grillas de accesos y parquet para rutinas y estados vacíos (cuando se armen esas pantallas).
+- **Fondos:** lisos. Hay dos ilustraciones en línea fina sobre Pizarra, cada una en un solo lugar: `NetIllustration` (red de vóley con la cancha en perspectiva) en la bienvenida y `CourtIllustration` (pizarra táctica vista desde arriba) en las pantallas de sesión, con textos distintos en cada una. La pelota es siempre `VolleyBall` (paneles blanco, amarillo y azul de `palette.volley`), nunca naranja. Los estados vacíos (`EmptyState`) van con ícono y texto sobre el fondo, con borde punteado.
+- **Pantallas de sesión** (`AuthLayout`): panel Pizarra con el logo, la frase y la pizarra táctica a la izquierda (franja baja en el celular, con el logo y "¿Qué es Club360?") y el formulario sobre blanco. El login tiene dos pestañas: "Ya tengo cuenta" y "Es mi primera vez" (`?primera=1`), donde cada persona elige lo que le dieron en el club: número de socio (`/register`), código de vínculo (`/family-link`) o email de activación (explicación, el staff entra desde el link).
 - **Tono:** español rioplatense con voseo, cercano y claro ("Tenés una citación pendiente para el sábado").
 - Diseño responsive: todo tiene que funcionar en el celular.
 
@@ -207,7 +215,7 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 - **Sesión del front:** `session = { user, club, roles, activeRole, permissions }`, armada siempre con `buildSession` en `auth.service.js`.
 - **Recuperación de contraseña:** link por email con token JWT de propósito `password-reset` que incluye una huella del hash actual de la contraseña, así sirve una sola vez. `forgot-password` responde siempre lo mismo, exista o no el usuario. Restablecer la contraseña desbloquea la cuenta.
 - **Mi cuenta:** el usuario solo modifica email, teléfono, foto y contraseña. Nombre, apellido, DNI, fecha de nacimiento y usuario los cambia el Admin; los endpoints de la cuenta ignoran esos campos si llegan en el body.
-- **Menú y rutas del front:** `client/src/navigation/menu.js` es la única configuración del menú (`label`, `path`, `icon`, `permission`, `group`). Toda pantalla nueva se agrega ahí con su permiso, y la ruta se protege con `PermissionRoute` y el mismo permiso.
+- **Menú y rutas del front:** `client/src/navigation/menu.js` es la única configuración del menú (`label`, `description`, `path`, `icon`, `permission`, `group`). Toda pantalla nueva se agrega ahí con su permiso, y la ruta se protege con `PermissionRoute` y el mismo permiso.
 
 ## Gestión de roles y permisos (módulo `access`)
 
@@ -282,7 +290,7 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 - La mora se calcula siempre con `getOverdueDays` de `fees.service.js`. Una cuota con una transferencia Pendiente **no** suma días de atraso.
 - **Transferencia (P14b):** los datos bancarios están en `club.extraInfo.bankInfo`. El socio adjunta el comprobante (JPG, PNG o PDF, hasta 5 MB, carpeta `receipts`) y se crea un `payment` Pendiente con `method = TRANSFER` y código `TRF-`; la cuota no cambia de estado. Una sola transferencia Pendiente por cuota: mientras exista, la cuota no se paga de otra forma (409). La revisa quien tiene `fees.manage` (aviso `PAYMENT_REVIEW_REQUEST`): aprobar → cuota Pagada y recuperación automática; rechazar → motivo obligatorio (10 a 300) en `note`. El resultado se avisa con `PAYMENT_RESULT`.
 - **Comprobantes adjuntos:** nunca por `/uploads` público. Se descargan con `GET /fees/payments/:id/receipt-file` (con sesión: `fees.manage`, quien pagó, el socio o su adulto; si no, 404). En Cloudinary van como recurso `raw` privado.
-- **Comprobante de pago:** todo pago Aprobado (cualquier medio) tiene uno (`GET /fees/payments/:id/voucher` y la página `/fees/payments/:id/voucher`). De la tarjeta solo se guardan los últimos 4 dígitos, en `note` ("Tarjeta ****1234").
+- **Comprobante de pago:** todo pago Aprobado (cualquier medio) tiene uno (`GET /fees/payments/:id/voucher` y la página `/fees/payments/:id/voucher`). Se descarga en PDF generado en el navegador (`utils/voucherPdf.js`, con jsPDF cargado solo al descargar y los colores del tema) o se imprime. De la tarjeta solo se guardan los últimos 4 dígitos, en `note` ("Tarjeta ****1234").
 - **Formulario de tarjeta:** el número se muestra en grupos de 4 con guiones mientras se escribe, pero se envían solo los dígitos.
 
 ## Rutinas (módulo `routines`)
@@ -296,8 +304,10 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 
 ## Panel de inicio (`HomePage`)
 
-- Se elige **por permisos**: `citations.respond` + `games.viewOwn` → `PlayerHome`; si no, `games.viewLinked` + `fees.manageLinked` → `FamilyHome`; si no, `games.manage` + `inscriptions.approve` → `RepresentativeHome`; si no, los accesos rápidos.
-- Los paneles usan los endpoints existentes de cada módulo (`/games/mine`, `/citations/mine`, `/fees/mine`, `/routines/mine` y sus `linked`). No hay módulo ni endpoint de "dashboard". Cada bloque carga y falla por separado.
+- Se elige **por permisos**, el primero que corresponda: `citations.respond` + `games.viewOwn` → `PlayerHome`; `games.viewLinked` + `fees.manageLinked` → `FamilyHome`; `games.manage` + `inscriptions.approve` → `RepresentativeHome`; `members.manage` + `fees.manage` → `AdminHome`; `citations.create` → `CoachHome`; `routines.manage` → `TrainerHome`; `fees.viewOwn` → `MemberHome`; si no (un rol nuevo), el saludo y los accesos rápidos.
+- Los paneles usan los endpoints existentes de cada módulo (`/games/mine`, `/citations/mine`, `/fees/mine`, `/routines/mine` y sus `linked`, `/fees`, `/members`, `/logs`, `/citations/games`, `/routines/tracking`...). No hay módulo ni endpoint de "dashboard". Cada bloque carga y falla por separado con `useBlock` (`components/home/useBlock.js`), que no llama si el rol no tiene el permiso del bloque.
+- Todos arman el encabezado con `HomeHeader` (saludo, frase de lo más urgente y el único botón Naranja, si hay algo para hacer) y los números con `StatCard`. Al final, `QuickAccess`: las entradas del menú agrupadas como en el menú lateral, con la `description` de cada una.
+- **Bienvenida** (`/welcome`, `WelcomePage`): sin sesión, la raíz (`/`) muestra la presentación de Club360, cómo entrar por primera vez y el asistente público; "Es mi primer ingreso" lleva a `/login?primera=1`. Cualquier otra ruta privada manda al login.
 
 ## Bitácora, integridad y backup (módulos `logs`, `integrity` y `backup`)
 
@@ -311,10 +321,12 @@ Referencia: `docs/moodboard.png`. Todo lo visual sale del tema (`client/src/them
 
 - **Sin Python ni servicios externos:** clasificador TF-IDF con similitud de coseno en `bot.classifier.js` (normalización sin tildes, stopwords sin "no"/"si", stemming con `natural`), entrenado al arrancar con `knowledge/intents.json`. Umbrales en `BOT_THRESHOLD` y `BOT_SUGGEST_THRESHOLD`, calibrados con `npm run bot:eval`.
 - **Acceso:** `bot.use`. El grupo del menú se calcula **por permisos** (`citations.respond` → `jugadora`; si no, `fees.manageLinked` → `familia`; si no, `socio`), nunca por el nombre del rol.
+- **Asistente público** (P23): `GET /bot/public/menu` y `POST /bot/public/chat`, **sin sesión**, con el grupo `visitante` (`BOT_PUBLIC_GROUP`) y 20 mensajes por minuto **por IP** (en producción, `trust proxy` para leer la IP real). Responde cómo entrar por primera vez, la cuenta y el acceso, y qué es la plataforma; **sin datos de ningún club** (los marcadores quedan sin valor) y **sin bitácora** (no hay club ni usuario). Lo que es de adentro de la plataforma responde `otherProfilePublic`. Va en la bienvenida y en las pantallas de sesión (`AuthLayout`, salvo elegir rol y mantenimiento). Una intención puede tener `labelByGroup` (el texto del botón para un grupo) además de `responsesByGroup`.
 - **Nunca** devuelve datos personales, partidos, días de mora, margen de conflicto ni montos. Los datos del club salen de `club` y `club.extraInfo`.
-- **Privacidad:** texto con 7 o más dígitos o un email → `blocked`, sin guardarlo. `BOT_INTERACTION` en la bitácora **sin** el texto; `BOT_UNANSWERED` (solo fallbacks) con el texto y sin `userId` ni `roleId`. Límite de 30 mensajes por minuto por usuario.
+- **Privacidad:** texto con 7 o más dígitos o un email → `blocked`, sin guardarlo (también en el público). `BOT_INTERACTION` en la bitácora **sin** el texto; `BOT_UNANSWERED` (solo fallbacks) con el texto y sin `userId` ni `roleId`. Límite de 30 mensajes por minuto por usuario.
 - **Conocimiento:** al cambiar `intents.json`, correr `npm run bot:eval` y actualizar `docs/pruebas/bot-evaluacion.txt`. Si el conocimiento no valida, el servidor no arranca.
-- **Widget:** `components/bot/ChatBot.jsx` en `DashboardLayout`, solo con `bot.use`; Fab Marino (no naranja).
+- **Lyla:** el asistente se llama **Lyla** y habla en femenino ("Soy Lyla, la asistente de…", "No estoy segura…"). Su ícono es `LylaAvatar` (una nena con colita, colores de `palette.lyla`), en el Fab y en el encabezado del chat.
+- **Widget:** `components/bot/ChatBot.jsx` en `DashboardLayout`, solo con `bot.use`; Fab Pizarra (no naranja) con el avatar de Lyla. Con `publicMode`, el asistente público ("Lyla · Asistente de Club360", sin 👍/👎).
 
 ## Lista de tareas (`docs/TODO.md`)
 

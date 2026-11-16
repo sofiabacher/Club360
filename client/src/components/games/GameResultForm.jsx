@@ -67,7 +67,7 @@ function SetRow({ number, set, onChange, disabled }) {
     <Box
       sx={(theme) => ({
         p: 1.25,
-        borderRadius: 2,
+        borderRadius: 1,
         border: 1,
         borderColor: 'divider',
         bgcolor: winner === 'own' ? theme.status.ok.bg : winner === 'rival' ? theme.status.overdue.bg : 'transparent'
@@ -160,7 +160,7 @@ export default function GameResultForm({ open, game, mode = 'played', onClose, o
           {game.category?.name} · {formatGameDate(game.dateTime)} · {game.isHome ? 'Local' : 'Visitante'}
         </Typography>
 
-        <Typography variant="overline" component="p" sx={{ color: 'text.secondary', letterSpacing: 1.5, mt: 2 }}>Sets</Typography>
+        <Typography variant="overline" component="p" sx={{ color: 'text.secondary', mt: 2 }}>Sets</Typography>
         <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'center', gap: { xs: 1, sm: 2 }, flexWrap: 'wrap', py: 1 }}>
           <Typography sx={{ fontWeight: 600, color: 'navy.main', textAlign: 'right', flex: '1 1 0', minWidth: 80, overflowWrap: 'anywhere' }}>{club?.name}</Typography>
           <SetsSelect label="Club" value={form.own} options={setOptions(null)} onChange={setOwn} disabled={saving} />

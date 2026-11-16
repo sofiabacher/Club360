@@ -33,6 +33,7 @@ import { getErrorMessage } from '../../utils/apiErrors.js'
 import { formatDayHeader } from '../../utils/format.js'
 import { gameSummary } from '../../utils/games.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 // Pestañas (la elegida va en la URL: ?tab=jugados o ?tab=conflictos)
 const TABS = { GAMES: 'proximos', HISTORY: 'jugados', CONFLICTS: 'conflictos' }
@@ -99,10 +100,7 @@ export default function AssignedGamesPage() {
 
   return (
     <>
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Partidos</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>Los partidos de tus categorías.</Typography>
-      </Box>
+      <PageHeader title="Partidos" description="Los partidos de tus categorías." sx={{ mb: 2 }} />
 
       <GamesTabs
         value={tab}

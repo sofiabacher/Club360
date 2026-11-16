@@ -63,7 +63,7 @@ Precondiciones: Camila logueada.
 Pasos:
   1. Escribir cada texto.
 Datos de entrada: a) "¿cómo pago por transferencia?"; b) "citación"; c) "receta de milanesas".
-Resultado esperado: a) la respuesta de cuotas_transferencia; b) "No estoy seguro de haber entendido. ¿Quisiste
+Resultado esperado: a) la respuesta de cuotas_transferencia; b) "No estoy segura de haber entendido. ¿Quisiste
   decir…?" con 2 o 3 preguntas y el menú; c) el fallback con el contacto del club y el menú, en una burbuja Crema.
 Resultado obtenido: a) answer cuotas_transferencia; b) suggestions con 3 preguntas de citaciones; c) fallback con
   "(011) 4000-0000" y el botón del menú.
@@ -199,3 +199,42 @@ Resultado esperado: una burbuja "El asistente no está disponible en este moment
   widget sigue andando y la consulta siguiente funciona.
 Resultado obtenido: —
 Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-BOT-14
+Módulo: bot
+Descripción: Asistente público: menú y respuestas sin sesión
+Precondiciones: sin sesión, en /welcome o /login.
+Pasos:
+  1. Abrir el asistente. 2. Escribir "me olvidé la contraseña". 3. Escribir "soy entrenadora como entro". 4. Tocar "Volver al menú".
+Datos de entrada: —
+Resultado esperado: 1) "Asistente de Club360", el saludo público y las categorías Empezar, El club, Cuenta y acceso y Sobre Club360 (en /login primero Empezar; en /welcome, Sobre Club360). 2) la respuesta de "Me olvidé la contraseña" con "Mi usuario está bloqueado" y "No me acuerdo mi usuario"; sin "Contactar al club" ni 👍/👎. 3) la activación de la cuenta del staff.
+Resultado obtenido: como se esperaba; GET /bot/public/menu y POST /bot/public/chat sin token responden 200.
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BOT-15
+Módulo: bot
+Descripción: Asistente público: consultas de adentro y datos personales
+Precondiciones: sin sesión.
+Pasos:
+  1. Escribir "cuándo vence la cuota". 2. Tocar el botón de "club_horarios" (por la API). 3. Escribir "mi dni es 40.123.456".
+Datos de entrada: —
+Resultado esperado: 1 y 2) "Eso lo vas a encontrar adentro de la plataforma, después de iniciar sesión...", sin datos de ningún club. 3) blocked, sin guardar el texto. Nada se escribe en la bitácora.
+Resultado obtenido: como se esperaba (other_profile, other_profile y blocked).
+Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-BOT-16
+Módulo: bot
+Descripción: Límite del asistente público por IP
+Precondiciones: sin sesión.
+Pasos:
+  1. Mandar 21 mensajes seguidos desde la misma IP en menos de un minuto.
+Datos de entrada: —
+Resultado esperado: los primeros 20 responden; el 21 responde 429 "Esperá un momento antes de seguir escribiendo." El asistente con sesión mantiene su propio límite por usuario.
+Resultado obtenido: 20 respuestas 200 y la 21 con 429.
+Estado: Aprobado

@@ -41,6 +41,7 @@ import { CRITICITY_CHIPS, CRITICITY_LABELS } from '../../utils/constants.js'
 import { saveBlob } from '../../utils/download.js'
 import { formatDate, formatTime } from '../../utils/format.js'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
+import PageHeader from '../../components/common/PageHeader.jsx'
 
 const emptyFilters = { from: '', to: '', criticity: '', action: '', userId: '', search: '', page: 1 }
 
@@ -132,17 +133,19 @@ export default function LogsPage() {
 
   return (
     <>
-      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' }, gap: 2, mb: 3 }}>
-        <Box>
-          <Typography variant="h5" component="h2" sx={{ color: 'navy.main' }}>Bitácora</Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>Lo que pasó en el club, del más nuevo al más viejo.</Typography>
-        </Box>
-        {hasPermission('logs.export') && (
-          <Button variant="contained" color="secondary" startIcon={<DownloadRounded />} onClick={handleDownload} loading={downloading} disabled={Boolean(rangeInvalid)}>
-            Descargar CSV
-          </Button>
-        )}
-      </Stack>
+      <PageHeader
+        title="Bitácora"
+        description="Lo que pasó en el club, del más nuevo al más viejo."
+        action={
+          <>
+            {hasPermission('logs.export') && (
+              <Button variant="contained" color="secondary" startIcon={<DownloadRounded />} onClick={handleDownload} loading={downloading} disabled={Boolean(rangeInvalid)}>
+                Descargar CSV
+              </Button>
+            )}
+          </>
+        }
+      />
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {Object.keys(CRITICITY_LABELS).map((criticity) => (

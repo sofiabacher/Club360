@@ -37,7 +37,7 @@ const {
     LOG_ACTIONS
 } = require('../../utils/constants')
 const { PERMISSIONS } = require('../../utils/permissions')
-const { fees: m, upload: uploadMessages } = require('../../utils/messages')
+const { fees: m, upload: uploadMessages, notificationTexts: texts } = require('../../utils/messages')
 
 const FEES_PAGE_SIZE = 20
 const PAYMENTS_PAGE_SIZE = 20
@@ -209,17 +209,15 @@ async function notifyDueSoon(today, clubIds) {
 
     let sent = 0
     for (const fee of fees) {
-        const month = monthNameOf(fee.period)
-        const title = `Tu cuota de ${month} ${fee.period.slice(0, 4)} vence pronto`
-        if (await alreadyNotified(fee.clubId, fee.member.userId, 'FEE_DUE_SOON', title)) continue
-
         const { weekday, dayMonth } = dateTimeParts(noonOf(fee.expirationDate))
+        const text = texts.feeDueSoon({ month: monthNameOf(fee.period), year: fee.period.slice(0, 4), weekday, dayMonth, amount: money(totalOf(fee)) })
+        if (await alreadyNotified(fee.clubId, fee.member.userId, 'FEE_DUE_SOON', text.title)) continue
+
         await notify({
             clubId: fee.clubId,
             type: 'FEE_DUE_SOON',
             recipientUserIds: [fee.member.userId],
-            title,
-            message: `Tu cuota de ${month} vence el ${weekday} ${dayMonth} (${money(totalOf(fee))}).`,
+            ...text,
             includeFamily: true
         })
         sent++
@@ -241,8 +239,7 @@ async function markOverdue(today, clubIds) {
                 clubId: fee.clubId,
                 type: 'FEE_OVERDUE',
                 recipientUserIds: [fee.member.userId],
-                title: `Tu cuota de ${month} ${fee.period.slice(0, 4)} venció`,
-                message: `Tu cuota de ${month} venció el ${dayMonth}. Regularizá tu situación desde Mis cuotas.`,
+                ...texts.feeOverdue({ month, year: fee.period.slice(0, 4), dayMonth }),
                 includeFamily: true
             }, { transaction })
         })
@@ -271,18 +268,15 @@ async function sendReminders(today, delayFeeOf, clubIds) {
         const days = await getOverdueDays(member.id, { today })
         if (days === 0 || days % FEE_OVERDUE_REMINDER_DAYS !== 0) continue
 
-        const title = `Recordatorio: ${days} días de atraso en tus cuotas`
-        if (await alreadyNotified(clubId, member.userId, 'FEE_OVERDUE', title)) continue
-
         const total = fees.reduce((sum, fee) => sum + totalOf(fee), 0)
-        const count = fees.length === 1 ? '1 cuota vencida' : `${fees.length} cuotas vencidas`
+        const text = texts.feeOverdueReminder({ days, count: fees.length, amount: money(total), delayFee: delayFeeOf.get(clubId) })
+        if (await alreadyNotified(clubId, member.userId, 'FEE_OVERDUE', text.title)) continue
+
         await notify({
             clubId,
             type: 'FEE_OVERDUE',
             recipientUserIds: [member.userId],
-            title,
-            message: `Tenés ${count} por ${money(total)}. La más vieja tiene ${days} días de atraso. `
-                + `Si superás los ${delayFeeOf.get(clubId)} días, perdés tu condición de socio.`,
+            ...text,
             includeFamily: true
         })
         sent++
@@ -313,9 +307,7 @@ async function suspendOverdueMembers(today, delayFeeOf, clubIds) {
                 clubId: member.clubId,
                 type: 'MEMBER_SUSPENDED',
                 recipientUserIds: [member.userId],
-                title: 'Perdiste tu condición de socio',
-                message: `Por tener cuotas impagas hace más de ${delayFee} días, perdiste tu condición de socio. `
-                    + 'Mientras tanto no podés ser citada ni inscribirte a deportes. Se recupera sola cuando regularices tus cuotas.',
+                ...texts.memberSuspended({ delayFee }),
                 includeFamily: true
             }, { transaction })
             await logger(SYSTEM(member.clubId), LOG_ACTIONS.MEMBER_SUSPENDED,
@@ -621,8 +613,7 @@ async function reportTransfer(user, feeId, file) {
                 clubId: user.clubId,
                 type: 'PAYMENT_REVIEW_REQUEST',
                 recipientUserIds: managers,
-                title: 'Transferencia para revisar',
-                message: `${fullNameOf(payer)} informó una transferencia de ${money(payment.amount)} por la cuota de ${monthNameOf(fee.period)}${forWhom}.`
+                ...texts.paymentReviewRequest({ payer: fullNameOf(payer), amount: money(payment.amount), month: monthNameOf(fee.period), forWhom })
             }, { transaction })
 
             return { fee, payment }
@@ -675,11 +666,7 @@ async function approveTransfer(actor, paymentId) {
         await logger(actorOf(actor), LOG_ACTIONS.PAYMENT_APPROVED,
             `${describeFee(fee)}, ${money(payment.amount)}, transferencia revisada, código ${payment.confirmationCode}`, { transaction })
 
-        const month = monthNameOf(fee.period)
-        await notifyTransferResult(actor, payment, fee, {
-            title: `Se aprobó tu transferencia de ${month}`,
-            message: `Se aprobó tu transferencia por la cuota de ${month}. Ya podés descargar el comprobante.`
-        }, transaction)
+        await notifyTransferResult(actor, payment, fee, texts.transferApproved({ month: monthNameOf(fee.period) }), transaction)
 
         return { payment, fee, recovered }
     })
@@ -703,11 +690,7 @@ async function rejectTransfer(actor, paymentId, { reason }) {
         await logger(actorOf(actor), LOG_ACTIONS.PAYMENT_REJECTED,
             `${describeFee(fee)}, ${money(payment.amount)}, transferencia revisada, código ${payment.confirmationCode}. Motivo: ${cleanReason}`, { transaction })
 
-        const month = monthNameOf(fee.period)
-        await notifyTransferResult(actor, payment, fee, {
-            title: `Se rechazó tu transferencia de ${month}`,
-            message: `Se rechazó tu transferencia por la cuota de ${month}: ${cleanReason}. Podés volver a pagarla.`
-        }, transaction)
+        await notifyTransferResult(actor, payment, fee, texts.transferRejected({ month: monthNameOf(fee.period), reason: cleanReason }), transaction)
 
         return { payment, fee }
     })
