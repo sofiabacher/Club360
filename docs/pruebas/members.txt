@@ -455,3 +455,20 @@ Resultado esperado: "El código no es válido." y no se vincula.
 Resultado obtenido: existing-account → 400 y desde la app → 400, con ese mensaje; linkStatus del socio siguió en false.
   Al final se borró el club de prueba.
 Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-29
+Módulo: members
+Descripción: Corregir la fecha de nacimiento genera o anula el código de vínculo
+Precondiciones: Admin logueado. Socio dado de alta como mayor (con email), sin adulto vinculado.
+Pasos:
+  1. Editar el socio y poner una fecha de nacimiento de menor. 2. Abrir el detalle y el comprobante del alta.
+  3. Volver a ponerle la fecha de mayor.
+Datos de entrada: birthDate 2015-05-05 y después la original.
+Resultado esperado: 2) "Vínculo familiar" y el comprobante muestran el código XXXX-XXXX; en la bitácora, "código de
+  vínculo generado (es menor de edad)". 3) El código se anula ("No tiene adulto responsable vinculado"). Integridad OK.
+  Un socio con un adulto ya vinculado no cambia su vínculo.
+Resultado obtenido: con el socio 000004 en la base local: código generado, visible en el comprobante, anulado al
+  volver a la fecha original; integridad OK. Falta probar la pantalla.
+Estado: Pendiente

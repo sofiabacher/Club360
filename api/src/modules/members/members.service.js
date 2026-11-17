@@ -359,6 +359,19 @@ const EDITABLE_FIELDS = {
     username: 'usuario'
 }
 
+const FAMILY_CODE_CHANGES = { CREATE: 'create', REMOVE: 'remove' }
+
+// El código de vínculo acompaña a la fecha de nacimiento (por si el alta se cargó con la fecha equivocada):
+//   - menor sin código y sin adulto vinculado → se le genera uno (también repara socios que quedaron así);
+//   - mayor con un código sin usar → se anula, para que no se vincule a un adulto con un mayor de edad.
+// Si ya hay un adulto vinculado no se toca nada (el socio mayor se desvincula solo, desde su cuenta).
+function familyCodeChange(member, birthDate) {
+    if (member.adultUserId || member.linkStatus) return null
+    if (!isAdult(birthDate) && !member.codeFamily) return FAMILY_CODE_CHANGES.CREATE
+    if (isAdult(birthDate) && member.codeFamily) return FAMILY_CODE_CHANGES.REMOVE
+    return null
+}
+
 // El email vuelve a ser obligatorio si, con la fecha nueva, es mayor. El nombre de usuario solo si ya se registró.
 async function updateMember(actor, memberId, { name, lastName, dni, birthDate, email, phone, username }) {
     const member = await findClubMember(actor.clubId, memberId)
@@ -381,8 +394,9 @@ async function updateMember(actor, memberId, { name, lastName, dni, birthDate, e
 
     const changes = Object.fromEntries(Object.entries(wanted).filter(([field, value]) => user[field] !== value))
     const changedFields = Object.keys(changes)
+    const familyChange = familyCodeChange(member, wanted.birthDate)
 
-    if (changedFields.length === 0) return getMember(actor, member.id)
+    if (changedFields.length === 0 && !familyChange) return getMember(actor, member.id)
 
     // Que el DNI, el email y el usuario no sean de otra persona (son únicos en toda la plataforma)
     const uniqueFields = ['dni', 'email', 'username'].filter(field => changes[field])
@@ -400,8 +414,15 @@ async function updateMember(actor, memberId, { name, lastName, dni, birthDate, e
 
     const previousBirthDate = user.birthDate
 
+    // Usuario y código de vínculo en la misma transacción (generateFamilyCode ya elige uno que no está en uso)
     try {
-        await user.update(changes)
+        await sequelize.transaction(async (transaction) => {
+            if (changedFields.length > 0) await user.update(changes, { transaction })
+            if (familyChange === FAMILY_CODE_CHANGES.CREATE) {
+                await member.update({ codeFamily: await generateFamilyCode(transaction) }, { transaction })
+            }
+            if (familyChange === FAMILY_CODE_CHANGES.REMOVE) await member.update({ codeFamily: null }, { transaction })
+        })
 
     } catch (error) {
         throw uniqueUserError(error) ?? error
@@ -411,6 +432,8 @@ async function updateMember(actor, memberId, { name, lastName, dni, birthDate, e
     const details = changedFields.map(field => field === 'birthDate'
         ? `fecha de nacimiento: ${previousBirthDate} → ${changes.birthDate}`
         : EDITABLE_FIELDS[field])
+    if (familyChange === FAMILY_CODE_CHANGES.CREATE) details.push('código de vínculo generado (es menor de edad)')
+    if (familyChange === FAMILY_CODE_CHANGES.REMOVE) details.push('código de vínculo sin usar anulado (es mayor de edad)')
 
     await logger(actorOf(actor), LOG_ACTIONS.MEMBER_UPDATED, `Socio Nº ${member.numMember}: ${details.join(', ')}`)
 

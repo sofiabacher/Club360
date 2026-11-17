@@ -231,7 +231,7 @@ Dirección **"Pizarra"** (P23, elegida por el equipo; reemplaza la paleta del mo
 ## Socios y club (módulos `members` y `clubs`)
 
 - **Número de socio:** 6 dígitos correlativos con ceros a la izquierda (`000001`), únicos en toda la plataforma. Lo genera `generateMemberNumber` en `members.service.js`.
-- **Código de vínculo familiar:** solo para menores al momento del alta, con formato `XXXX-XXXX` (sin caracteres que se confundan). Se usa una sola vez.
+- **Código de vínculo familiar:** solo para menores al momento del alta, con formato `XXXX-XXXX` (sin caracteres que se confundan). Se usa una sola vez. Si el Admin corrige la fecha de nacimiento (`updateMember`, `familyCodeChange`), el código la acompaña: a un menor sin código ni adulto vinculado se le genera uno, y a un mayor se le anula el código sin usar; con un adulto ya vinculado no se toca.
 - **Alta presencial:** DNI y fecha de nacimiento obligatorios; email obligatorio solo para mayores. Si la persona ya tiene usuario en el club: si es staff activo (`isActiveStaff`), se rechaza; si ya es socia, se rechaza; si es otra cosa (por ejemplo, Familia), se le crea el socio sobre ese mismo usuario (`EXISTING_USER`). El rol Socio se asigna con `assignBaseRole`.
 - **Baja del socio:** `member` en INACTIVE, sin tocar el `user`. **Reactivación:** solo de INACTIVE a ACTIVE. Un SUSPENDED por mora no se reactiva a mano.
 - **Estado del socio:** los demás módulos (inscripciones, cuotas, categorías, citaciones) consultan `memberStateId` en lugar de modificarse cuando el socio se da de baja.
