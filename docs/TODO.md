@@ -204,6 +204,8 @@ Cada una se resuelve en el chat de Claude y se registra en el documento de conte
 
 Lo terminado, con la fecha. Lo más reciente arriba.
 
+- 17/11/2026 — Arreglo: en la demo el Admin no podía ver el comprobante adjunto de una transferencia. La URL de un archivo privado de Cloudinary trae la firma `s--...--` antes de la versión y `cloudinaryRefOf` (`utils/files.js`) la tomaba como parte del public_id, así que la descarga firmada daba 404 (y `deleteUpload` tampoco borraba esos archivos). Ahora la saltea, y si Cloudinary responde error queda el estado en el log de Render. Verificado el parseo con URLs de ejemplo; falta probarlo en la demo después del deploy
+
 - 17/11/2026 — Aviso `PAYMENT_RECEIVED` (in-app, "Cuota pagada") a quienes gestionan cuotas cuando un socio o su Familia paga con tarjeta (salvo a quien pagó). Agregado a la tabla de canales del contexto (sección 6). Verificado contra la base local con la transacción deshecha (CP-FEES-39)
 
 - 17/11/2026 — Detalle del socio: "Vínculo familiar" muestra también de qué socios es Familia la persona (con link, número y edad), y el adulto responsable de un menor con link a su ficha si es socio. A un mayor sin vínculos le dice que no necesita adulto responsable. Verificado contra la base local y con el build del front (CP-MEMBERS-30)

@@ -53,9 +53,10 @@ function resolveUploadPath(publicPath) {
 }
 
 // Datos de un archivo de Cloudinary a partir de su URL, o null si no es una URL de Cloudinary:
-// https://res.cloudinary.com/<cloud>/<resource_type>/<type>/v123/club360/<carpeta>/<archivo>
+// https://res.cloudinary.com/<cloud>/<resource_type>/<type>/[s--firma--/]v123/club360/<carpeta>/<archivo>
+// Los privados (los comprobantes) traen la firma s--...-- antes de la versión: no es parte del public_id.
 // public_id va sin la versión; en las imágenes, sin la extensión, y en los raw, con la extensión (así los guarda Cloudinary)
-const CLOUDINARY_URL = /^https:\/\/res\.cloudinary\.com\/[^/]+\/(image|raw)\/(upload|private|authenticated)\/(?:v\d+\/)?(.+)$/
+const CLOUDINARY_URL = /^https:\/\/res\.cloudinary\.com\/[^/]+\/(image|raw)\/(upload|private|authenticated)\/(?:s--[^/]+--\/)?(?:v\d+\/)?(.+)$/
 
 function cloudinaryRefOf(url) {
     const match = CLOUDINARY_URL.exec(url ?? '')
@@ -127,7 +128,11 @@ async function downloadPrivateFile(url) {
         })
 
         const response = await fetch(link, { signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS) })
-        if (!response.ok) return null
+        if (!response.ok) {
+            // Sin el link (está firmado): solo el estado y el public_id, para diagnosticar en los logs de Render
+            console.error(`Cloudinary respondió ${response.status} al descargar el archivo privado "${ref.publicId}"`)
+            return null
+        }
         return Buffer.from(await response.arrayBuffer())
 
     } catch (error) {
