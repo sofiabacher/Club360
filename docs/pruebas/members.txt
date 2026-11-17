@@ -472,3 +472,19 @@ Resultado esperado: 2) "Vínculo familiar" y el comprobante muestran el código 
 Resultado obtenido: con el socio 000004 en la base local: código generado, visible en el comprobante, anulado al
   volver a la fecha original; integridad OK. Falta probar la pantalla.
 Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-MEMBERS-30
+Módulo: members
+Descripción: El detalle del socio muestra de quién es Familia
+Precondiciones: Admin logueado. Datos de la demo cargados (Gabriela Romero, socia 000004, es Familia de Sofía y Martina).
+Pasos:
+  1. Socios → Gabriela Romero. 2. Tocar el nombre de una de las hijas. 3. Abrir un socio mayor que no es Familia de nadie.
+Datos de entrada: —
+Resultado esperado: 1) En "Vínculo familiar": "Es Familia (adulto responsable) de:" con Sofía Romero y Martina Romero,
+  con su número de socio y su edad. 2) Abre el detalle de la hija y su adulto responsable (Gabriela, Socio Nº 000004)
+  es un link que vuelve. 3) "Es mayor de edad: no necesita adulto responsable, y no es Familia de ningún socio."
+Resultado obtenido: base local, getMember de la 000004 devuelve las dos menores y el de las menores, a Gabriela con
+  su número de socio; el de un adulto que no es socio, sin link. Build del front OK. Falta probar la pantalla.
+Estado: Pendiente

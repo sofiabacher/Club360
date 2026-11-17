@@ -9,7 +9,7 @@ export const getMembers = ({ search, state, registration, page }) =>
     params: { search: search || undefined, state: state || undefined, registration: registration || undefined, page }
   }).then((res) => res.data)
 
-// data: { id, numMember, memberStateId, createdAt, user: {...}, family: { code, linked, adult }, roles }
+// data: { id, numMember, memberStateId, createdAt, user: {...}, family: { code, linked, adult: { id, fullName, memberId, numMember }, minors: [{ memberId, numMember, fullName, age }] }, roles }
 export const getMember = (id) => axiosClient.get(`/members/${id}`).then((res) => res.data)
 
 // payload: { name, lastName, dni, birthDate, email, phone, existingUserId? }. data: los datos del comprobante.

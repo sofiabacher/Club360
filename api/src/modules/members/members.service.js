@@ -169,14 +169,26 @@ async function getMember({ clubId }, memberId) {
     const member = await findClubMember(clubId, memberId)
     const { user } = member
 
-    const [roles, adult] = await Promise.all([
+    const [roles, adult, linkedMinors] = await Promise.all([
         Role.findAll({
             where: { clubId },
             attributes: ['id', 'name'],
             include: [{ model: User, as: 'users', attributes: [], where: { id: user.id }, through: { attributes: [] } }],
             order: [['isBase', 'DESC'], ['name', 'ASC']]
         }),
-        member.adultUserId ? User.findByPk(member.adultUserId, { attributes: ['id', 'name', 'lastName'] }) : null
+        member.adultUserId
+            ? User.findByPk(member.adultUserId, {
+                attributes: ['id', 'name', 'lastName'],
+                include: [{ model: Member, as: 'member', attributes: ['id', 'numMember'] }]   // Si el adulto también es socio
+            })
+            : null,
+        // Socios de los que esta persona es el adulto Familia (los menores que vinculó con su código)
+        Member.findAll({
+            where: { clubId, adultUserId: user.id },
+            attributes: ['id', 'numMember'],
+            include: [{ model: User, as: 'user', attributes: ['name', 'lastName', 'birthDate'] }],
+            order: [[{ model: User, as: 'user' }, 'name', 'ASC']]
+        })
     ])
 
     return {
@@ -199,11 +211,20 @@ async function getMember({ clubId }, memberId) {
             userStateId: user.userStateId,
             isRegistered: user.userStateId !== USER_STATES.PENDING
         },
-        // Vínculo familiar: el código mientras no se usó, o el adulto vinculado
+        // Vínculo familiar: el código mientras no se usó, el adulto vinculado (con su número de socio, si lo es) y los
+        // socios de los que esta persona es Familia
         family: {
             code: hasUnusedFamilyCode(member) ? member.codeFamily : null,
             linked: member.linkStatus,
-            adult: adult ? { id: adult.id, fullName: fullNameOf(adult) } : null
+            adult: adult
+                ? { id: adult.id, fullName: fullNameOf(adult), memberId: adult.member?.id ?? null, numMember: adult.member?.numMember ?? null }
+                : null,
+            minors: linkedMinors.map(minor => ({
+                memberId: minor.id,
+                numMember: minor.numMember,
+                fullName: fullNameOf(minor.user),
+                age: getAge(minor.user.birthDate)
+            }))
         },
         roles: roles.map(role => ({ id: role.id, name: role.name }))
     }

@@ -12,6 +12,7 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import Grid from '@mui/material/Grid'
+import Link from '@mui/material/Link'
 import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
@@ -212,12 +213,47 @@ export default function MemberDetailPage() {
               )}
 
               {!family.code && family.adult && (
-                <Field label="Adulto responsable vinculado">{family.adult.fullName}</Field>
+                <Field label="Adulto responsable vinculado">
+                  {family.adult.memberId ? (
+                    <Link component={RouterLink} to={`/members/${family.adult.memberId}`} color="secondary">
+                      {family.adult.fullName}
+                    </Link>
+                  ) : family.adult.fullName}
+                  {family.adult.numMember && (
+                    <Typography variant="caption" component="span" sx={{ color: 'text.secondary', ml: 1 }}>
+                      Socio Nº {family.adult.numMember}
+                    </Typography>
+                  )}
+                </Field>
               )}
 
-              {!family.code && !family.adult && (
+              {family.minors.length > 0 && (
+                <Box sx={{ mt: family.code || family.adult ? 2.5 : 0 }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    Es Familia (adulto responsable) de:
+                  </Typography>
+                  <Stack spacing={1} sx={{ mt: 0.5 }}>
+                    {family.minors.map((minor) => (
+                      <Box key={minor.memberId}>
+                        <Link component={RouterLink} to={`/members/${minor.memberId}`} color="secondary" sx={{ fontWeight: 500 }}>
+                          {minor.fullName}
+                        </Link>
+                        <Typography variant="caption" component="span" sx={{ color: 'text.secondary', ml: 1 }}>
+                          Socio Nº {minor.numMember} · {minor.age} años
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+              )}
+
+              {!family.code && !family.adult && family.minors.length === 0 && (
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {family.linked ? 'El vínculo ya se usó.' : 'No tiene adulto responsable vinculado.'}
+                  {family.linked
+                    ? 'El vínculo ya se usó.'
+                    : user.isMinor
+                      ? 'No tiene adulto responsable vinculado.'
+                      : 'Es mayor de edad: no necesita adulto responsable, y no es Familia de ningún socio.'}
                 </Typography>
               )}
             </CardContent>

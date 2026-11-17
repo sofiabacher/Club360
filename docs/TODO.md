@@ -204,6 +204,8 @@ Cada una se resuelve en el chat de Claude y se registra en el documento de conte
 
 Lo terminado, con la fecha. Lo más reciente arriba.
 
+- 17/11/2026 — Detalle del socio: "Vínculo familiar" muestra también de qué socios es Familia la persona (con link, número y edad), y el adulto responsable de un menor con link a su ficha si es socio. A un mayor sin vínculos le dice que no necesita adulto responsable. Verificado contra la base local y con el build del front (CP-MEMBERS-30)
+
 - 17/11/2026 — Arreglo: al corregir la fecha de nacimiento de un socio (cargado como mayor y era menor) no se generaba el código de vínculo, así que no había forma de vincularlo. Ahora `updateMember` genera el código si pasa a menor (sin adulto vinculado) y anula el que no se usó si pasa a mayor, en la misma transacción y con bitácora. Verificado contra la base local (CP-MEMBERS-29, integridad OK)
 
 - 16/11/2026 — Rescate del Admin del Club (no hay superadmin): `npm run admin:unlock` desde una compu (solo usuarios con `access.assignRoles`; confirma la base y `RESCATAR`, desbloquea y pone una contraseña temporal, bitácora `ADMIN_RESCUE`), desbloqueo de cualquier usuario desde Usuarios y roles (`POST /access/users/:id/unblock`) y segundo Admin en la demo (`pvera`). Sección 12 de `docs/deploy.md`. Verificado contra la base local con un Admin de prueba (rescate, login con la temporal, desbloqueo, integridad OK) y con el build del front; la carga de `pvera` en la demo queda para después de recrear la base (falta `category.minAge`/`maxAge`). La recuperación con códigos quedó en "Si queda tiempo"
