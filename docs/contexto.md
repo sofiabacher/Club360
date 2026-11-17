@@ -373,6 +373,7 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
   | Respuesta a una citación: confirmación o rechazo (05/11) | Entrenadoras de la categoría | in-app |
   | Transferencia informada para revisar (08/11) | Usuarios con gestión de cuotas | in-app |
   | Resultado de la revisión de una transferencia (08/11) | Quien pagó y el Socio (y Familia si es menor) | in-app |
+  | Cuota pagada con tarjeta (17/11) | Usuarios con gestión de cuotas (salvo quien pagó) | in-app |
   | Error de integridad detectado (09/11) | Usuarios con gestión de la integridad | in-app + email |
   | Solicitud de inscripción nueva (05/11) | Representante del deporte | in-app |
   | Avisos generales (Admin, Representante, Entrenadora) | Según el permiso de envío | in-app, y email si quien envía lo elige |

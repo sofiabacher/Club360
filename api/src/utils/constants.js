@@ -317,6 +317,7 @@ const NOTIFICATION_TYPES = {
     INSCRIPTION_REQUEST: { email: false },  // Solicitud de inscripción nueva (Representante del deporte)
     PAYMENT_REVIEW_REQUEST: { email: false },   // Transferencia informada para revisar (usuarios con fees.manage)
     PAYMENT_RESULT: { email: false },       // Resultado de la revisión de una transferencia (quien pagó y el socio, con Familia)
+    PAYMENT_RECEIVED: { email: false },     // Un socio pagó una cuota con tarjeta (usuarios con fees.manage)
     INTEGRITY_ALERT: { email: true },       // Error de integridad: el club queda bloqueado (usuarios con integrity.manage)
     GENERAL: { email: 'optional' }          // Avisos generales del Admin, el Representante y la Entrenadora
 }

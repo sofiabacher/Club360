@@ -204,6 +204,8 @@ Cada una se resuelve en el chat de Claude y se registra en el documento de conte
 
 Lo terminado, con la fecha. Lo más reciente arriba.
 
+- 17/11/2026 — Aviso `PAYMENT_RECEIVED` (in-app, "Cuota pagada") a quienes gestionan cuotas cuando un socio o su Familia paga con tarjeta (salvo a quien pagó). Agregado a la tabla de canales del contexto (sección 6). Verificado contra la base local con la transacción deshecha (CP-FEES-39)
+
 - 17/11/2026 — Detalle del socio: "Vínculo familiar" muestra también de qué socios es Familia la persona (con link, número y edad), y el adulto responsable de un menor con link a su ficha si es socio. A un mayor sin vínculos le dice que no necesita adulto responsable. Verificado contra la base local y con el build del front (CP-MEMBERS-30)
 
 - 17/11/2026 — Arreglo: al corregir la fecha de nacimiento de un socio (cargado como mayor y era menor) no se generaba el código de vínculo, así que no había forma de vincularlo. Ahora `updateMember` genera el código si pasa a menor (sin adulto vinculado) y anula el que no se usó si pasa a mayor, en la misma transacción y con bitácora. Verificado contra la base local (CP-MEMBERS-29, integridad OK)

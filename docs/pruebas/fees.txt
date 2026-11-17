@@ -616,3 +616,20 @@ Datos de entrada: —
 Resultado esperado: 2) se descarga comprobante-<código>.pdf con el encabezado Bordó del club, la franja del color del club, el código, el detalle, el total y el pie, sin abrir la impresión. 3) la ventana de impresión del navegador, solo con el comprobante. Si el PDF no se puede generar, un aviso que sugiere imprimir y elegir "Guardar como PDF".
 Resultado obtenido: se descargó comprobante-PAY-WBBH69G5.pdf (PDF válido de una página, con todos los datos). Falta probar "Imprimir" a mano.
 Estado: Aprobado
+
+--------------------------------------------------
+ID: CP-FEES-39
+Módulo: fees
+Descripción: El Admin recibe un aviso cuando un socio paga una cuota con tarjeta
+Precondiciones: Socia mayor con una cuota impaga. Admin del Club activo.
+Pasos:
+  1. Entrar como la socia y pagar la cuota con una tarjeta válida. 2. Entrar como Admin y abrir la campana.
+  3. Tocar el aviso. 4. Repetir el pago con una tarjeta terminada en 0000.
+Datos de entrada: tarjeta 4111 1111 1111 1111; después, una terminada en 0000.
+Resultado esperado: 2) "Cuota pagada: <Nombre> pagó con tarjeta $<monto> por la cuota de <mes>." (si paga la Familia,
+  dice de quién es la cuota; si estaba Suspendida y se regularizó, lo aclara). 3) Abre el detalle con "Ir a…" el
+  historial de pagos. 4) Rechazado: no llega ningún aviso. Los pagos en secretaría y las transferencias aprobadas no avisan.
+Resultado obtenido: base local, con la transacción deshecha al final: pago Aprobado, aviso "Cuota pagada — Paula
+  Giménez pagó con tarjeta $40.000 por la cuota de noviembre." para el Admin; la cuota quedó como estaba. Falta probar
+  la pantalla.
+Estado: Pendiente

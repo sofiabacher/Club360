@@ -489,11 +489,15 @@ const describeFee = (fee) => `Cuota ${fee.period} de ${fullNameOf(fee.member.use
 // Pago simulado con tarjeta (fees.payOwn o fees.manageLinked). La cuota tiene que ser del socio logueado (con payOwn) o
 // de una socia vinculada (con manageLinked); si no, 404. No se guarda la tarjeta: si se aprueba, solo los últimos 4
 // dígitos en payment.note ("Tarjeta ****1234"), para el comprobante; en la bitácora, también solo los últimos 4
+// Si se aprueba, avisa PAYMENT_RECEIVED (in-app) a quienes gestionan cuotas, salvo a quien pagó.
 async function payFee(user, feeId, { cardNumber }) {
     const allowed = await payableMemberIds(user)
 
     const last4 = String(cardNumber).slice(-4)
     const approved = !String(cardNumber).endsWith(REJECTED_CARD_SUFFIX)
+    const managers = approved
+        ? (await getActiveUsersWithPermission(user.clubId, PERMISSIONS.FEES_MANAGE)).filter(id => id !== user.id)
+        : []
 
     const result = await sequelize.transaction(async (transaction) => {
         const fee = await lockUnpaidFee({ id: feeId, clubId: user.clubId, memberId: allowed }, transaction)
@@ -521,6 +525,18 @@ async function payFee(user, feeId, { cardNumber }) {
 
         await logger(actorOf(user), approved ? LOG_ACTIONS.PAYMENT_APPROVED : LOG_ACTIONS.PAYMENT_REJECTED,
             `${describeFee(fee)}, ${money(payment.amount)}, tarjeta terminada en ${last4}, código ${payment.confirmationCode}`, { transaction })
+
+        if (approved && managers.length > 0) {
+            const payer = await User.findByPk(user.id, { attributes: ['id', 'name', 'lastName'], transaction })
+            // Si paga el adulto por una vinculada, el aviso dice de quién es la cuota
+            const forWhom = fee.member.userId === user.id ? '' : ` de ${fullNameOf(fee.member.user)}`
+            await notify({
+                clubId: user.clubId,
+                type: 'PAYMENT_RECEIVED',
+                recipientUserIds: managers,
+                ...texts.paymentReceived({ payer: fullNameOf(payer), amount: money(payment.amount), month: monthNameOf(fee.period), forWhom, recovered })
+            }, { transaction })
+        }
 
         return { fee, payment, recovered }
     })

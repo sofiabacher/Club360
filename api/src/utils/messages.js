@@ -560,6 +560,10 @@ module.exports = {
             message: `Por tener cuotas impagas hace más de ${delayFee} días, perdiste tu condición de socio. `
                 + 'Mientras tanto no podés ser citada ni inscribirte a deportes. Se recupera sola cuando regularices tus cuotas.'
         }),
+        paymentReceived: ({ payer, amount, month, forWhom, recovered }) => ({
+            title: 'Cuota pagada',
+            message: `${payer} pagó con tarjeta ${amount} por la cuota de ${month}${forWhom}.${recovered ? ' Se regularizó y volvió a estar Activo.' : ''}`
+        }),
         paymentReviewRequest: ({ payer, amount, month, forWhom }) => ({
             title: 'Transferencia para revisar',
             message: `${payer} informó una transferencia de ${amount} por la cuota de ${month}${forWhom}.`

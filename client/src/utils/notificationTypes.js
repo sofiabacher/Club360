@@ -39,6 +39,7 @@ export const NOTIFICATION_TYPES = {
   FEE_DUE_SOON: { icon: ScheduleRounded, tone: 'pending', path: feesPath },
   PAYMENT_REVIEW_REQUEST: { icon: ReceiptLongRounded, tone: 'pending', path: () => '/fees/payments' },
   PAYMENT_RESULT: { icon: ReceiptLongRounded, tone: null, path: feesPath },
+  PAYMENT_RECEIVED: { icon: PaymentsRounded, tone: 'ok', path: () => '/fees/payments' },
   FIXTURE_PUBLISHED: { icon: EventRounded, tone: null, path: gamesPath },
   SCHEDULE_CONFLICT: { icon: WarningAmberRounded, tone: 'urgent', path: () => '/games/assigned' },
   ROUTINE_PUBLISHED: { icon: FitnessCenterRounded, tone: null, path: () => '/my-routine' },
