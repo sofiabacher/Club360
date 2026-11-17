@@ -7,6 +7,10 @@ Este documento es el contexto acumulado del proyecto. Está pensado para pegarse
 - Cada regla vive en **un solo lugar**; en el resto del documento se referencia con "ver sección X". Si una regla cambia, se actualiza solo en su lugar de origen.
 - `[A DEFINIR]` marca una contradicción o ambigüedad que necesita una decisión explícita. `[COMPLETAR]` marca datos que faltan cargar. `[PROVISORIO]` marca datos inventados para avanzar, que se reemplazan por los reales más adelante.
 
+**Última actualización (17/11/2026) — documentación final y contexto al día con el código:** la documentación final (manual de usuario, propósito y alcance, DER y tabla de valores de los estados) se arma en un solo PDF con el diseño del manual. No hace falta un diccionario de datos completo porque el DER incluye tipo, nulabilidad, `UNIQUE` y `DEFAULT` de cada campo; se agrega solo una tabla con los valores de los campos de estado. Se registran en este documento cosas que ya estaban en el código: escalas de edad 3 (Maxi) y 4 (personalizada), el asistente **Lyla** disponible antes del login y el catálogo de 43 permisos (ver secciones 6, 8, 9 y 10).
+
+**Última actualización (16/11/2026) — Socio y Jugadora:** la jugadora conserva los roles Socio y Jugadora y elige con cuál entrar, como ya hace la aplicación (ver 3.3 y 3.5).
+
 **Última actualización (15/11/2026) — bot de consultas en Node:** el bot entra al MVP, pero sin el servicio en Python (Flask con TensorFlow), que no entra en el plan gratuito de Render: es un módulo más del back (`bot`, el 16), con el mismo comportamiento de la guía (menú por rol, botones, texto libre, sugerencias, fallback y privacidad) y un clasificador liviano en JavaScript. Su precisión se mide con un set de prueba aparte (ver sección 9).
 
 **Última actualización (14/11/2026) — seguimiento personal de la jugadora e historial de partidos:** el seguimiento personal vuelve al MVP: la jugadora registra cómo le fue con cada rutina diaria (completada, parcial o no completada, esfuerzo del 1 al 5 y nota), carga sus objetivos y ve su progreso con gráficos; la preparadora física de sus categorías lo consulta. Se suman las tablas `routineLog` y `goal` (26 entidades) y dos permisos (43 en total). La Jugadora, la Entrenadora y la Familia tienen una pestaña "Jugados" con el historial de partidos (ver sección 4, 6, 7 y 8).
@@ -83,6 +87,8 @@ El proyecto integrador sigue el ciclo de vida de desarrollo de software (Ingenie
 - 17/11: congelamiento, recorrido completo en la demo con cada rol y documento final cerrado.
 - 18/11: entrega.
 
+**Documentación final (17/11/2026):** un PDF único con el diseño del manual: propósito y alcance, tabla de valores de los campos de estado y DER lógico (más el manual de usuario, que va aparte). El profesor pidió manual de usuario, DER y/o diccionario de datos, y alcance y propósito; el diccionario completo solo hace falta si el DER no incluye los tipos, y el DER de Club360 sí los incluye.
+
 **Equipo de colegio:** 4 integrantes — Sofía Bacher, Thiago Chaile, Ignacio Jericó, Julián Prol. Roles y tareas de cada uno: aún sin definir.
 
 ---
@@ -150,11 +156,11 @@ Se usan para el seed, los datos de prueba, la pantalla "El club" y el bot. Se re
 - Inscripción o baja a un deporte (baja: ver 3.3.1).
 - Acceso a información general del club.
 - Notificaciones.
-- Acceso al bot de consultas (funcionalidad opcional, ver sección 9).
+- Acceso a Lyla, el asistente de consultas (ver sección 9).
 
 **3.3 Socio → Socio-Deportista**
 - El Socio solicita inscripción a un deporte (botón "Inscripción a un deporte").
-- El Representante del deporte aprueba → el Socio pasa a tener el rol **Jugadora** (Socio-Deportista), que incluye todas las funciones y permisos del rol Socio más las deportivas. Es una extensión del perfil base, **no** un usuario nuevo, y no alterna entre ambos roles.
+- El Representante del deporte aprueba → el Socio pasa a tener el rol **Jugadora** (Socio-Deportista), que incluye todas las funciones y permisos del rol Socio más las deportivas. Es una extensión del perfil base, **no** un usuario nuevo: conserva el rol Socio y suma el rol Jugadora. **Desde el 16/11/2026, puede alternar entre los dos** con el rol activo (ver 3.5): como Jugadora tiene todas las funciones del Socio más las deportivas; como Socio, solo las del perfil base.
 - Al pasar a Jugadora se le suma la cuota deportiva (ver sección 6).
 - **Reglas de la inscripción (05/11/2026):** solo puede pedirla un Socio **Activo** (un Suspendido por mora primero tiene que regularizar), en un deporte activo del club y si no tiene ya una inscripción Pendiente o Aprobada en ese deporte; puede volver a pedirla después de un rechazo. También la puede pedir un Socio menor. Al pedirla, se avisa in-app al Representante del deporte. El Representante la aprueba (le da el rol Jugadora) o la rechaza con un motivo opcional, que se le informa al Socio. El Socio puede cancelar una solicitud mientras está Pendiente.
 
@@ -185,7 +191,7 @@ Se usan para el seed, los datos de prueba, la pantalla "El club" y el bot. Se re
 - Si el usuario Familia es también Socio por su cuenta, tiene ambos roles (ver "Rol activo" más abajo).
 - Un usuario Staff puede ser también Familia de un Socio menor (no puede ser Socio, ver 3.6); tiene ambos roles (ver "Rol activo" más abajo).
 - Un usuario puede ser "Jugadora" y estar vinculado como "Familia" de otra jugadora (mayor de edad), sin conflicto entre roles.
-- **Rol activo:** un usuario con más de un rol (ej. Familia y Socio, Familia y Jugadora, Familia y Staff) elige con qué rol trabajar y alterna entre sus dashboards. Los permisos efectivos son **solo los del rol activo**, no la suma de ambos. La Bitácora registra con qué rol se hizo cada acción.
+- **Rol activo:** un usuario con más de un rol (ej. Socio y Jugadora, Familia y Socio, Familia y Jugadora, Familia y Staff) elige con qué rol trabajar y alterna entre sus dashboards. Los permisos efectivos son **solo los del rol activo**, no la suma de ambos. La Bitácora registra con qué rol se hizo cada acción.
 
 **3.6 Alta de Staff** (Representante, entrenadoras, preparadora física)
 - No pasa por el circuito de Socio. Alta directa por el Admin del club, con rol de staff ya asignado.
@@ -228,7 +234,7 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 - **Roles nuevos:** el Admin los crea con cualquier combinación de permisos del catálogo. El nombre es único dentro del club.
 - **Asignación manual:** desde "Usuarios y roles", el Admin solo asigna o quita los **roles nuevos y el rol Admin del Club**. Socio, Jugadora, Familia, Representante, Entrenadora y Preparadora física se asignan únicamente desde su circuito: alta de socio (3.1), aprobación de la inscripción (3.3), vínculo familiar (3.5) y alta de staff (3.6). Así no se puede, por ejemplo, convertir a alguien en Jugadora sin inscripción ni darle el rol Socio a un Staff.
 - **Eliminar un rol nuevo:** solo si no tiene usuarios asignados; si los tiene, primero hay que quitárselo a cada uno.
-- **Permisos directos:** cualquiera de los 41, como excepción puntual para un usuario. Los permisos condicionados por edad igual se quitan si el usuario es menor (ver 3.6.1).
+- **Permisos directos:** cualquiera de los 43, como excepción puntual para un usuario. Los permisos condicionados por edad igual se quitan si el usuario es menor (ver 3.6.1).
 - Los cambios de roles y permisos rigen desde la siguiente acción del usuario afectado.
 
 **Funciones comunes** — todos los usuarios con sesión
@@ -303,7 +309,7 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 7. Vínculo familiar por código (ver 3.5)
 8. Bitácora de actividad y decisiones de negocio
 9. Carga inicial de club y catálogo de deportes por script (ver sección 2) — sin panel de SuperAdmin
-10. **Bot de consultas (FUNCIONALIDAD OPCIONAL, última prioridad)**: ver sección 9.
+10. **Bot de consultas, Lyla** (incluido en el MVP desde el 15/11/2026): ver sección 9.
 
 ---
 
@@ -312,7 +318,7 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 - **Ligas y categorías (26/10/2026):**
   - Cada liga pertenece a un deporte del club y tiene categorías. Las jugadoras y el staff se asignan a las categorías.
   - El Representante gestiona solo las ligas de su deporte.
-  - **Escalas de edad (28/10/2026):** las categorías del vóley van por edad y hay dos escalas en uso. Cada liga elige una, y sus categorías se eligen de esa lista:
+  - **Escalas de edad (28/10/2026):** las categorías del vóley van por edad y hay tres escalas fijas y una personalizada (ver abajo). Cada liga elige una, y sus categorías se eligen de esa lista:
     - **Escala 1:** Sub-11, Sub-12, Sub-13, Sub-15, Sub-16, Sub-18, Sub-21 y Mayores.
     - **Escala 2:** Sub-13, Sub-15, Sub-17, Sub-20, Sub-23 y Mayores.
 
@@ -373,7 +379,6 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
   | Respuesta a una citación: confirmación o rechazo (05/11) | Entrenadoras de la categoría | in-app |
   | Transferencia informada para revisar (08/11) | Usuarios con gestión de cuotas | in-app |
   | Resultado de la revisión de una transferencia (08/11) | Quien pagó y el Socio (y Familia si es menor) | in-app |
-  | Cuota pagada con tarjeta (17/11) | Usuarios con gestión de cuotas (salvo quien pagó) | in-app |
   | Error de integridad detectado (09/11) | Usuarios con gestión de la integridad | in-app + email |
   | Solicitud de inscripción nueva (05/11) | Representante del deporte | in-app |
   | Avisos generales (Admin, Representante, Entrenadora) | Según el permiso de envío | in-app, y email si quien envía lo elige |
@@ -458,7 +463,7 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
   - (21/10) `user.email` admite NULL (sigue siendo único): es obligatorio para los mayores de 18 y opcional para los menores, que pueden no tener email propio y no pueden repetir el del adulto si son hermanos. Un menor sin email recupera su contraseña a través del club.
   - (21/10) `user.phone` pasa a `VARCHAR(255)` y se guarda **cifrado con AES** (encriptación reversible de la consigna). El DNI y el email no se cifran porque se buscan y son únicos.
   - (16/11) `category` suma `minAge` y `maxAge` (`TINYINT UNSIGNED` NULL): las edades de una categoría de la escala personalizada (`league.ageScale` = 4, con `ageGroup` = `CUSTOM`). En las demás escalas quedan en NULL, porque las edades salen de `AGE_SCALES`. `ageScale` pasa a admitir 3 (Maxi) y 4 (Personalizada). Se agregan recreando la base y restaurando los datos.
-  - (28/10) `league` suma `ageScale` (`TINYINT NOT NULL`, 1 o 2) y `category` suma `ageGroup` (`VARCHAR(10) NOT NULL`, código del grupo de edad, por ejemplo `SUB18` o `MAYORES`). Las edades máximas de cada grupo viven en la constante `AGE_SCALES` de la aplicación, no en la base (ver sección 6, "Escalas de edad").
+  - (28/10) `league` suma `ageScale` (`TINYINT NOT NULL`, de 1 a 4: 1 y 2 Sub-N, 3 Maxi, 4 personalizada) y `category` suma `ageGroup` (`VARCHAR(10) NOT NULL`, código del grupo de edad, por ejemplo `SUB18` o `MAYORES`). Las edades máximas de cada grupo viven en la constante `AGE_SCALES` de la aplicación, no en la base (ver sección 6, "Escalas de edad").
   - (01/11) `game` suma `isHome` (`TINYINT(1) NOT NULL DEFAULT 1`): si el partido es de local, como muestra el moodboard ("vs. Atlético Ribera · Local").
   - (01/11) `notification` suma `batchId` (`CHAR(36)` NULL, con índice): identifica a todas las notificaciones de un mismo aviso general, para el historial de enviados. Las notificaciones automáticas lo tienen en NULL. Se agrega recreando la base y restaurando los datos (ver sección 11, "Cambios en el modelo").
   - (14/11) **Tablas nuevas** (no están en la imagen): `routineLog` (`id`, `clubId`, `routineId` FK, `memberId` FK, `status` `TINYINT NOT NULL DEFAULT 1` — 1 Completada, 2 Parcial, 3 No completada —, `effort` `TINYINT` NULL de 1 a 5, `note` `VARCHAR(300)` NULL, `dvh`; único `(routineId, memberId)`) y `goal` (`id`, `clubId`, `memberId` FK, `text` `VARCHAR(200) NOT NULL`, `dueDate` `DATEONLY NOT NULL`, `goalState` `INT NOT NULL DEFAULT 1` — 1 En curso, 2 Cumplido, 3 Abandonado —, `closedAt` `DATE` NULL, `dvh`). Sus FK usan `RESTRICT`. Al ser tablas nuevas, `sync()` las crea sin recrear la base.
@@ -484,7 +489,8 @@ Los actores se describen por rol para facilitar la lectura, pero el acceso a pan
 
 Asistente de consultas generales sobre el club y sobre cómo usar la plataforma, con menú de botones y texto libre. **No es requisito del profesor.** Entró al MVP el 15/11/2026, después de los resultados de partidos (decisión D11) y del seguimiento personal.
 
-- **Acceso:** por el permiso `bot.use`, que traen los roles Socio, Jugadora y Familia. Un usuario con más de un rol lo ve solo mientras su rol activo lo habilita. No está disponible antes del login ni para Staff o Admin del club. El menú depende de un grupo que se calcula por permisos: `jugadora` (puede responder citaciones), `familia` (gestiona cuotas de jugadoras vinculadas) o `socio`.
+- **Acceso:** por el permiso `bot.use`, que traen los roles Socio, Jugadora y Familia. Un usuario con más de un rol lo ve solo mientras su rol activo lo habilita. No está disponible para Staff ni Admin del club. El menú depende de un grupo que se calcula por permisos: `jugadora` (puede responder citaciones), `familia` (gestiona cuotas de jugadoras vinculadas) o `socio`.
+- **Lyla y el asistente público (17/11/2026):** el asistente se llama **Lyla** y habla en femenino. Además del asistente con sesión, hay una versión **pública, sin login** (grupo `visitante`), en la bienvenida y en las pantallas de sesión: explica cómo entrar por primera vez (número de socio, código de vínculo o email de activación), la cuenta y qué es la plataforma. No usa datos de ningún club, no se registra en la bitácora (no hay club ni usuario) y tiene un límite de 20 mensajes por minuto por IP.
 - **Alcance:** solo información general y orientación. No accede a datos personales: a "¿cuánto debo?" o "¿me citaron?" responde dónde verlo. No lista partidos. No informa valores que configura el Admin (días de mora, margen de conflicto, montos); sí las reglas fijas del sistema. Los datos del club (contacto, horarios, dirección y canchas) salen de la base.
 - **Interacción:** los botones van directo a la respuesta; el texto libre pasa por el clasificador. Con confianza alta responde, con confianza media sugiere hasta 3 preguntas ("¿Quisiste decir…?") y con confianza baja, o si es una consulta fuera de tema, muestra el contacto del club y el menú. La categoría de la pantalla en la que está el usuario aparece primera. Tras cada respuesta: "Volver al menú", "Contactar al club" y 👍/👎.
 - **Arquitectura (15/11/2026):** React → Express, en el módulo `bot` del back. **Cambia el diseño original** (servicio interno en Flask con TensorFlow), porque el plan gratuito de Render tiene 512 MB de memoria y un segundo servicio en la misma cuenta consumiría las horas del back. El clasificador usa similitud de coseno con TF-IDF sobre los patrones de cada intención (texto normalizado, sin tildes y con stemming en español), en JavaScript, sin IA generativa ni servicios externos. La base de conocimiento es un archivo `intents.json` en el módulo.
@@ -502,12 +508,12 @@ Asistente de consultas generales sobre el club y sobre cómo usar la plataforma,
 **Pendiente:**
 1. ~~Modelo DER Lógico completo~~ — cerrado el 04/10/2026, actualizado el 10/10/2026 (ver sección 8)
 2. Diagrama de Clases
-2b. Actualizar `Documentación Club360` (alcance, catálogo de 43 permisos y especificaciones funcionales) con lo que se sumó desde el 21/10/2026: transferencias y comprobantes, resultados y campaña, seguimiento personal, historial de partidos, bitácora, integridad y backup por club
+2b. **En curso (17/11/2026):** propósito y alcance ya actualizados en el PDF final; falta actualizar `Documentación Club360` (catálogo de 43 permisos, requisitos funcionales y no funcionales: el bot ya no es opcional ni usa Flask) con lo que se sumó desde el 21/10/2026: transferencias y comprobantes, resultados y campaña, seguimiento personal, historial de partidos, bitácora, integridad y backup por club
 3. ~~Documento de Visión formal + requisitos funcionales/no funcionales~~ — cerrado el 10/10/2026 (Propósito del sistema, Alcance funcional, requisitos funcionales y no funcionales, ajustados al recorte de alcance). Actualizado el 21/10/2026 con las decisiones D3, D4, D5 y D6: 51 requisitos funcionales (se sumaron el comprobante del alta y la baja de un deporte) y 11 no funcionales
 4. Diagrama General de Casos de Uso + especificación de funcionalidad
 5. ~~Cronograma de trabajo~~ — cerrado el 13/11/2026: entrega el 18/11 (ver sección 0)
 6. Definir roles/participantes del equipo de desarrollo (quién hace qué)
-7. Manuales de usuario
+7. ~~Manuales de usuario~~ — cerrado el 17/11/2026 (PDF de 44 páginas con capítulos por rol, errores, preguntas frecuentes y glosario)
 8. Diseño de seguridad técnica (encriptación reversible/irreversible, dígitos verificadores horizontales/verticales), bitácora técnica, backup/restore — **definidos el 09/11/2026** (ver sección 11, "Bitácora, integridad y copias de seguridad"); falta redactarlos en la documentación formal. Las particiones no se hacen (ver sección 0)
 9. ~~Mecanismo de recuperación de contraseña~~ — cerrado el 21/10/2026 (ver 3.7)
 10. ~~Datos de contacto, horarios y direcciones de Valencia y sus canchas~~ — cargados con datos provisorios el 21/10/2026 (D2, ver 2.1). Reemplazar por los reales cuando estén
@@ -523,6 +529,8 @@ Asistente de consultas generales sobre el club y sobre cómo usar la plataforma,
 20. ~~Día de generación y día de vencimiento de la cuota mensual~~ — cerrado el 08/11/2026: se genera el día 1 y vence el 10 (D12, ver sección 6)
 21. ~~Dónde se guarda el color de acento de cada club~~ — cerrado el 21/10/2026: campo `club.accentColor` (D13, ver sección 8)
 22. ~~Proveedor de la base de datos en la nube~~ — cerrado el 11/11/2026: Railway (ver sección 11)
+23. **DER lógico: rehacer la imagen (17/11/2026).** La imagen actual quedó desactualizada: faltan campos y las tablas `routineLog` y `goal` (ver los puntos de la sección 8). Se rehace con los campos del código y se reemplazan `docs/DER_logico.jpg` y la imagen del proyecto.
+24. **Tabla de valores de los estados (17/11/2026):** una página con los códigos de cada campo de estado, para la documentación final (ver sección 0).
 
 **Stack técnico:** ver sección 11.
 
