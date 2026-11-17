@@ -13,6 +13,13 @@ Las contraseñas no se escriben en ningún archivo del repo: se piden al equipo.
 
 El número de socio de Rocío y el código de vínculo de Julieta cambian en cada carga, así que **no** están en este archivo: el script los muestra al terminar, junto con la hora en que vencen las citaciones Pendientes. Anotalos antes de la defensa.
 
+## Admins del Club
+
+| Usuario | Nombre | Qué muestra |
+|---|---|---|
+| `admin.valencia` | Admin del seed (`SEED_ADMIN_USERNAME`) | Toda la administración del club |
+| `pvera` | Patricia Vera | Segundo Admin: si uno se bloquea, el otro lo desbloquea desde **Usuarios y roles** (aviso "Está bloqueado" con el botón Desbloquear). Si se bloquean los dos, `npm run admin:unlock` (`docs/deploy.md`, sección 12) |
+
 ## Staff
 
 | Usuario | Nombre | Roles | Categorías | Qué muestra |

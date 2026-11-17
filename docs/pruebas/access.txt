@@ -324,3 +324,38 @@ Datos de entrada: —
 Resultado esperado: en la compu, panel Pizarra a la izquierda con el logo, la frase, la red de vóley y "¿Qué es Club360?"; en el celular, una franja con el logo y la red chica arriba del formulario. Fondo blanco, sin la cancha naranja. El asistente público abajo a la derecha (no en elegir rol ni en mantenimiento).
 Resultado obtenido: como se esperaba en la compu y en el celular, sin errores de consola.
 Estado: Aprobado
+
+
+--------------------------------------------------
+ID: CP-ACCESS-20
+Módulo: access
+Descripción: Desbloquear a otro Admin desde Usuarios y roles
+Precondiciones: Datos de la demo cargados (dos Admin: admin.valencia y pvera). pvera Bloqueado (5 intentos fallidos).
+Pasos:
+  1. Entrar como admin.valencia. 2. Usuarios y roles → Patricia Vera. 3. Tocar "Desbloquear" en el aviso.
+  4. Repetir el desbloqueo por la API. 5. Entrar como pvera con su contraseña.
+Datos de entrada: POST /access/users/:id/unblock
+Resultado esperado: 2) el aviso "Está bloqueado por intentos fallidos" con el botón. 3) "Desbloqueamos el usuario.", el
+  estado pasa a Activo y en la bitácora queda "Usuario desbloqueado". 4) 409 "El usuario no está bloqueado." 5) Entra.
+  Sin access.assignRoles → 403.
+Resultado obtenido: con un Admin de prueba en la base local, unblockUser lo pasó a Activo con los intentos en 0, la
+  segunda vez respondió 409 y la integridad dio OK. Falta probar la pantalla.
+Estado: Pendiente
+
+
+--------------------------------------------------
+ID: CP-ACCESS-21
+Módulo: access
+Descripción: Rescate del Admin bloqueado con npm run admin:unlock
+Precondiciones: Un Admin del Club Bloqueado. Acceso a la base desde la compu.
+Pasos:
+  1. npm run admin:unlock -- noexiste. 2. npm run admin:unlock -- cbenitez (Entrenadora). 3. Con el Admin, responder
+  algo distinto de RESCATAR. 4. Con el Admin, escribir RESCATAR. 5. Entrar con la contraseña temporal.
+Datos de entrada: usuario del Admin.
+Resultado esperado: 1) "No existe el usuario". 2) "El usuario no es Admin del Club..." 3) "Cancelado: no se cambió
+  nada." 4) Desbloqueado, contraseña temporal mostrada una vez, "Rescate de acceso del Admin" en la bitácora del club.
+  5) Entra; la contraseña vieja ya no sirve. Integridad OK. Contra una base no local, antes pide el nombre de la base.
+Resultado obtenido: los 5 pasos como se esperaba en la base local (con un Admin de prueba, que después se borró);
+  integridad OK.
+Estado: Aprobado
+

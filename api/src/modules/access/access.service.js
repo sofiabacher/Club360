@@ -497,6 +497,22 @@ async function updateUserRoles(actor, userId, { roleIds }) {
     return getUser(actor, user.id)
 }
 
+// Usuario BLOCKED por intentos fallidos → ACTIVE, con los intentos en 0. Sirve para cualquier usuario del club, también
+// los que no son socios ni staff (por ejemplo, otro Admin del Club). Socios y staff se desbloquean además desde su pantalla
+async function unblockUser(actor, userId) {
+    const user = await sequelize.transaction(async (transaction) => {
+        const { id } = await findClubUser(actor.clubId, userId, { transaction })
+        const user = await User.findByPk(id, { transaction, lock: transaction.LOCK.UPDATE })
+        if (user.userStateId !== USER_STATES.BLOCKED) throw createError(m.notBlocked, 409)
+
+        await user.update({ userStateId: USER_STATES.ACTIVE, failedAttempts: 0 }, { transaction })
+        return user
+    })
+
+    await logger(actorOf(actor), LOG_ACTIONS.USER_UNBLOCKED, `Desbloqueado por el Admin desde Usuarios y roles: usuario "${user.username}" (id ${user.id})`)
+    return getUser(actor, user.id)
+}
+
 // Reemplaza los permisos directos del usuario (user_permission)
 async function updateUserPermissions(actor, userId, { permissionIds }) {
     const { clubId } = actor
@@ -611,6 +627,7 @@ module.exports = {
     getUser,
     updateUserRoles,
     updateUserPermissions,
+    unblockUser,
     assignBaseRole,
     removeBaseRole
 }

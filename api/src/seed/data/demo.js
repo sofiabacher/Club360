@@ -16,6 +16,12 @@ const DEMO_STAFF = [
     { key: 'nibanez', name: 'Natalia', lastName: 'Ibáñez', birthDate: '1994-06-30', roles: ['COACH'], categories: [], pending: true }
 ]
 
+// ---------- Segundo Admin del Club ----------
+// Además del Admin del seed: si uno se bloquea, el otro lo desbloquea desde Usuarios y roles (siempre conviene tener dos)
+const DEMO_ADMINS = [
+    { key: 'pvera', name: 'Patricia', lastName: 'Vera', birthDate: '1979-09-12' }
+]
+
 // ---------- Socias y familias (los casos de la demo) ----------
 // Campos de cada caso:
 //   player: inscripción Aprobada a Vóley y rol Jugadora; categories: dónde juega
@@ -195,6 +201,7 @@ const DEMO_GENERAL_NOTICE = {
 
 module.exports = {
     DEMO_STAFF,
+    DEMO_ADMINS,
     DEMO_MEMBERS,
     DEMO_FAMILY_ONLY,
     DEMO_FILLER_PLAYERS,

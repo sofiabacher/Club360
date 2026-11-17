@@ -39,3 +39,6 @@ export const updateUserRoles = (id, roleIds) => axiosClient.put(`/access/users/$
 // data: el usuario actualizado
 export const updateUserPermissions = (id, permissionIds) =>
   axiosClient.put(`/access/users/${id}/permissions`, { permissionIds }).then((res) => res.data)
+
+// Usuario Bloqueado por intentos fallidos → Activo. data: el usuario actualizado
+export const unblockUser = (id) => axiosClient.post(`/access/users/${id}/unblock`).then((res) => res.data)

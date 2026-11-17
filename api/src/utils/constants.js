@@ -125,6 +125,7 @@ const LOG_ACTIONS = {
     PASSWORD_RECOVERY: { message: 'Pedido de recuperación de contraseña', criticity: CRITICITY.MEDIUM },
     PASSWORD_CHANGE: { message: 'Cambio de contraseña', criticity: CRITICITY.MEDIUM },
     USER_UNBLOCKED: { message: 'Usuario desbloqueado', criticity: CRITICITY.MEDIUM },
+    ADMIN_RESCUE: { message: 'Rescate de acceso del Admin', criticity: CRITICITY.HIGH },   // npm run admin:unlock (desde una compu)
     USER_UPDATE: { message: 'Modificación de datos del usuario', criticity: CRITICITY.MEDIUM },
 
     // Roles y permisos: HIGH porque cambian la seguridad del sistema

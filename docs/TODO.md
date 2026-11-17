@@ -196,12 +196,15 @@ Cada una se resuelve en el chat de Claude y se registra en el documento de conte
 - [x] Bot de consultas en Node dentro del back, sin Flask (P21: módulo `bot` con clasificador TF-IDF de palabras y trigramas de caracteres, `knowledge/intents.json` con 33 intenciones, menú por grupo calculado por permisos, sugerencias, fallback, privacidad y bitácora sin el texto; widget `ChatBot` en `DashboardLayout` con `bot.use`. Falta probar el widget a mano en el navegador y en el celular)
 - [x] Evaluación del bot con set de prueba (P21: `npm run bot:eval`, 175 preguntas; 92,0 % con umbrales 0,45 / 0,25 y las 15 frases fuera de tema sin respuesta; informe en `docs/pruebas/bot-evaluacion.txt`)
 - [ ] Dominio propio verificado para enviar los emails con Resend en lugar de Gmail SMTP
+- [ ] Recuperación del Admin dentro del sistema, sin depender del email ni de la compu del equipo: códigos de recuperación de un solo uso (como GitHub o Google). El seed los genera y los muestra una vez, se guarda solo su hash, en el login hay "Usar un código de recuperación" (usuario + código → nueva contraseña, que desbloquea) y se regeneran desde Mi cuenta. Cambia el modelo (columna o tabla nueva): recrear la base y aplicar en Railway. Hoy se cubre con el segundo Admin y `npm run admin:unlock`
 
 ---
 
 ## Registro
 
 Lo terminado, con la fecha. Lo más reciente arriba.
+
+- 16/11/2026 — Rescate del Admin del Club (no hay superadmin): `npm run admin:unlock` desde una compu (solo usuarios con `access.assignRoles`; confirma la base y `RESCATAR`, desbloquea y pone una contraseña temporal, bitácora `ADMIN_RESCUE`), desbloqueo de cualquier usuario desde Usuarios y roles (`POST /access/users/:id/unblock`) y segundo Admin en la demo (`pvera`). Sección 12 de `docs/deploy.md`. Verificado contra la base local con un Admin de prueba (rescate, login con la temporal, desbloqueo, integridad OK) y con el build del front; la carga de `pvera` en la demo queda para después de recrear la base (falta `category.minAge`/`maxAge`). La recuperación con códigos quedó en "Si queda tiempo"
 
 - 16/11/2026 — Escalas de edad nuevas: escala 3 fija, Maxi (+35 a +60, por edad mínima), y escala Personalizada, donde cada categoría se crea con su nombre y su edad mínima y/o máxima (`category.minAge` y `category.maxAge`, NULL en las demás escalas). La asignación de jugadoras valida también la edad mínima. Front: formulario de liga con las 4 escalas y formulario de categoría con las edades. Casos CP-LEAGUES-25 a 27 en `docs/pruebas/leagues.txt` (pendientes: falta recrear la base local con las columnas nuevas y, antes de integrar a `main`, la de Railway). Verificado con el build del front y con un script de la lógica del service
 

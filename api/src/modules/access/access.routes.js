@@ -29,5 +29,7 @@ router.get('/users', ...assignRoles, validator.listUsers, validateFields, contro
 router.get('/users/:id', ...assignRoles, validator.userById, validateFields, controller.getUser)
 router.put('/users/:id/roles', ...assignRoles, validator.updateUserRoles, validateFields, controller.updateUserRoles)
 router.put('/users/:id/permissions', ...assignRoles, validator.updateUserPermissions, validateFields, controller.updateUserPermissions)
+// Desbloqueo de cualquier usuario del club (también los que no son socios ni staff, como otro Admin)
+router.post('/users/:id/unblock', ...assignRoles, validator.userById, validateFields, controller.unblockUser)
 
 module.exports = router

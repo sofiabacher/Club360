@@ -107,6 +107,16 @@ const updateUserPermissions = async (req, res, next) => {
     }
 }
 
+const unblockUser = async (req, res, next) => {
+    try {
+        const data = await service.unblockUser(req.user, req.params.id)
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
 module.exports = {
     listPermissions,
     listRoles,
@@ -117,5 +127,6 @@ module.exports = {
     listUsers,
     getUser,
     updateUserRoles,
-    updateUserPermissions
+    updateUserPermissions,
+    unblockUser
 }

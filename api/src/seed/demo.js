@@ -39,7 +39,7 @@ const { notificationTexts: texts } = require('../utils/messages')
 
 const {
     User, Role, ClubSport, Sport, Member, Staff, Inscription, Fee, Payment, League, Category, CategoryPlayer,
-    CategoryStaff, Game, Citation, Routine, RoutineLog, Goal, Notification, Club
+    CategoryStaff, Game, Citation, Routine, RoutineLog, Goal, Notification, Club, UserRole
 } = models
 
 const DEMO_MARKER = 'ctorres'   // Si existe este usuario, los datos de la demo ya están cargados
@@ -154,6 +154,7 @@ function buildPeople(realEmails) {
     }
 
     DATA.DEMO_STAFF.forEach(person => push(person, 'staff'))
+    DATA.DEMO_ADMINS.forEach(person => push(person, 'admin'))
     DATA.DEMO_FAMILY_ONLY.forEach(person => push(person, 'family'))
     DATA.DEMO_MEMBERS.forEach(person => push(person, 'member'))
     DATA.DEMO_FILLER_PLAYERS.forEach(person => push({ ...person, player: true }, 'filler'))
@@ -218,7 +219,7 @@ async function wipeClub(club, admin, adminRole, transaction) {
 
 // ---------- Carga ----------
 
-async function loadDemo({ club, admin, people, transaction }) {
+async function loadDemo({ club, admin, adminRole, people, transaction }) {
     const now = new Date()
     const today = todayAR()
     const currentPeriod = today.slice(0, 7)
@@ -257,7 +258,7 @@ async function loadDemo({ club, admin, people, transaction }) {
     for (const person of people) {
         const userState = person.pending || person.userState === 'PENDING' ? USER_STATES.PENDING : USER_STATES[person.userState ?? 'ACTIVE']
         const hasAccess = userState !== USER_STATES.PENDING
-        const at = person.kind === 'staff' ? staffSince : joinedAt[person.joined ?? 'default']
+        const at = ['staff', 'admin'].includes(person.kind) ? staffSince : joinedAt[person.joined ?? 'default']
 
         const user = await add(User, {
             clubId: club.id,
@@ -281,6 +282,11 @@ async function loadDemo({ club, admin, people, transaction }) {
         const user = userOf.get(person.key)
         staffOf.set(person.key, await add(Staff, { clubId: club.id, userId: user.id, clubSportId: clubSport.id }, { at: staffSince }))
         for (const role of person.roles) await assignBaseRole(user.id, BASE_ROLES[role], { transaction })
+    }
+
+    // --- Segundo Admin del Club (el rol Admin no tiene circuito: se asigna como lo haría otro Admin desde access) ---
+    for (const person of people.filter(item => item.kind === 'admin')) {
+        await add(UserRole, { userId: userOf.get(person.key).id, roleId: adminRole.id }, { at: staffSince })
     }
 
     // --- Socios (con su número, el código de vínculo de los menores y el adulto Familia) ---
@@ -736,7 +742,7 @@ async function run() {
     const result = await sequelize.transaction(async (transaction) => {
         if (reset) deleted = await wipeClub(club, admin, adminRole, transaction)
 
-        const loadedData = await loadDemo({ club, admin, people, transaction })
+        const loadedData = await loadDemo({ club, admin, adminRole, people, transaction })
 
         const details = Object.entries(loadedData.counts).map(([table, count]) => `${table}: ${count}`).join(', ')
         await logger({ clubId: club.id, userId: null, roleId: null }, LOG_ACTIONS.DEMO_DATA_LOADED,

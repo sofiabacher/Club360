@@ -213,3 +213,15 @@ En este orden:
 3. **Verificá la integridad** desde la demo, con el Admin.
 
 Hasta el paso 2, las pantallas nuevas no aparecen en el menú de nadie (los roles todavía no tienen los permisos), pero el resto de la demo funciona igual.
+
+## 12. Si el Admin del Club se bloquea
+
+Club360 no tiene un superadmin de la plataforma: a un Admin lo desbloquea otro Admin del club desde **Usuarios y roles** (la demo tiene dos, `admin.valencia` y `pvera`), o él mismo con **¿Olvidaste tu contraseña?** si su email es real. Si ninguna de las dos sirve, se rescata desde una compu:
+
+1. Con el `.env` apuntando a Railway como en el paso 7 (`DATABASE_URL` pública y `DB_SSL=true`; guardá una copia del `.env` local).
+2. `npm run admin:unlock -- <usuario>`: muestra la base y pide escribir su **nombre** (no es local); después muestra el usuario y pide escribir `RESCATAR`.
+3. Muestra **una sola vez** una contraseña temporal. Pasala por un canal privado: el Admin entra con ella y la cambia desde **Mi cuenta**.
+4. Volvé a dejar el `.env` local como estaba.
+
+Solo sirve para usuarios con el permiso `access.assignRoles` (Admin del Club). Queda registrado en la bitácora del club como "Rescate de acceso del Admin".
+

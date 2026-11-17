@@ -82,6 +82,7 @@ module.exports = {
 
         // Asignación a usuarios
         userNotFound: 'No encontramos el usuario.',
+        notBlocked: 'El usuario no está bloqueado.',
         circuitRole: 'Este rol se asigna desde su circuito (alta de socio, inscripción, vínculo familiar o alta de staff).',
         lastAdmin: 'No se puede quitar el rol Admin del Club: tiene que quedar al menos un Admin activo.',
         selfAdminRemoval: 'No podés quitarte a vos mismo el rol Admin del Club.',

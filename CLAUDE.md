@@ -42,6 +42,7 @@ npm run seed     # carga inicial del club (se corre a mano, no al arrancar)
 npm run seed:demo    # datos de la demo sobre el seed (--reset para borrarlos y volver a cargarlos)
 npm run db:snapshot  # guarda todos los datos de la base en api/backups/ (antes de recrearla)
 npm run db:restore   # vuelve a cargar el último snapshot en una base recién recreada
+npm run admin:unlock # rescate: desbloquea a un Admin del Club y le pone una contraseña temporal
 
 # client/
 npm run dev      # Vite en http://localhost:5173
@@ -213,6 +214,7 @@ Dirección **"Pizarra"** (P23, elegida por el equipo; reemplaza la paleta del mo
 - **Rol activo:** con un solo rol disponible se entra directo; con más de uno, el token sale con `activeRoleId: null` y el usuario elige en `/select-role` (`POST /auth/switch-role`, que genera un token nuevo).
 - **Permisos efectivos** (`getEffectivePermissions`): rol activo + permisos directos, menos `ADULT_ONLY_PERMISSIONS` si el usuario es menor de 18. Es la **única** fuente de permisos: la usan `checkPermission` y `/auth/me`. No calcular permisos por otro lado.
 - **Sesión del front:** `session = { user, club, roles, activeRole, permissions }`, armada siempre con `buildSession` en `auth.service.js`.
+- **Rescate del Admin** (no hay superadmin de la plataforma): `npm run admin:unlock -- <usuario>` (`scripts/adminUnlock.js`), desde una compu con acceso a la base. Solo para usuarios que tienen `access.assignRoles` con alguno de sus roles (calculado con `getEffectivePermissions`); muestra la base (si no es local, pide su nombre), pide escribir `RESCATAR`, desbloquea, pone una contraseña temporal que cumple la política (se muestra una sola vez) y registra `ADMIN_RESCUE`. Además, `POST /access/users/:id/unblock` (`access.assignRoles`) desbloquea a cualquier usuario del club desde "Usuarios y roles", también a otro Admin: la demo tiene dos (`pvera`). La recuperación dentro del sistema con códigos de un solo uso quedó como mejora a futuro (`docs/TODO.md`).
 - **Recuperación de contraseña:** link por email con token JWT de propósito `password-reset` que incluye una huella del hash actual de la contraseña, así sirve una sola vez. `forgot-password` responde siempre lo mismo, exista o no el usuario. Restablecer la contraseña desbloquea la cuenta.
 - **Mi cuenta:** el usuario solo modifica email, teléfono, foto y contraseña. Nombre, apellido, DNI, fecha de nacimiento y usuario los cambia el Admin; los endpoints de la cuenta ignoran esos campos si llegan en el body.
 - **Menú y rutas del front:** `client/src/navigation/menu.js` es la única configuración del menú (`label`, `description`, `path`, `icon`, `permission`, `group`). Toda pantalla nueva se agrega ahí con su permiso, y la ruta se protege con `PermissionRoute` y el mismo permiso.

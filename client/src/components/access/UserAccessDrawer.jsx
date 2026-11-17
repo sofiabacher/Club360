@@ -13,10 +13,12 @@ import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
 import CloseRounded from '@mui/icons-material/CloseRounded'
+import LockOpenRounded from '@mui/icons-material/LockOpenRounded'
 
-import { getUser, updateUserPermissions, updateUserRoles } from '../../api/access.api.js'
+import { getUser, unblockUser, updateUserPermissions, updateUserRoles } from '../../api/access.api.js'
 import useAuth from '../../hooks/useAuth.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
+import { USER_STATES } from '../../utils/constants.js'
 import PermissionPicker from './PermissionPicker.jsx'
 
 const sameIds = (a, b) => a.length === b.length && a.every((id) => b.includes(id))
@@ -121,6 +123,26 @@ export default function UserAccessDrawer({ userId, permissionGroups, onClose, on
 
       <Box sx={{ p: 2, overflowY: 'auto', flexGrow: 1 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+        {user?.userStateId === USER_STATES.BLOCKED && (
+          <Alert
+            severity="warning"
+            sx={{ mb: 2 }}
+            action={(
+              <Button
+                color="inherit"
+                size="small"
+                startIcon={<LockOpenRounded />}
+                disabled={saving}
+                onClick={() => save(() => unblockUser(user.id), 'Desbloqueamos el usuario.')}
+              >
+                Desbloquear
+              </Button>
+            )}
+          >
+            Está bloqueado por intentos fallidos. Al desbloquearlo vuelve a entrar con su contraseña.
+          </Alert>
+        )}
 
         {!user && !error && (
           <Box sx={{ display: 'grid', placeItems: 'center', py: 6 }}>

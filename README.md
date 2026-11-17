@@ -92,6 +92,7 @@ npm run dev              # http://localhost:5173
 | `npm run seed:demo` | Datos de la demo sobre el seed (`-- --reset` para borrarlos y volver a cargarlos) |
 | `npm run db:snapshot` | Guarda todos los datos de la base en `api/backups/` |
 | `npm run db:restore` | Vuelve a cargar el último snapshot en una base recién recreada |
+| `npm run admin:unlock` | Rescate: desbloquea a un Admin del Club y le pone una contraseña temporal (`-- <usuario>`) |
 | `npm run bot:eval` | Evalúa el asistente de consultas con su set de prueba |
 
 | `client/` | Qué hace |

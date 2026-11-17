@@ -14,6 +14,7 @@
     "seed:demo": "node src/seed/demo.js",
     "db:snapshot": "node src/scripts/db/snapshot.js",
     "db:restore": "node src/scripts/db/restore.js",
+    "admin:unlock": "node src/scripts/adminUnlock.js",
     "bot:eval": "node scripts/botEval.js"
   },
   "dependencies": {
