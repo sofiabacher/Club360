@@ -10,10 +10,13 @@ export function formatDate(value) {
 
 const moneyFormat = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0, maximumFractionDigits: 2 })
 
-// 15000 → '$ 15.000'
+// Con centavos, siempre los dos decimales
+const moneyWithCentsFormat = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+// 15000 → '$ 15.000'; 9500.5 → '$ 9.500,50'
 export function formatMoney(value) {
   if (value === null || value === undefined) return ''
-  return moneyFormat.format(value)
+  return (Number.isInteger(Number(value)) ? moneyFormat : moneyWithCentsFormat).format(value)
 }
 
 // Tamaño de un archivo: 52000 → '51 KB', 2400000 → '2,3 MB'

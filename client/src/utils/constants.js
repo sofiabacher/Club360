@@ -34,6 +34,22 @@ export const FEE_STATES = {
 }
 
 // payment.transactionState
+// chargeMember.chargeState — cargo eventual de un socio. Un cargo impago no es mora
+export const CHARGE_STATES = {
+    PENDING: 1,
+    PAID: 2,
+    OVERDUE: 3,
+    CANCELLED: 4
+}
+
+// charge.targetType — a quiénes se les cobra un cargo eventual
+export const CHARGE_TARGETS = {
+    ALL: 1,
+    MEMBERS: 2,
+    CATEGORIES: 3,
+    SPORTS: 4
+}
+
 export const TRANSACTION_STATES = { 
     PENDING: 1, 
     APPROVED: 2, 

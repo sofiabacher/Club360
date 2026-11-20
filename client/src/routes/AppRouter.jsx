@@ -50,6 +50,8 @@ import MemberFeesPage from '../pages/fees/MemberFeesPage.jsx'
 import PlayersFeesPage from '../pages/fees/PlayersFeesPage.jsx'
 import PaymentsHistoryPage from '../pages/fees/PaymentsHistoryPage.jsx'
 import PaymentVoucherPage from '../pages/fees/PaymentVoucherPage.jsx'
+import ChargesPage from '../pages/fees/ChargesPage.jsx'
+import ChargeDetailPage from '../pages/fees/ChargeDetailPage.jsx'
 import RoutinesManagePage from '../pages/routines/RoutinesManagePage.jsx'
 import RoutinesAssignedPage from '../pages/routines/RoutinesAssignedPage.jsx'
 import MyRoutinePage from '../pages/routines/MyRoutinePage.jsx'
@@ -84,6 +86,7 @@ const SCREENS = {
   '/fees': FeesPage,
   '/fees/players': PlayersFeesPage,
   '/fees/payments': PaymentsHistoryPage,
+  '/fees/charges': ChargesPage,
   '/routines': RoutinesManagePage,
   '/routines/assigned': RoutinesAssignedPage,
   '/my-routine': MyRoutinePage,
@@ -111,6 +114,7 @@ const EXTRA_SCREENS = [
   { path: '/leagues/categories/:id', permission: ['leagues.manage', 'leagues.assignPlayers', 'leagues.assignStaff'], Screen: CategoryDetailPage },
   { path: '/citations/games/:gameId', permission: 'citations.create', Screen: GameCitationsPage },
   { path: '/fees/members/:memberId', permission: 'fees.manage', Screen: MemberFeesPage },
+  { path: '/fees/charges/:id', permission: 'fees.manage', Screen: ChargeDetailPage },
   // Cualquier usuario con sesión: el back controla quién puede ver cada comprobante (404 si no corresponde)
   { path: '/fees/payments/:id/voucher', permission: null, Screen: PaymentVoucherPage }
 ]

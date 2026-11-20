@@ -124,10 +124,20 @@ export default function PaymentVoucherPage() {
               <Row label="Socio">{voucher.member.name} · Nº {voucher.member.numMember}</Row>
               {voucher.paidBy && <Row label="Pagó">{voucher.paidBy}</Row>}
               {voucher.registeredBy && <Row label="Registró">{voucher.registeredBy}</Row>}
-              <Row label="Período">{formatPeriod(voucher.period)}</Row>
-              <Row label="Medio de pago">{voucher.methodLabel}</Row>
-              <Row label="Cuota social">{formatMoney(voucher.socialAmount)}</Row>
-              <Row label="Cuota deportiva">{formatMoney(voucher.sportAmount)}</Row>
+              {voucher.kind === 'charge' ? (
+                <>
+                  <Row label="Concepto">{voucher.concept}</Row>
+                  {voucher.description && <Row label="Detalle">{voucher.description}</Row>}
+                  <Row label="Medio de pago">{voucher.methodLabel}</Row>
+                </>
+              ) : (
+                <>
+                  <Row label="Período">{formatPeriod(voucher.period)}</Row>
+                  <Row label="Medio de pago">{voucher.methodLabel}</Row>
+                  <Row label="Cuota social">{formatMoney(voucher.socialAmount)}</Row>
+                  <Row label="Cuota deportiva">{formatMoney(voucher.sportAmount)}</Row>
+                </>
+              )}
             </TableBody>
           </Table>
 

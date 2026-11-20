@@ -2,6 +2,9 @@
 // Lee req (params, query, body, user), llama al service y responde { success: true, data } o { success: false, message }.
 // Sin lógica de negocio ni acceso a modelos. Los errores se pasan con next(error).
 const service = require('./fees.service')
+const charges = require('./fees.charges.service')
+
+// kind: lo que se paga, 'fee' (cuota) o 'charge' (cargo eventual de un socio). Lo fija la ruta
 
 // ---------- Socio y Familia ----------
 
@@ -26,9 +29,9 @@ const linked = async (req, res, next) => {
 }
 
 // Los datos de la tarjeta no pasan al service salvo el número (para simular el resultado y los últimos 4 dígitos)
-const pay = async (req, res, next) => {
+const pay = (kind) => async (req, res, next) => {
     try {
-        const data = await service.payFee(req.user, req.params.id, { cardNumber: req.body.cardNumber })
+        const data = await service.payItem(req.user, kind, req.params.id, { cardNumber: req.body.cardNumber })
         res.json({ success: true, data })
 
     } catch (error) {
@@ -49,9 +52,9 @@ const transferInfo = async (req, res, next) => {
 }
 
 // El comprobante adjunto llega en req.file (middleware upload, campo receipt)
-const transfer = async (req, res, next) => {
+const transfer = (kind) => async (req, res, next) => {
     try {
-        const data = await service.reportTransfer(req.user, req.params.id, req.file)
+        const data = await service.reportTransfer(req.user, kind, req.params.id, req.file)
         res.status(201).json({ success: true, data })
 
     } catch (error) {
@@ -86,8 +89,8 @@ const voucher = async (req, res, next) => {
 
 const payments = async (req, res, next) => {
     try {
-        const { method, state, search, from, to, page } = req.query
-        const data = await service.listPayments(req.user, { method, state, search, from, to, page })
+        const { kind, method, state, search, from, to, page } = req.query
+        const data = await service.listPayments(req.user, { kind, method, state, search, from, to, page })
         res.json({ success: true, data })
 
     } catch (error) {
@@ -146,9 +149,83 @@ const generate = async (req, res, next) => {
     }
 }
 
-const registerPayment = async (req, res, next) => {
+const registerPayment = (kind) => async (req, res, next) => {
     try {
-        const data = await service.registerPayment(req.user, req.params.id, { note: req.body.note })
+        const data = await service.registerPayment(req.user, kind, req.params.id, { note: req.body.note })
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+// ---------- Cargos eventuales (Admin) ----------
+
+const chargeOptions = async (req, res, next) => {
+    try {
+        const data = await charges.getChargeOptions(req.user)
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const previewCharge = async (req, res, next) => {
+    try {
+        const { targetType, targetIds } = req.body
+        const data = await charges.previewCharge(req.user, { targetType, targetIds })
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const createCharge = async (req, res, next) => {
+    try {
+        const { concept, description, amount, expirationDate, targetType, targetIds } = req.body
+        const data = await charges.createCharge(req.user, { concept, description, amount, expirationDate, targetType, targetIds })
+        res.status(201).json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const listCharges = async (req, res, next) => {
+    try {
+        const data = await charges.listCharges(req.user)
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const getCharge = async (req, res, next) => {
+    try {
+        const data = await charges.getCharge(req.user, req.params.id)
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const cancelCharge = async (req, res, next) => {
+    try {
+        const data = await charges.cancelCharge(req.user, req.params.id)
+        res.json({ success: true, data })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const cancelChargeItem = async (req, res, next) => {
+    try {
+        const data = await charges.cancelChargeItem(req.user, req.params.id)
         res.json({ success: true, data })
 
     } catch (error) {
@@ -183,5 +260,12 @@ module.exports = {
     memberAccount,
     generate,
     registerPayment,
+    chargeOptions,
+    previewCharge,
+    createCharge,
+    listCharges,
+    getCharge,
+    cancelCharge,
+    cancelChargeItem,
     players
 }

@@ -109,6 +109,9 @@ Seguimiento de todo lo que falta para entregar el proyecto: desarrollo, entregab
 - [x] Pago por transferencia con comprobante adjunto y revisión del Admin (P14b)
 - [x] Comprobante de pago imprimible para todos los medios (P14b)
 - [x] Historial de pagos del Admin (P14b)
+- [x] Cargos eventuales: cobros aparte de la cuota a todos, a socios elegidos, por categoría o por deporte, pagables como la cuota y sin contar como mora (19/11/2026)
+- [ ] Aplicar en Railway el cambio de modelo de los cargos eventuales (tablas `charge` y `chargeMember`, `payment.feeId` NULL y `payment.chargeMemberId`) antes de integrar a `main` (`docs/deploy.md`, sección 11)
+- [ ] Actualizar en claude.ai el contexto (sección 6, "Canal de cada notificación": `CHARGE_NEW` por email; `CHARGE_OVERDUE` y `CHARGE_CANCELLED` solo in-app) y reemplazar `docs/contexto.md`
 
 ## Fase 6 — Funciones transversales
 
@@ -204,6 +207,7 @@ Cada una se resuelve en el chat de Claude y se registra en el documento de conte
 
 Lo terminado, con la fecha. Lo más reciente arriba.
 
+- 19/11/2026 — Cargos eventuales: modelos `Charge` y `ChargeMember` (en `CLUB_TABLES`), `payment.chargeMemberId` y `feeId` NULL; `fees.charges.service.js` (opciones, resumen previo, alta con aviso `CHARGE_NEW` por email, listado, detalle, anulación y vencimiento en `feeStatus`); pagos generalizados con `kind` (tarjeta, transferencia, secretaría, revisión, comprobante, historial con filtro "Qué"); los cargos no son mora. Los backups anteriores se siguen restaurando (las tablas nuevas quedan vacías). Front: Cargos eventuales (listado, alta con destinatarios y resumen en vivo, detalle con registrar pago y anular), cargos en el estado de cuenta, comprobante y PDF con el concepto, montos con centavos siempre con 2 decimales. Casos CP-FEES-40 a 49. Verificado contra una base local de prueba (62 chequeos del service, 19 por HTTP y recorrida en Chrome) y con el build del front
 - 17/11/2026 — Arreglo: en la demo el Admin no podía ver el comprobante adjunto de una transferencia. La URL de un archivo privado de Cloudinary trae la firma `s--...--` antes de la versión y `cloudinaryRefOf` (`utils/files.js`) la tomaba como parte del public_id, así que la descarga firmada daba 404 (y `deleteUpload` tampoco borraba esos archivos). Ahora la saltea, y si Cloudinary responde error queda el estado en el log de Render. Verificado el parseo con URLs de ejemplo; falta probarlo en la demo después del deploy
 
 - 17/11/2026 — Aviso `PAYMENT_RECEIVED` (in-app, "Cuota pagada") a quienes gestionan cuotas cuando un socio o su Familia paga con tarjeta (salvo a quien pagó). Agregado a la tabla de canales del contexto (sección 6). Verificado contra la base local con la transacción deshecha (CP-FEES-39)

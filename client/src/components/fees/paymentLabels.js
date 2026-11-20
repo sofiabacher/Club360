@@ -1,5 +1,12 @@
-// Cómo se muestran los pagos: el estado (con StatusChip) y el medio de pago
+// Cómo se muestran los pagos: el estado (con StatusChip), el medio de pago y qué se pagó (una cuota o un cargo eventual)
 import { PAYMENT_METHODS, TRANSACTION_STATES } from '../../utils/constants.js'
+import { formatPeriod } from '../../utils/format.js'
+
+// Nombre de una cuota ("Noviembre 2026") o de un cargo eventual (su concepto)
+export const itemLabel = (item) => (item.kind === 'charge' ? item.concept : formatPeriod(item.period))
+
+// Qué pagó un pago: "Cuota de Noviembre 2026" o el concepto del cargo
+export const paymentLabel = (payment) => (payment.kind === 'charge' ? payment.concept : `Cuota de ${formatPeriod(payment.period)}`)
 
 export const PAYMENT_CHIPS = {
   [TRANSACTION_STATES.APPROVED]: { status: 'ok', label: 'Aprobado' },

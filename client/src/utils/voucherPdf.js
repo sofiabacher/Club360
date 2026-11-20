@@ -35,10 +35,11 @@ export async function downloadVoucherPdf(voucher, palette) {
     ['Socio', `${voucher.member.name} · Nº ${voucher.member.numMember}`],
     voucher.paidBy && ['Pagó', voucher.paidBy],
     voucher.registeredBy && ['Registró', voucher.registeredBy],
-    ['Período', formatPeriod(voucher.period)],
-    ['Medio de pago', voucher.methodLabel],
-    ['Cuota social', formatMoney(voucher.socialAmount)],
-    ['Cuota deportiva', formatMoney(voucher.sportAmount)]
+    // De una cuota: el período y el desglose; de un cargo eventual: el concepto y su detalle
+    ...(voucher.kind === 'charge'
+      ? [['Concepto', voucher.concept], voucher.description && ['Detalle', voucher.description], ['Medio de pago', voucher.methodLabel]]
+      : [['Período', formatPeriod(voucher.period)], ['Medio de pago', voucher.methodLabel],
+          ['Cuota social', formatMoney(voucher.socialAmount)], ['Cuota deportiva', formatMoney(voucher.sportAmount)]])
   ].filter(Boolean)
 
   // Cuerpo blanco con borde fino, con el alto justo para el contenido (encabezado, filas, total y pie)

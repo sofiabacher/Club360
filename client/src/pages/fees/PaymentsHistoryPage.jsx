@@ -40,7 +40,8 @@ import EmptyState from '../../components/common/EmptyState.jsx'
 import StatusChip from '../../components/common/StatusChip.jsx'
 import FeeStateChip from '../../components/fees/FeeStateChip.jsx'
 import ReceiptViewer from '../../components/fees/ReceiptViewer.jsx'
-import { PAYMENT_CHIPS, PAYMENT_METHOD_LABELS } from '../../components/fees/paymentLabels.js'
+import { PAYMENT_CHIPS, PAYMENT_METHOD_LABELS, paymentLabel } from '../../components/fees/paymentLabels.js'
+import ChargeStateChip from '../../components/fees/ChargeStateChip.jsx'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { PAYMENT_METHODS, TRANSACTION_STATES } from '../../utils/constants.js'
 import { formatDate, formatMoney, formatPeriod, formatShortDateTime } from '../../utils/format.js'
@@ -61,10 +62,17 @@ const STATE_OPTIONS = [
   { value: String(TRANSACTION_STATES.REJECTED), label: 'Rechazados' }
 ]
 
+// Qué se pagó: cuotas o cargos eventuales
+const KIND_OPTIONS = [
+  { value: '', label: 'Todo' },
+  { value: 'fee', label: 'Cuotas' },
+  { value: 'charge', label: 'Cargos' }
+]
+
 const REASON_MIN = 10
 const REASON_MAX = 300
 
-const emptyFilters = { method: '', state: '', search: '', from: '', to: '', page: 1 }
+const emptyFilters = { kind: '', method: '', state: '', search: '', from: '', to: '', page: 1 }
 
 const isInReview = (payment) => payment.method === PAYMENT_METHODS.TRANSFER && payment.transactionState === TRANSACTION_STATES.PENDING
 
@@ -104,7 +112,7 @@ function ReviewDrawer({ payment, onClose, onDone }) {
     try {
       if (action === 'approve') {
         const { data } = await approveTransfer(payment.id)
-        onDone(`Aprobaste la transferencia ${payment.confirmationCode}. La cuota quedó pagada.${data.recovered ? ' El socio recuperó su condición.' : ''}`)
+        onDone(`Aprobaste la transferencia ${payment.confirmationCode}. ${payment.kind === 'charge' ? 'El cargo quedó pagado.' : 'La cuota quedó pagada.'}${data.recovered ? ' El socio recuperó su condición.' : ''}`)
       } else {
         await rejectTransfer(payment.id, reason.trim())
         onDone(`Rechazaste la transferencia ${payment.confirmationCode}. Le avisamos al socio.`)
@@ -115,7 +123,8 @@ function ReviewDrawer({ payment, onClose, onDone }) {
     }
   }
 
-  const amountMatches = payment.amount === payment.fee.total
+  const item = payment.fee ?? payment.charge   // Lo que paga: la cuota o el cargo eventual
+  const amountMatches = payment.amount === item.total
 
   return (
     <Drawer anchor="right" open onClose={sending ? undefined : onClose} slotProps={{ paper: { sx: { width: { xs: '100%', sm: 480 } } } }}>
@@ -133,16 +142,18 @@ function ReviewDrawer({ payment, onClose, onDone }) {
 
         <Paper variant="outlined" sx={{ p: 2, my: 2 }}>
           <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', gap: 1, mb: 1 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: 'navy.main' }}>Cuota de {formatPeriod(payment.period)}</Typography>
-            <FeeStateChip feeState={payment.fee.feeState} />
+            <Typography variant="body2" sx={{ fontWeight: 600, color: 'navy.main', overflowWrap: 'anywhere' }}>{paymentLabel(payment)}</Typography>
+            {payment.fee ? <FeeStateChip feeState={payment.fee.feeState} /> : <ChargeStateChip chargeState={payment.charge.chargeState} />}
           </Stack>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Cuota social {formatMoney(payment.fee.socialAmount)} · Cuota deportiva {formatMoney(payment.fee.sportAmount)}
+          <Typography variant="body2" sx={{ color: 'text.secondary', overflowWrap: 'anywhere' }}>
+            {payment.fee
+              ? `Cuota social ${formatMoney(payment.fee.socialAmount)} · Cuota deportiva ${formatMoney(payment.fee.sportAmount)}`
+              : (payment.charge.description || 'Cargo eventual')}
           </Typography>
           <Divider sx={{ my: 1.5 }} />
           <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>Monto esperado</Typography>
-            <Typography variant="numeric" sx={{ fontSize: '1.8rem', color: 'navy.main', lineHeight: 1 }}>{formatMoney(payment.fee.total)}</Typography>
+            <Typography variant="numeric" sx={{ fontSize: '1.8rem', color: 'navy.main', lineHeight: 1 }}>{formatMoney(item.total)}</Typography>
           </Stack>
           {!amountMatches && (
             <Typography variant="body2" sx={{ color: 'error.main', mt: 0.5 }}>Informado: {formatMoney(payment.amount)}</Typography>
@@ -219,9 +230,9 @@ export default function PaymentsHistoryPage() {
     return () => clearTimeout(timer)
   }, [search])
 
-  // En "Transferencias por revisar", el medio y el estado son fijos
+  // En "Transferencias por revisar", el medio y el estado son fijos (de cuotas y de cargos)
   const params = tab === TABS.REVIEW
-    ? { ...filters, method: PAYMENT_METHODS.TRANSFER, state: TRANSACTION_STATES.PENDING }
+    ? { ...filters, kind: '', method: PAYMENT_METHODS.TRANSFER, state: TRANSACTION_STATES.PENDING }
     : filters
   const paramsKey = JSON.stringify(params)
 
@@ -252,7 +263,7 @@ export default function PaymentsHistoryPage() {
   }
 
   const payments = result?.items ?? []
-  const hasFilters = Boolean(filters.search || filters.from || filters.to || (tab === TABS.ALL && (filters.method || filters.state)))
+  const hasFilters = Boolean(filters.search || filters.from || filters.to || (tab === TABS.ALL && (filters.kind || filters.method || filters.state)))
   const open = (payment) => isInReview(payment) && setReviewing(payment)
 
   return (
@@ -286,6 +297,9 @@ export default function PaymentsHistoryPage() {
         />
         {tab === TABS.ALL && (
           <Stack direction="row" spacing={2}>
+            <TextField select label="Qué" value={filters.kind} onChange={setFilter('kind')} size="small" sx={{ minWidth: 120, flex: 1 }}>
+              {KIND_OPTIONS.map((option) => <MenuItem key={option.label} value={option.value}>{option.label}</MenuItem>)}
+            </TextField>
             <TextField select label="Medio" value={filters.method} onChange={setFilter('method')} size="small" sx={{ minWidth: 140, flex: 1 }}>
               {METHOD_OPTIONS.map((option) => <MenuItem key={option.label} value={option.value}>{option.label}</MenuItem>)}
             </TextField>
@@ -311,7 +325,7 @@ export default function PaymentsHistoryPage() {
             <EmptyState
               icon={ReceiptLongRounded}
               title={tab === TABS.REVIEW ? 'No hay transferencias por revisar' : 'Todavía no hay pagos'}
-              description={tab === TABS.REVIEW ? 'Cuando un socio informe una transferencia, aparece acá.' : 'Los pagos de las cuotas aparecen acá.'}
+              description={tab === TABS.REVIEW ? 'Cuando un socio informe una transferencia, aparece acá.' : 'Los pagos de las cuotas y de los cargos eventuales aparecen acá.'}
             />
           )
       )}
@@ -323,7 +337,7 @@ export default function PaymentsHistoryPage() {
               <TableRow>
                 <TableCell>Fecha</TableCell>
                 <TableCell>Socio</TableCell>
-                <TableCell>Período</TableCell>
+                <TableCell>Concepto</TableCell>
                 <TableCell align="right">Monto</TableCell>
                 <TableCell>Medio</TableCell>
                 <TableCell>Estado</TableCell>
@@ -347,7 +361,7 @@ export default function PaymentsHistoryPage() {
                         </Typography>
                       )}
                     </TableCell>
-                    <TableCell>{formatPeriod(payment.period)}</TableCell>
+                    <TableCell sx={{ maxWidth: 220, overflowWrap: 'anywhere' }}>{payment.kind === 'charge' ? payment.concept : formatPeriod(payment.period)}</TableCell>
                     <TableCell align="right"><Typography variant="numeric" sx={{ fontSize: '1.2rem' }}>{formatMoney(payment.amount)}</Typography></TableCell>
                     <TableCell><MethodChip method={payment.method} /></TableCell>
                     <TableCell><StatusChip status={chip.status} label={chip.label} /></TableCell>
@@ -376,7 +390,7 @@ export default function PaymentsHistoryPage() {
                 </Stack>
                 <Typography variant="numeric" sx={{ color: 'text.secondary' }}>Nº {payment.member.numMember}</Typography>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {formatPeriod(payment.period)} · {formatDate(payment.createdAt)}
+                  {payment.kind === 'charge' ? payment.concept : formatPeriod(payment.period)} · {formatDate(payment.createdAt)}
                 </Typography>
                 <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mt: 1, gap: 1 }}>
                   <Stack direction="row" sx={{ gap: 1, alignItems: 'center', minWidth: 0 }}>

@@ -7,6 +7,8 @@
 // referencia (today, 'AAAA-MM-DD') para poder probarlas con cualquier fecha. La mora se calcula con getOverdueDays.
 // Medios de pago (P14b): tarjeta (simulada, PAY-), transferencia con comprobante que revisa el club (TRF-) y pago en
 // secretaría (SEC-). Todo pago Aprobado tiene un comprobante de pago (getVoucher).
+// Lo que se paga (payable) es una cuota (fee) o un cargo eventual de un socio (chargeMember, ver fees.charges.service.js):
+// los pagos, las transferencias, la revisión y los comprobantes son los mismos para los dos. Solo las cuotas son mora.
 const crypto = require('crypto')
 const fs = require('fs/promises')
 const path = require('path')
@@ -14,12 +16,13 @@ const { Op } = require('sequelize')
 
 const sequelize = require('../../config/db')
 const {
-    Fee, Payment, Member, User, Club, Inscription, ClubSport, Sport, Notification
+    Fee, Payment, Member, User, Club, Inscription, ClubSport, Sport, Notification, Charge, ChargeMember
 } = require('../../models')
 const { getEffectivePermissions, getActiveUsersWithPermission } = require('../access/access.service')
 const { getBankInfo } = require('../clubs/clubs.service')
 const { getSportScope } = require('../staff/staff.service')
 const { notify } = require('../notifications/notifications.service')
+const { itemsInReview, markOverdueCharges } = require('./fees.charges.service')
 
 const logger = require('../../utils/logger')
 const { createError } = require('../../utils/errors')
@@ -27,6 +30,7 @@ const { today: todayAR, daysBetween, dateTimeParts, getAge, TIME_ZONE } = requir
 const { resolveUploadPath, cloudinaryRefOf, deleteUpload, downloadPrivateFile } = require('../../utils/files')
 const {
     FEE_STATES,
+    CHARGE_STATES,
     TRANSACTION_STATES,
     PAYMENT_METHODS,
     MEMBER_STATES,
@@ -46,6 +50,10 @@ const PAYMENTS_PAGE_SIZE = 20
 const BILLABLE_MEMBER_STATES = [MEMBER_STATES.ACTIVE, MEMBER_STATES.SUSPENDED]
 
 const UNPAID_STATES = [FEE_STATES.PENDING, FEE_STATES.OVERDUE]
+const UNPAID_CHARGE_STATES = [CHARGE_STATES.PENDING, CHARGE_STATES.OVERDUE]
+
+// Lo que se paga: una cuota o un cargo eventual de un socio (el :kind de las rutas)
+const PAYABLE = { FEE: 'fee', CHARGE: 'charge' }
 
 // Situación de una jugadora en la vista del Representante
 const PLAYER_STATUS = { OK: 'ok', PENDING: 'pending', OVERDUE: 'overdue' }
@@ -66,8 +74,8 @@ const toAmount = (value) => Math.round(Number(value) * 100) / 100
 
 const totalOf = (fee) => toAmount(Number(fee.socialAmount) + Number(fee.sportAmount))
 
-// $40.000 (sin decimales si no los tiene)
-const money = (value) => `$${Number(value).toLocaleString('es-AR', { maximumFractionDigits: 2 })}`
+// $40.000 (sin decimales si no los tiene; con centavos, $9.500,50)
+const money = (value) => `$${Number(value).toLocaleString('es-AR', { minimumFractionDigits: Number.isInteger(Number(value)) ? 0 : 2, maximumFractionDigits: 2 })}`
 
 // ---------- Fechas ----------
 
@@ -328,8 +336,9 @@ async function runDailyFeeCheck(today = todayAR(), { clubIds = null } = {}) {
     const overdue = await markOverdue(today, clubIds)
     const reminders = await sendReminders(today, delayFeeOf, clubIds)
     const suspended = await suspendOverdueMembers(today, delayFeeOf, clubIds)
+    const chargesOverdue = await markOverdueCharges(today, clubIds)   // Cargos eventuales: no son mora
 
-    return { today, dueSoon, overdue, reminders, suspended }
+    return { today, dueSoon, overdue, reminders, suspended, chargesOverdue }
 }
 
 // ---------- Estado de cuenta ----------
@@ -338,6 +347,7 @@ async function runDailyFeeCheck(today = todayAR(), { clubIds = null } = {}) {
 function formatFee(fee, today, inReview = false) {
     return {
         id: fee.id,
+        kind: PAYABLE.FEE,
         period: fee.period,
         socialAmount: toAmount(fee.socialAmount),
         sportAmount: toAmount(fee.sportAmount),
@@ -349,15 +359,36 @@ function formatFee(fee, today, inReview = false) {
     }
 }
 
+// Cargo eventual de un socio (chargeMember con su charge). overdueDays es solo informativo: un cargo no es mora
+function formatChargeItem(item, today, inReview = false) {
+    const unpaid = UNPAID_CHARGE_STATES.includes(item.chargeState)
+    return {
+        id: item.id,
+        kind: PAYABLE.CHARGE,
+        chargeId: item.chargeId,
+        concept: item.charge.concept,
+        description: item.charge.description,
+        total: toAmount(item.charge.amount),
+        expirationDate: item.charge.expirationDate,
+        chargeState: item.chargeState,
+        overdueDays: unpaid && !inReview && item.charge.expirationDate < today ? daysBetween(item.charge.expirationDate, today) : 0,
+        inReview
+    }
+}
+
 const isRejectedTransfer = (payment) => payment.method === PAYMENT_METHODS.TRANSFER && payment.transactionState === TRANSACTION_STATES.REJECTED
 
 // Pago para el socio y la Familia. hasVoucher: tiene comprobante de pago (todo pago Aprobado). La nota solo se muestra
-// cuando es el motivo del rechazo de una transferencia (la del pago en secretaría es interna del club)
+// cuando es el motivo del rechazo de una transferencia (la del pago en secretaría es interna del club).
+// kind: si es de una cuota (period) o de un cargo eventual (concept)
 function formatPayment(payment) {
     return {
         id: payment.id,
+        kind: payment.chargeMemberId ? PAYABLE.CHARGE : PAYABLE.FEE,
         feeId: payment.feeId,
+        chargeMemberId: payment.chargeMemberId,
         period: payment.fee?.period ?? null,
+        concept: payment.chargeMember?.charge?.concept ?? null,
         amount: toAmount(payment.amount),
         method: payment.method,
         transactionState: payment.transactionState,
@@ -369,21 +400,38 @@ function formatPayment(payment) {
     }
 }
 
-// Estado de cuenta de un socio: sus cuotas (la más reciente primero), el total adeudado, los días de atraso y los pagos
+const isInReviewPayment = (payment) => payment.method === IN_REVIEW.method && payment.transactionState === IN_REVIEW.transactionState
+
+// Estado de cuenta de un socio: sus cuotas (la más reciente primero), sus cargos eventuales no anulados (el que vence
+// último primero), el total adeudado (cuotas y cargos), los días de atraso (solo cuotas) y los pagos
 async function accountOf(member, { canPay }) {
     const today = todayAR()
-    const [fees, payments, club] = await Promise.all([
+    const [fees, charges, payments, club] = await Promise.all([
         Fee.findAll({ where: { memberId: member.id }, order: [['period', 'DESC']] }),
+        ChargeMember.findAll({
+            where: { memberId: member.id, chargeState: { [Op.ne]: CHARGE_STATES.CANCELLED } },
+            include: [{ model: Charge, as: 'charge' }],
+            order: [[{ model: Charge, as: 'charge' }, 'expirationDate', 'DESC'], ['id', 'DESC']]
+        }),
         Payment.findAll({
-            include: [{ model: Fee, as: 'fee', attributes: ['period'], where: { memberId: member.id } }],
+            where: { [Op.or]: [{ '$fee.memberId$': member.id }, { '$chargeMember.memberId$': member.id }] },
+            include: [
+                { model: Fee, as: 'fee', attributes: ['period', 'memberId'], required: false },
+                { model: ChargeMember, as: 'chargeMember', attributes: ['id', 'memberId'], required: false, include: [{ model: Charge, as: 'charge', attributes: ['concept'] }] }
+            ],
             order: [['createdAt', 'DESC'], ['id', 'DESC']]
         }),
         Club.findByPk(member.clubId, { attributes: ['delayFee'] })
     ])
 
-    const inReview = new Set(payments.filter(payment => payment.method === IN_REVIEW.method && payment.transactionState === IN_REVIEW.transactionState).map(payment => payment.feeId))
-    const items = fees.map(fee => formatFee(fee, today, inReview.has(fee.id)))
-    const unpaid = items.filter(fee => fee.feeState !== FEE_STATES.PAID)
+    const inReview = payments.filter(isInReviewPayment)
+    const feesInReviewIds = new Set(inReview.map(payment => payment.feeId).filter(Boolean))
+    const chargesInReviewIds = new Set(inReview.map(payment => payment.chargeMemberId).filter(Boolean))
+
+    const feeItems = fees.map(fee => formatFee(fee, today, feesInReviewIds.has(fee.id)))
+    const chargeItems = charges.map(item => formatChargeItem(item, today, chargesInReviewIds.has(item.id)))
+    const unpaidFees = feeItems.filter(fee => fee.feeState !== FEE_STATES.PAID)
+    const unpaidCharges = chargeItems.filter(item => UNPAID_CHARGE_STATES.includes(item.chargeState))
 
     return {
         member: {
@@ -393,11 +441,13 @@ async function accountOf(member, { canPay }) {
             memberStateId: member.memberStateId,
             isAdult: getAge(member.user.birthDate) >= 18
         },
-        totalDue: toAmount(unpaid.reduce((sum, fee) => sum + fee.total, 0)),
+        totalDue: toAmount([...unpaidFees, ...unpaidCharges].reduce((sum, item) => sum + item.total, 0)),
+        chargesDue: toAmount(unpaidCharges.reduce((sum, item) => sum + item.total, 0)),
         overdueDays: await getOverdueDays(member.id, { today }),
         delayFee: club.delayFee,
         canPay,
-        fees: items,
+        fees: feeItems,
+        charges: chargeItems,
         payments: payments.map(formatPayment)
     }
 }
@@ -431,6 +481,92 @@ async function getMemberAccount(user, memberId) {
     return accountOf(member, { canPay: false })
 }
 
+// ---------- Lo que se paga: una cuota o un cargo eventual ----------
+
+const describeFee = (fee) => `Cuota ${fee.period} de ${fullNameOf(fee.member.user)} (Nº ${fee.member.numMember})`
+
+// Lo que necesitan los pagos de una cuota o de un cargo, igual para los dos:
+//   - record: la fila (fee o chargeMember), member: su socio con el usuario, amount: el total a pagar;
+//   - name y what: cómo se nombra en los avisos ("noviembre" / "la cuota de noviembre", o el concepto del cargo);
+//   - describe: cómo se nombra en la bitácora; ref: la columna del pago (feeId o chargeMemberId);
+//   - paidState: el cambio de estado al aprobarse el pago; countsForMora: solo las cuotas (recuperación automática)
+function payableOfFee(fee) {
+    const month = monthNameOf(fee.period)
+    return {
+        kind: PAYABLE.FEE,
+        record: fee,
+        member: fee.member,
+        amount: totalOf(fee),
+        name: month,
+        what: `la cuota de ${month}`,
+        describe: describeFee(fee),
+        ref: { feeId: fee.id },
+        paidState: { feeState: FEE_STATES.PAID },
+        state: () => fee.feeState,
+        countsForMora: true
+    }
+}
+
+function payableOfCharge(item) {
+    const { concept } = item.charge
+    return {
+        kind: PAYABLE.CHARGE,
+        record: item,
+        member: item.member,
+        amount: toAmount(item.charge.amount),
+        name: concept,
+        what: `«${concept}»`,
+        describe: `Cargo «${concept}» de ${fullNameOf(item.member.user)} (Nº ${item.member.numMember})`,
+        ref: { chargeMemberId: item.id },
+        paidState: { chargeState: CHARGE_STATES.PAID },
+        state: () => item.chargeState,
+        countsForMora: false
+    }
+}
+
+// Función (y no un objeto fijo): Sequelize modifica los include, y uno compartido por dos ramas de la misma consulta falla
+const includeItemMember = () => ({ model: Member, as: 'member', include: [{ ...includeUser }] })
+
+// Lo que se paga, bloqueado para pagarlo. Solo impagos (si no, 409) y sin una transferencia en revisión (mientras
+// exista, no se paga de otra forma: 409). where: { id, clubId, memberId? }
+async function lockUnpaid(kind, where, transaction) {
+    if (kind === PAYABLE.FEE) {
+        const fee = await Fee.findOne({ where, include: [includeItemMember()], transaction, lock: transaction.LOCK.UPDATE })
+        if (!fee) throw createError(m.feeNotFound, 404)
+        if (!UNPAID_STATES.includes(fee.feeState)) throw createError(m.alreadyPaid, 409)
+        if ((await feesInReview([fee.id], { transaction })).size > 0) throw createError(m.transferInReview, 409)
+        return payableOfFee(fee)
+    }
+
+    const item = await ChargeMember.findOne({ where, include: [{ model: Charge, as: 'charge' }, includeItemMember()], transaction, lock: transaction.LOCK.UPDATE })
+    if (!item) throw createError(m.chargeItemNotFound, 404)
+    if (item.chargeState === CHARGE_STATES.CANCELLED) throw createError(m.chargeCancelled, 409)
+    if (!UNPAID_CHARGE_STATES.includes(item.chargeState)) throw createError(m.chargeAlreadyPaid, 409)
+    if ((await itemsInReview([item.id], { transaction })).size > 0) throw createError(m.chargeInReview, 409)
+    return payableOfCharge(item)
+}
+
+// Lo que paga un pago ya creado (para revisar una transferencia), bloqueado
+async function lockPayableOf(payment, transaction) {
+    if (payment.feeId) {
+        const fee = await Fee.findByPk(payment.feeId, { include: [includeItemMember()], transaction, lock: transaction.LOCK.UPDATE })
+        return payableOfFee(fee)
+    }
+    const item = await ChargeMember.findByPk(payment.chargeMemberId, { include: [{ model: Charge, as: 'charge' }, includeItemMember()], transaction, lock: transaction.LOCK.UPDATE })
+    return payableOfCharge(item)
+}
+
+// Respuesta de los pagos: el pago (con su período o su concepto), el estado de lo pagado y si el socio se recuperó
+const paymentResult = ({ payment, payable, recovered = false }) => ({
+    payment: {
+        ...formatPayment(payment),
+        period: payable.kind === PAYABLE.FEE ? payable.record.period : null,
+        concept: payable.kind === PAYABLE.CHARGE ? payable.name : null
+    },
+    state: payable.state(),
+    recovered
+})
+
 // ---------- Pagos ----------
 
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -457,22 +593,13 @@ async function recoverIfRegularized(member, actor, transaction) {
     return true
 }
 
-// Una cuota del club con su socio, bloqueada para pagarla. Solo Pendientes o Vencidas (si no, 409) y sin una
-// transferencia en revisión (mientras exista, la cuota no se paga de otra forma: 409)
-async function lockUnpaidFee(feeWhere, transaction) {
-    const fee = await Fee.findOne({
-        where: feeWhere,
-        include: [{ model: Member, as: 'member', include: [includeUser] }],
-        transaction,
-        lock: transaction.LOCK.UPDATE
-    })
-    if (!fee) throw createError(m.feeNotFound, 404)
-    if (!UNPAID_STATES.includes(fee.feeState)) throw createError(m.alreadyPaid, 409)
-    if ((await feesInReview([fee.id], { transaction })).size > 0) throw createError(m.transferInReview, 409)
-    return fee
+// Marca como pagado lo que se pagó y, si es una cuota, aplica la recuperación automática. Devuelve si se recuperó
+async function markPaid(payable, actor, transaction) {
+    await payable.record.update(payable.paidState, { transaction })
+    return payable.countsForMora ? recoverIfRegularized(payable.member, actor, transaction) : false
 }
 
-// Socios cuyas cuotas puede pagar el usuario: el propio (con fees.payOwn) y sus vinculadas (con fees.manageLinked)
+// Socios cuyas cuotas y cargos puede pagar el usuario: el propio (con fees.payOwn) y sus vinculadas (con fees.manageLinked)
 async function payableMemberIds(user) {
     const permissions = await getEffectivePermissions(user.id, user.activeRoleId)
     const conditions = []
@@ -484,29 +611,30 @@ async function payableMemberIds(user) {
     return members.map(member => member.id)
 }
 
-const describeFee = (fee) => `Cuota ${fee.period} de ${fullNameOf(fee.member.user)} (Nº ${fee.member.numMember})`
+// Si paga el adulto por una vinculada, el aviso dice de quién es
+const forWhomOf = (payable, user) => (payable.member.userId === user.id ? '' : ` de ${fullNameOf(payable.member.user)}`)
 
-// Pago simulado con tarjeta (fees.payOwn o fees.manageLinked). La cuota tiene que ser del socio logueado (con payOwn) o
-// de una socia vinculada (con manageLinked); si no, 404. No se guarda la tarjeta: si se aprueba, solo los últimos 4
-// dígitos en payment.note ("Tarjeta ****1234"), para el comprobante; en la bitácora, también solo los últimos 4
-// Si se aprueba, avisa PAYMENT_RECEIVED (in-app) a quienes gestionan cuotas, salvo a quien pagó.
-async function payFee(user, feeId, { cardNumber }) {
+// Pago simulado con tarjeta (fees.payOwn o fees.manageLinked) de una cuota o un cargo (kind). Tiene que ser del socio
+// logueado (con payOwn) o de una socia vinculada (con manageLinked); si no, 404. No se guarda la tarjeta: si se
+// aprueba, solo los últimos 4 dígitos en payment.note ("Tarjeta ****1234"), para el comprobante; en la bitácora,
+// también solo los últimos 4. Si se aprueba, avisa PAYMENT_RECEIVED (in-app) a quienes gestionan cuotas, salvo a quien pagó.
+async function payItem(user, kind, id, { cardNumber }) {
     const allowed = await payableMemberIds(user)
 
     const last4 = String(cardNumber).slice(-4)
     const approved = !String(cardNumber).endsWith(REJECTED_CARD_SUFFIX)
     const managers = approved
-        ? (await getActiveUsersWithPermission(user.clubId, PERMISSIONS.FEES_MANAGE)).filter(id => id !== user.id)
+        ? (await getActiveUsersWithPermission(user.clubId, PERMISSIONS.FEES_MANAGE)).filter(managerId => managerId !== user.id)
         : []
 
-    const result = await sequelize.transaction(async (transaction) => {
-        const fee = await lockUnpaidFee({ id: feeId, clubId: user.clubId, memberId: allowed }, transaction)
+    return paymentResult(await sequelize.transaction(async (transaction) => {
+        const payable = await lockUnpaid(kind, { id, clubId: user.clubId, memberId: allowed }, transaction)
 
         const payment = await Payment.create({
             clubId: user.clubId,
             userId: user.id,
-            feeId: fee.id,
-            amount: totalOf(fee),
+            ...payable.ref,
+            amount: payable.amount,
             method: PAYMENT_METHODS.CARD,
             transactionState: TRANSACTION_STATES.PENDING,
             confirmationCode: await newConfirmationCode('PAY', transaction)
@@ -517,69 +645,51 @@ async function payFee(user, feeId, { cardNumber }) {
             ? { transactionState: TRANSACTION_STATES.APPROVED, note: `Tarjeta ****${last4}` }
             : { transactionState: TRANSACTION_STATES.REJECTED }, { transaction })
 
-        let recovered = false
-        if (approved) {
-            await fee.update({ feeState: FEE_STATES.PAID }, { transaction })
-            recovered = await recoverIfRegularized(fee.member, actorOf(user), transaction)
-        }
+        const recovered = approved ? await markPaid(payable, actorOf(user), transaction) : false
 
         await logger(actorOf(user), approved ? LOG_ACTIONS.PAYMENT_APPROVED : LOG_ACTIONS.PAYMENT_REJECTED,
-            `${describeFee(fee)}, ${money(payment.amount)}, tarjeta terminada en ${last4}, código ${payment.confirmationCode}`, { transaction })
+            `${payable.describe}, ${money(payment.amount)}, tarjeta terminada en ${last4}, código ${payment.confirmationCode}`, { transaction })
 
         if (approved && managers.length > 0) {
             const payer = await User.findByPk(user.id, { attributes: ['id', 'name', 'lastName'], transaction })
-            // Si paga el adulto por una vinculada, el aviso dice de quién es la cuota
-            const forWhom = fee.member.userId === user.id ? '' : ` de ${fullNameOf(fee.member.user)}`
             await notify({
                 clubId: user.clubId,
                 type: 'PAYMENT_RECEIVED',
                 recipientUserIds: managers,
-                ...texts.paymentReceived({ payer: fullNameOf(payer), amount: money(payment.amount), month: monthNameOf(fee.period), forWhom, recovered })
+                ...texts.paymentReceived({ payer: fullNameOf(payer), amount: money(payment.amount), what: payable.what, forWhom: forWhomOf(payable, user), recovered })
             }, { transaction })
         }
 
-        return { fee, payment, recovered }
-    })
-
-    return {
-        payment: { ...formatPayment(result.payment), period: result.fee.period },
-        feeState: result.fee.feeState,
-        recovered: result.recovered
-    }
+        return { payment, payable, recovered }
+    }))
 }
 
-// Pago en secretaría (fees.manage): pago Aprobado a nombre del Admin, con código SEC- y una nota opcional
-async function registerPayment(actor, feeId, { note }) {
+// Pago en secretaría (fees.manage) de una cuota o un cargo: pago Aprobado a nombre del Admin, con código SEC- y una
+// nota opcional
+async function registerPayment(actor, kind, id, { note }) {
     const cleanNote = note?.trim() || null
 
-    const result = await sequelize.transaction(async (transaction) => {
-        const fee = await lockUnpaidFee({ id: feeId, clubId: actor.clubId }, transaction)
+    return paymentResult(await sequelize.transaction(async (transaction) => {
+        const payable = await lockUnpaid(kind, { id, clubId: actor.clubId }, transaction)
 
         const payment = await Payment.create({
             clubId: actor.clubId,
             userId: actor.id,
-            feeId: fee.id,
-            amount: totalOf(fee),
+            ...payable.ref,
+            amount: payable.amount,
             method: PAYMENT_METHODS.CASH,
             transactionState: TRANSACTION_STATES.APPROVED,
             confirmationCode: await newConfirmationCode('SEC', transaction),
             note: cleanNote
         }, { transaction })
 
-        await fee.update({ feeState: FEE_STATES.PAID }, { transaction })
-        const recovered = await recoverIfRegularized(fee.member, actorOf(actor), transaction)
+        const recovered = await markPaid(payable, actorOf(actor), transaction)
 
         await logger(actorOf(actor), LOG_ACTIONS.FEE_PAID_MANUAL,
-            `${describeFee(fee)}, ${money(payment.amount)}, código ${payment.confirmationCode}. Nota: ${cleanNote ?? 'sin nota'}`, { transaction })
+            `${payable.describe}, ${money(payment.amount)}, código ${payment.confirmationCode}. Nota: ${cleanNote ?? 'sin nota'}`, { transaction })
 
-        return { fee, payment, recovered }
-    })
-
-    return {
-        payment: { ...formatPayment(result.payment), period: result.fee.period },
-        feeState: result.fee.feeState,
-        recovered: result.recovered
-    }
+        return { payment, payable, recovered }
+    }))
 }
 
 // ---------- Transferencias (P14b) ----------
@@ -592,10 +702,11 @@ async function getTransferInfo(user) {
 // Tipo de cada comprobante, por su extensión (para devolverlo con receipt-file)
 const RECEIPT_CONTENT_TYPES = { '.jpg': 'image/jpeg', '.png': 'image/png', '.pdf': 'application/pdf' }
 
-// Informar una transferencia (fees.payOwn o fees.manageLinked): mismas cuotas que el pago con tarjeta, por el total.
-// Crea un pago Pendiente con el comprobante adjunto y código TRF-; la cuota no cambia hasta que la revisa el club.
-// Avisa PAYMENT_REVIEW_REQUEST a quienes gestionan cuotas. Si algo falla, se borra el archivo subido
-async function reportTransfer(user, feeId, file) {
+// Informar una transferencia (fees.payOwn o fees.manageLinked) de una cuota o un cargo: lo mismo que se puede pagar
+// con tarjeta, por el total. Crea un pago Pendiente con el comprobante adjunto y código TRF-; lo pagado no cambia
+// hasta que lo revisa el club. Avisa PAYMENT_REVIEW_REQUEST a quienes gestionan cuotas. Si algo falla, se borra el
+// archivo subido
+async function reportTransfer(user, kind, id, file) {
     if (!file) throw createError(m.receiptRequired, 400)
     const receiptUrl = file.url   // Ruta local o secure_url de Cloudinary. El middleware upload ya revisó sus primeros bytes
 
@@ -605,15 +716,15 @@ async function reportTransfer(user, feeId, file) {
         const allowed = await payableMemberIds(user)
         const managers = await getActiveUsersWithPermission(user.clubId, PERMISSIONS.FEES_MANAGE)
 
-        const result = await sequelize.transaction(async (transaction) => {
-            const fee = await lockUnpaidFee({ id: feeId, clubId: user.clubId, memberId: allowed }, transaction)
+        return paymentResult(await sequelize.transaction(async (transaction) => {
+            const payable = await lockUnpaid(kind, { id, clubId: user.clubId, memberId: allowed }, transaction)
             const payer = await User.findByPk(user.id, { attributes: ['id', 'name', 'lastName'], transaction })
 
             const payment = await Payment.create({
                 clubId: user.clubId,
                 userId: user.id,
-                feeId: fee.id,
-                amount: totalOf(fee),
+                ...payable.ref,
+                amount: payable.amount,
                 method: PAYMENT_METHODS.TRANSFER,
                 transactionState: TRANSACTION_STATES.PENDING,
                 confirmationCode: await newConfirmationCode('TRF', transaction),
@@ -621,21 +732,17 @@ async function reportTransfer(user, feeId, file) {
             }, { transaction })
 
             await logger(actorOf(user), LOG_ACTIONS.TRANSFER_REPORTED,
-                `${describeFee(fee)}, ${money(payment.amount)}, código ${payment.confirmationCode}`, { transaction })
+                `${payable.describe}, ${money(payment.amount)}, código ${payment.confirmationCode}`, { transaction })
 
-            // Si paga el adulto por una vinculada, el aviso dice de quién es la cuota
-            const forWhom = fee.member.userId === user.id ? '' : ` de ${fullNameOf(fee.member.user)}`
             await notify({
                 clubId: user.clubId,
                 type: 'PAYMENT_REVIEW_REQUEST',
                 recipientUserIds: managers,
-                ...texts.paymentReviewRequest({ payer: fullNameOf(payer), amount: money(payment.amount), month: monthNameOf(fee.period), forWhom })
+                ...texts.paymentReviewRequest({ payer: fullNameOf(payer), amount: money(payment.amount), what: payable.what, forWhom: forWhomOf(payable, user) })
             }, { transaction })
 
-            return { fee, payment }
-        })
-
-        return { payment: { ...formatPayment(result.payment), period: result.fee.period }, feeState: result.fee.feeState }
+            return { payment, payable }
+        }))
 
     } catch (error) {
         await deleteUpload(receiptUrl)
@@ -643,86 +750,81 @@ async function reportTransfer(user, feeId, file) {
     }
 }
 
-// Pago con su cuota, su socio y quien pagó
-const includePaymentDetail = [
-    { model: Fee, as: 'fee', include: [{ model: Member, as: 'member', include: [includeUser] }] },
+// Pago con lo que paga (su cuota o su cargo), su socio y quien pagó
+const includePaymentDetail = () => [
+    { model: Fee, as: 'fee', required: false, include: [includeItemMember()] },
+    { model: ChargeMember, as: 'chargeMember', required: false, include: [{ model: Charge, as: 'charge' }, includeItemMember()] },
     { model: User, as: 'user', attributes: ['id', 'name', 'lastName'] }
 ]
 
-// Transferencia a revisar (fees.manage), bloqueada con su cuota. Solo las Pendientes (si no, 409)
+// Socio de un pago (el de su cuota o el de su cargo), con includePaymentDetail
+const memberOfPayment = (payment) => payment.fee?.member ?? payment.chargeMember?.member
+
+// Transferencia a revisar (fees.manage), bloqueada con lo que paga. Solo las Pendientes (si no, 409)
 async function lockTransferInReview(actor, paymentId, transaction) {
     const payment = await Payment.findOne({ where: { id: paymentId, clubId: actor.clubId }, transaction, lock: transaction.LOCK.UPDATE })
     if (!payment) throw createError(m.paymentNotFound, 404)
-    if (payment.method !== IN_REVIEW.method || payment.transactionState !== IN_REVIEW.transactionState) throw createError(m.notReviewable, 409)
+    if (!isInReviewPayment(payment)) throw createError(m.notReviewable, 409)
 
-    const fee = await Fee.findByPk(payment.feeId, { include: [{ model: Member, as: 'member', include: [includeUser] }], transaction, lock: transaction.LOCK.UPDATE })
-    return { payment, fee }
+    return { payment, payable: await lockPayableOf(payment, transaction) }
 }
 
 // Aviso del resultado a quien pagó y al socio (con su adulto, si es menor)
-const notifyTransferResult = (actor, payment, fee, { title, message }, transaction) => notify({
+const notifyTransferResult = (actor, payment, payable, { title, message }, transaction) => notify({
     clubId: actor.clubId,
     type: 'PAYMENT_RESULT',
-    recipientUserIds: [...new Set([payment.userId, fee.member.userId])],
+    recipientUserIds: [...new Set([payment.userId, payable.member.userId])],
     title,
     message,
     transmitterId: actor.id,
     includeFamily: true
 }, { transaction })
 
-// Aprobar: el pago pasa a Aprobado, la cuota a Pagada y aplica la recuperación automática
+// Aprobar: el pago pasa a Aprobado, lo pagado a Pagado y, si es una cuota, aplica la recuperación automática
 async function approveTransfer(actor, paymentId) {
-    const result = await sequelize.transaction(async (transaction) => {
-        const { payment, fee } = await lockTransferInReview(actor, paymentId, transaction)
+    return paymentResult(await sequelize.transaction(async (transaction) => {
+        const { payment, payable } = await lockTransferInReview(actor, paymentId, transaction)
 
         await payment.update({ transactionState: TRANSACTION_STATES.APPROVED }, { transaction })
-        await fee.update({ feeState: FEE_STATES.PAID }, { transaction })
-        const recovered = await recoverIfRegularized(fee.member, actorOf(actor), transaction)
+        const recovered = await markPaid(payable, actorOf(actor), transaction)
 
         await logger(actorOf(actor), LOG_ACTIONS.PAYMENT_APPROVED,
-            `${describeFee(fee)}, ${money(payment.amount)}, transferencia revisada, código ${payment.confirmationCode}`, { transaction })
+            `${payable.describe}, ${money(payment.amount)}, transferencia revisada, código ${payment.confirmationCode}`, { transaction })
 
-        await notifyTransferResult(actor, payment, fee, texts.transferApproved({ month: monthNameOf(fee.period) }), transaction)
+        await notifyTransferResult(actor, payment, payable, texts.transferApproved({ name: payable.name, what: payable.what }), transaction)
 
-        return { payment, fee, recovered }
-    })
-
-    return {
-        payment: { ...formatPayment(result.payment), period: result.fee.period },
-        feeState: result.fee.feeState,
-        recovered: result.recovered
-    }
+        return { payment, payable, recovered }
+    }))
 }
 
-// Rechazar: con un motivo obligatorio (en payment.note). La cuota sigue impaga y se puede volver a pagar
+// Rechazar: con un motivo obligatorio (en payment.note). Lo pagado sigue impago y se puede volver a pagar
 async function rejectTransfer(actor, paymentId, { reason }) {
     const cleanReason = reason.trim()
 
-    const result = await sequelize.transaction(async (transaction) => {
-        const { payment, fee } = await lockTransferInReview(actor, paymentId, transaction)
+    return paymentResult(await sequelize.transaction(async (transaction) => {
+        const { payment, payable } = await lockTransferInReview(actor, paymentId, transaction)
 
         await payment.update({ transactionState: TRANSACTION_STATES.REJECTED, note: cleanReason }, { transaction })
 
         await logger(actorOf(actor), LOG_ACTIONS.PAYMENT_REJECTED,
-            `${describeFee(fee)}, ${money(payment.amount)}, transferencia revisada, código ${payment.confirmationCode}. Motivo: ${cleanReason}`, { transaction })
+            `${payable.describe}, ${money(payment.amount)}, transferencia revisada, código ${payment.confirmationCode}. Motivo: ${cleanReason}`, { transaction })
 
-        await notifyTransferResult(actor, payment, fee, texts.transferRejected({ month: monthNameOf(fee.period), reason: cleanReason }), transaction)
+        await notifyTransferResult(actor, payment, payable, texts.transferRejected({ name: payable.name, what: payable.what, reason: cleanReason }), transaction)
 
-        return { payment, fee }
-    })
-
-    return { payment: { ...formatPayment(result.payment), period: result.fee.period }, feeState: result.fee.feeState }
+        return { payment, payable }
+    }))
 }
 
 // ---------- Acceso a un pago: comprobante adjunto y comprobante de pago ----------
 
-// Un pago del club si el usuario puede verlo: quien gestiona cuotas (fees.manage), quien pagó, el socio de la cuota o su
-// adulto vinculado. Si no, 404 (no se dice que existe). extraWhere: condiciones del pago (por ejemplo, Aprobado)
+// Un pago del club si el usuario puede verlo: quien gestiona cuotas (fees.manage), quien pagó, el socio de la cuota o
+// del cargo, o su adulto vinculado. Si no, 404 (no se dice que existe). extraWhere: condiciones del pago (por ejemplo,
+// Aprobado)
 async function findAccessiblePayment(user, paymentId, extraWhere, notFoundMessage) {
-    const payment = await Payment.findOne({ where: { id: paymentId, clubId: user.clubId, ...extraWhere }, include: includePaymentDetail })
+    const payment = await Payment.findOne({ where: { id: paymentId, clubId: user.clubId, ...extraWhere }, include: includePaymentDetail() })
     if (!payment) throw createError(notFoundMessage, 404)
 
-    const { member } = payment.fee
+    const member = memberOfPayment(payment)
     const isInvolved = payment.userId === user.id || member.userId === user.id || (member.adultUserId === user.id && member.linkStatus)
     if (isInvolved) return payment
 
@@ -769,11 +871,12 @@ function methodLabelOf(payment) {
 }
 
 // Comprobante de pago de un pago Aprobado (cualquier medio). Pendientes y Rechazados no tienen: 404.
-// approvedAt: el momento en que el pago pasó a Aprobado (su última modificación; un pago Aprobado ya no se modifica)
+// approvedAt: el momento en que el pago pasó a Aprobado (su última modificación; un pago Aprobado ya no se modifica).
+// De una cuota: el período y el desglose; de un cargo eventual: el concepto y su descripción
 async function getVoucher(user, paymentId) {
     const payment = await findAccessiblePayment(user, paymentId, { transactionState: TRANSACTION_STATES.APPROVED }, m.voucherNotFound)
-    const { fee } = payment
-    const { member } = fee
+    const { fee, chargeMember } = payment
+    const member = memberOfPayment(payment)
     const club = await Club.findByPk(user.clubId, { attributes: ['name', 'address', 'accentColor', 'extraInfo'] })
 
     // Quién pagó, si no fue el socio: su adulto responsable u otra persona. En secretaría, quién registró el pago
@@ -785,14 +888,17 @@ async function getVoucher(user, paymentId) {
 
     return {
         club: { name: club.name, address: club.address, cuit: club.extraInfo?.bankInfo?.cuit ?? null, accentColor: club.accentColor },
+        kind: fee ? PAYABLE.FEE : PAYABLE.CHARGE,
         confirmationCode: payment.confirmationCode,
         approvedAt: payment.updatedAt,
         member: { name: fullNameOf(member.user), numMember: member.numMember },
         paidBy,
         registeredBy,
-        period: fee.period,
-        socialAmount: toAmount(fee.socialAmount),
-        sportAmount: toAmount(fee.sportAmount),
+        period: fee?.period ?? null,
+        socialAmount: fee ? toAmount(fee.socialAmount) : null,
+        sportAmount: fee ? toAmount(fee.sportAmount) : null,
+        concept: chargeMember?.charge.concept ?? null,
+        description: chargeMember?.charge.description ?? null,
         total: toAmount(payment.amount),
         method: payment.method,
         methodLabel: methodLabelOf(payment)
@@ -858,17 +964,19 @@ async function listFees(user, { period, state, search = '', page = 1 }) {
     }
 }
 
-// Transferencias que esperan revisión en el club (para el contador de "Transferencias por revisar")
+// Transferencias que esperan revisión en el club, de cuotas y de cargos (para el contador de "Transferencias por revisar")
 const countTransfersInReview = (clubId) => Payment.count({ where: { clubId, ...IN_REVIEW } })
 
-// Historial de pagos del club (fees.manage), de a PAYMENTS_PAGE_SIZE: todos los medios. Filtros: medio, estado, fechas
-// (desde y hasta, días en Argentina) y búsqueda por socio (cada palabra en el nombre, el apellido, el DNI o el número
-// de socio). Orden: las transferencias Pendientes primero (la más vieja antes, para revisarlas en orden de llegada),
-// después el resto del más nuevo al más viejo. pendingReview: transferencias por revisar en todo el club
-async function listPayments(user, { method, state, search = '', from, to, page = 1 }) {
+// Historial de pagos del club (fees.manage), de a PAYMENTS_PAGE_SIZE: todos los medios, de cuotas y de cargos. Filtros:
+// qué se pagó (kind: 'fee' o 'charge'), medio, estado, fechas (desde y hasta, días en Argentina) y búsqueda por socio
+// (cada palabra en el nombre, el apellido, el DNI o el número de socio). Orden: las transferencias Pendientes primero
+// (la más vieja antes, para revisarlas en orden de llegada), después el resto del más nuevo al más viejo.
+// pendingReview: transferencias por revisar en todo el club
+async function listPayments(user, { kind, method, state, search = '', from, to, page = 1 }) {
     page = Number(page) || 1   // Con Express 5 req.query es de solo lectura: el toInt del validator no llega hasta acá
     const words = String(search).trim().split(/\s+/).filter(Boolean)
-    const fields = ['$fee.member.user.name$', '$fee.member.user.lastName$', '$fee.member.user.dni$', '$fee.member.numMember$']
+    const fields = ['user.name$', 'user.lastName$', 'user.dni$', 'numMember$']
+        .flatMap(field => [`$fee.member.${field}`, `$chargeMember.member.${field}`])
 
     const createdAt = {
         ...(from && { [Op.gte]: new Date(`${from}T00:00:00.000-03:00`) }),
@@ -877,6 +985,8 @@ async function listPayments(user, { method, state, search = '', from, to, page =
 
     const where = {
         clubId: user.clubId,
+        ...(kind === PAYABLE.FEE && { feeId: { [Op.ne]: null } }),
+        ...(kind === PAYABLE.CHARGE && { chargeMemberId: { [Op.ne]: null } }),
         ...(method && { method: Number(method) }),
         ...(state && { transactionState: Number(state) }),
         ...((from || to) && { createdAt }),
@@ -886,12 +996,14 @@ async function listPayments(user, { method, state, search = '', from, to, page =
     }
 
     const isInReview = `(\`Payment\`.\`method\` = ${PAYMENT_METHODS.TRANSFER} AND \`Payment\`.\`transactionState\` = ${TRANSACTION_STATES.PENDING})`
+    const includeListMember = () => ({ model: Member, as: 'member', attributes: ['id', 'userId', 'numMember'], include: [{ model: User, as: 'user', attributes: ['name', 'lastName'] }] })
 
     const [{ count, rows }, pendingReview] = await Promise.all([
         Payment.findAndCountAll({
             where,
             include: [
-                { model: Fee, as: 'fee', attributes: ['id', 'period', 'socialAmount', 'sportAmount', 'expirationDate', 'feeState'], include: [{ model: Member, as: 'member', attributes: ['id', 'userId', 'numMember'], include: [{ model: User, as: 'user', attributes: ['name', 'lastName'] }] }] },
+                { model: Fee, as: 'fee', required: false, attributes: ['id', 'period', 'socialAmount', 'sportAmount', 'expirationDate', 'feeState'], include: [includeListMember()] },
+                { model: ChargeMember, as: 'chargeMember', required: false, attributes: ['id', 'chargeId', 'chargeState'], include: [{ model: Charge, as: 'charge' }, includeListMember()] },
                 { model: User, as: 'user', attributes: ['id', 'name', 'lastName'] }
             ],
             order: [
@@ -910,13 +1022,17 @@ async function listPayments(user, { method, state, search = '', from, to, page =
 
     return {
         pendingReview,
-        items: rows.map(payment => ({
-            ...formatPayment(payment),
-            note: payment.note,
-            member: { id: payment.fee.member.id, userId: payment.fee.member.userId, name: fullNameOf(payment.fee.member.user), numMember: payment.fee.member.numMember },
-            payer: { id: payment.user.id, name: fullNameOf(payment.user) },
-            fee: formatFee(payment.fee, today)
-        })),
+        items: rows.map(payment => {
+            const member = memberOfPayment(payment)
+            return {
+                ...formatPayment(payment),
+                note: payment.note,
+                member: { id: member.id, userId: member.userId, name: fullNameOf(member.user), numMember: member.numMember },
+                payer: { id: payment.user.id, name: fullNameOf(payment.user) },
+                fee: payment.fee ? formatFee(payment.fee, today) : null,
+                charge: payment.chargeMember ? formatChargeItem(payment.chargeMember, today) : null
+            }
+        }),
         total: count,
         page,
         pageSize: PAYMENTS_PAGE_SIZE,
@@ -994,7 +1110,7 @@ module.exports = {
     getMine,
     getLinked,
     getMemberAccount,
-    payFee,
+    payItem,
     registerPayment,
     getTransferInfo,
     reportTransfer,
@@ -1005,5 +1121,6 @@ module.exports = {
     listPayments,
     listFees,
     listPlayers,
-    PLAYER_STATUS
+    PLAYER_STATUS,
+    PAYABLE
 }

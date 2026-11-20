@@ -23,6 +23,7 @@ import HowToRegRounded from '@mui/icons-material/HowToRegRounded'
 import ManageAccountsRounded from '@mui/icons-material/ManageAccountsRounded'
 import ManageHistoryRounded from '@mui/icons-material/ManageHistoryRounded'
 import PaymentsRounded from '@mui/icons-material/PaymentsRounded'
+import PostAddRounded from '@mui/icons-material/PostAddRounded'
 import InsightsRounded from '@mui/icons-material/InsightsRounded'
 import ReceiptLongRounded from '@mui/icons-material/ReceiptLongRounded'
 import RequestQuoteRounded from '@mui/icons-material/RequestQuoteRounded'
@@ -42,6 +43,7 @@ export const MENU_ITEMS = [
   { label: 'Staff', description: 'Entrenadoras, preparadoras y representantes', path: '/staff', icon: BadgeRounded, permission: 'staff.manage', group: 'Gestión' },
   { label: 'Cuotas', description: 'Cuotas del mes y estado de cuenta', path: '/fees', icon: PaymentsRounded, permission: 'fees.manage', group: 'Gestión' },
   { label: 'Pagos', description: 'Pagos y transferencias por revisar', path: '/fees/payments', icon: ReceiptLongRounded, permission: 'fees.manage', group: 'Gestión' },
+  { label: 'Cargos eventuales', description: 'Cobros aparte de la cuota: torneos, indumentaria, viajes', path: '/fees/charges', icon: PostAddRounded, permission: 'fees.manage', group: 'Gestión' },
   { label: 'Inscripciones', description: 'Solicitudes para aprobar o rechazar', path: '/inscriptions', icon: HowToRegRounded, permission: 'inscriptions.approve', group: 'Gestión' },
   { label: 'Ligas y categorías', description: 'Ligas, categorías y planteles', path: '/leagues', icon: EmojiEventsRounded, permission: 'leagues.manage', group: 'Gestión' },
   { label: 'Partidos', description: 'Fixture, resultados y superposiciones', path: '/games', icon: SportsVolleyballRounded, permission: 'games.manage', group: 'Gestión' },
@@ -96,7 +98,8 @@ const EXTRA_TITLES = [
   [/^\/leagues\/categories\/\d+$/, 'Categoría'],
   [/^\/citations\/games\/\d+$/, 'Citaciones del partido'],
   [/^\/fees\/members\/\d+$/, 'Estado de cuenta'],
-  [/^\/fees\/payments\/\d+\/voucher$/, 'Comprobante de pago']
+  [/^\/fees\/payments\/\d+\/voucher$/, 'Comprobante de pago'],
+  [/^\/fees\/charges\/\d+$/, 'Cargo eventual']
 ]
 
 // Entradas que puede ver el usuario con sus permisos, sin repetir label dentro de un grupo

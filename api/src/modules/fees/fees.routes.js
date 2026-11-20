@@ -10,6 +10,7 @@ const validator = require('./fees.validator')
 const upload = require('../../middlewares/upload')
 const { UPLOAD_FOLDERS } = require('../../utils/files')
 const { PERMISSIONS } = require('../../utils/permissions')
+const { PAYABLE } = require('./fees.service')
 
 const router = express.Router()
 
@@ -32,15 +33,29 @@ router.post('/payments/:id/reject', ...manage, validator.reject, validateFields,
 router.get('/payments/:id/receipt-file', isAuth, validator.paymentId, validateFields, controller.receiptFile)
 router.get('/payments/:id/voucher', isAuth, validator.paymentId, validateFields, controller.voucher)
 
+// Cargos eventuales (Admin)
+router.get('/charges', ...manage, controller.listCharges)
+router.get('/charges/options', ...manage, controller.chargeOptions)
+router.post('/charges/preview', ...manage, validator.previewCharge, validateFields, controller.previewCharge)
+router.post('/charges', ...manage, validator.createCharge, validateFields, controller.createCharge)
+router.get('/charges/:id', ...manage, validator.chargeId, validateFields, controller.getCharge)
+router.post('/charges/:id/cancel', ...manage, validator.chargeId, validateFields, controller.cancelCharge)
+
+// El cargo de un socio (chargeMember): anularlo o registrar el pago (Admin), y pagarlo (el socio o el adulto Familia)
+router.post('/charge-items/:id/cancel', ...manage, validator.chargeId, validateFields, controller.cancelChargeItem)
+router.post('/charge-items/:id/register-payment', ...manage, validator.registerPayment, validateFields, controller.registerPayment(PAYABLE.CHARGE))
+router.post('/charge-items/:id/pay', ...payer, validator.pay, validateFields, controller.pay(PAYABLE.CHARGE))
+router.post('/charge-items/:id/transfer', ...payer, validator.transfer, validateFields, upload(UPLOAD_FOLDERS.RECEIPTS).single('receipt'), controller.transfer(PAYABLE.CHARGE))
+
 // Admin
 router.get('/', ...manage, validator.list, validateFields, controller.list)
 router.get('/members/:memberId', ...manage, validator.memberAccount, validateFields, controller.memberAccount)
 router.post('/generate', ...manage, validator.generate, validateFields, controller.generate)
-router.post('/:id/register-payment', ...manage, validator.registerPayment, validateFields, controller.registerPayment)
+router.post('/:id/register-payment', ...manage, validator.registerPayment, validateFields, controller.registerPayment(PAYABLE.FEE))
 
 // Pago: el propio socio (mayor) o el adulto Familia por una vinculada
-router.post('/:id/pay', ...payer, validator.pay, validateFields, controller.pay)
+router.post('/:id/pay', ...payer, validator.pay, validateFields, controller.pay(PAYABLE.FEE))
 // Transferencia: el id se valida antes de subir el archivo (así no queda un archivo suelto)
-router.post('/:id/transfer', ...payer, validator.transfer, validateFields, upload(UPLOAD_FOLDERS.RECEIPTS).single('receipt'), controller.transfer)
+router.post('/:id/transfer', ...payer, validator.transfer, validateFields, upload(UPLOAD_FOLDERS.RECEIPTS).single('receipt'), controller.transfer(PAYABLE.FEE))
 
 module.exports = router

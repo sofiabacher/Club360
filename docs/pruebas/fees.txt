@@ -626,10 +626,156 @@ Pasos:
   1. Entrar como la socia y pagar la cuota con una tarjeta válida. 2. Entrar como Admin y abrir la campana.
   3. Tocar el aviso. 4. Repetir el pago con una tarjeta terminada en 0000.
 Datos de entrada: tarjeta 4111 1111 1111 1111; después, una terminada en 0000.
-Resultado esperado: 2) "Cuota pagada: <Nombre> pagó con tarjeta $<monto> por la cuota de <mes>." (si paga la Familia,
+Resultado esperado: 2) "Pago recibido: <Nombre> pagó con tarjeta $<monto> por la cuota de <mes>." (título cambiado el
+  19/11/2026, al sumar los cargos eventuales, que usan el mismo aviso; si paga la Familia,
   dice de quién es la cuota; si estaba Suspendida y se regularizó, lo aclara). 3) Abre el detalle con "Ir a…" el
   historial de pagos. 4) Rechazado: no llega ningún aviso. Los pagos en secretaría y las transferencias aprobadas no avisan.
 Resultado obtenido: base local, con la transacción deshecha al final: pago Aprobado, aviso "Cuota pagada — Paula
   Giménez pagó con tarjeta $40.000 por la cuota de noviembre." para el Admin; la cuota quedó como estaba. Falta probar
   la pantalla.
 Estado: Pendiente
+
+--------------------------------------------------
+Cargos eventuales (19/11/2026). Verificados con un script contra una base local de prueba (seed + demo): 62 chequeos
+del service, 19 por HTTP y la recorrida de las pantallas en Chrome.
+
+--------------------------------------------------
+ID: CP-FEES-40
+Módulo: fees
+Descripción: Crear un cargo eventual para todos los socios
+Precondiciones: Admin del Club (fees.manage). Socios activos y suspendidos.
+Pasos:
+  1. Gestión → Cargos eventuales → "Nuevo cargo". 2. Completar concepto, detalle, monto y vencimiento. 3. Dejar "Todos".
+  4. "Ver quiénes". 5. "Crear y avisar".
+Datos de entrada: "Camiseta 2027", "Talle a elegir", $15.000, vence en 10 días.
+Resultado esperado: 3) "Se les cobra a N socios" con el total (N = socios Activos y Suspendidos; los dados de baja no).
+  5) Va al detalle con un cargo Pendiente por socio. Aviso "Nuevo cargo: Camiseta 2027" por la app y por email al socio y,
+  si es menor, a su adulto Familia. Bitácora "Creación de cargo eventual".
+Resultado obtenido: un chargeMember por socio cobrable, aviso CHARGE_NEW a socios y familias, bitácora registrada.
+Estado: Aprobado
+
+--------------------------------------------------
+ID: CP-FEES-41
+Módulo: fees
+Descripción: Crear un cargo para una categoría, un deporte o socios elegidos
+Precondiciones: Admin del Club. Una categoría con jugadoras.
+Pasos:
+  1. "Nuevo cargo" → "Categorías" y elegir una. 2. Repetir con "Deportes" y con "Socios" (buscando por nombre, DNI o número).
+Datos de entrada: "Torneo de verano", $8.000,50.
+Resultado esperado: el resumen se actualiza al elegir. Categorías: las jugadoras activas de la categoría (sin repetir si
+  está en dos). Deportes: los socios con la inscripción Aprobada. Sin elegir nada, "Crear y avisar" queda deshabilitado.
+  El monto acepta hasta 2 decimales.
+Resultado obtenido: como el esperado; ids repetidos no duplican cargos y el monto 8000,50 se guarda bien.
+Estado: Aprobado
+
+--------------------------------------------------
+ID: CP-FEES-42
+Módulo: fees
+Descripción: Validaciones del alta de un cargo
+Precondiciones: Admin del Club.
+Pasos:
+  1. Mandar un concepto de 2 letras, un monto negativo o con 3 decimales, una fecha inválida o pasada.
+  2. Elegir "Socios" sin ninguno. 3. Mandar el id de un socio dado de baja o de otro club.
+Datos de entrada: los del paso.
+Resultado esperado: 1 y 2) 400 con el mensaje de cada campo; la fecha pasada, "El vencimiento tiene que ser de hoy en
+  adelante." 3) 400 "Alguno de los socios, categorías o deportes elegidos no es del club."
+Resultado obtenido: 400 en todos los casos. Sin fees.manage, 403; sin sesión, 401.
+Estado: Aprobado
+
+--------------------------------------------------
+ID: CP-FEES-43
+Módulo: fees
+Descripción: El socio ve el cargo en sus cuotas y lo paga con tarjeta
+Precondiciones: Socia mayor (fees.payOwn) con un cargo Pendiente.
+Pasos:
+  1. Mis cuotas. 2. "Pagar" en el cargo. 3. Pagar con una tarjeta terminada en 0000 y después con una válida.
+  4. "Ver comprobante".
+Datos de entrada: 4242 4242 4242 0000; 4242 4242 4242 4242.
+Resultado esperado: 1) Tarjeta "Cargos eventuales" con concepto, detalle, vencimiento y monto; el total adeudado lo
+  incluye y aclara que no suma días de atraso. 3) Rechazado: el cargo sigue Pendiente; Aprobado: Pagado, sin cambiar la
+  condición de socio. Aviso "Pago recibido" a quienes tienen fees.manage. 4) Comprobante con "Concepto" y "Detalle" en
+  lugar del período y el desglose.
+Resultado obtenido: como el esperado (script y recorrida en el celular).
+Estado: Aprobado
+
+--------------------------------------------------
+ID: CP-FEES-44
+Módulo: fees
+Descripción: La Familia paga por transferencia el cargo de una menor
+Precondiciones: Adulto Familia con una jugadora menor vinculada que tiene un cargo. Datos bancarios cargados.
+Pasos:
+  1. Estado de cuenta → "Pagar" en el cargo → Transferencia, adjuntar el comprobante. 2. Intentar pagarlo con tarjeta.
+  3. Como Admin, en Pagos, rechazar con motivo. 4. Informar otra y aprobarla.
+Datos de entrada: un PDF.
+Resultado esperado: 1) Pago Pendiente TRF-, el cargo dice "Transferencia en revisión". 2) 409. 3) El cargo sigue
+  Pendiente; aviso "Se rechazó tu transferencia de <concepto>". 4) Cargo Pagado; el comprobante dice que pagó el adulto
+  responsable.
+Resultado obtenido: como el esperado.
+Estado: Aprobado
+
+--------------------------------------------------
+ID: CP-FEES-45
+Módulo: fees
+Descripción: Registrar en secretaría el pago de un cargo
+Precondiciones: Admin del Club. Un cargo con socios Pendientes.
+Pasos:
+  1. Detalle del cargo (o el estado de cuenta del socio) → "Registrar pago". 2. Confirmar con una nota.
+Datos de entrada: "Efectivo".
+Resultado esperado: pago Aprobado SEC-, el socio queda Pagado con el ícono del comprobante. Bitácora "Pago registrado en
+  secretaría".
+Resultado obtenido: como el esperado.
+Estado: Aprobado
+
+--------------------------------------------------
+ID: CP-FEES-46
+Módulo: fees
+Descripción: Anular el cargo de un socio y el cargo entero
+Precondiciones: Un cargo con socios Pendientes, uno Pagado y uno con una transferencia en revisión.
+Pasos:
+  1. "Anular" en un socio Pendiente. 2. "Anular cargo" con la transferencia en revisión. 3. Revisar la transferencia y
+  volver a "Anular cargo".
+Datos de entrada: —
+Resultado esperado: 1) Queda Anulado, desaparece de sus cuotas y recibe "Se anuló el cargo <concepto>". 2) 409 "Hay
+  transferencias en revisión…". 3) Los impagos pasan a Anulado y se les avisa; los pagados quedan. Un pagado no se anula.
+  Bitácora "Anulación de cargo eventual".
+Resultado obtenido: como el esperado.
+Estado: Aprobado
+
+--------------------------------------------------
+ID: CP-FEES-47
+Módulo: fees
+Descripción: Un cargo vencido no es mora
+Precondiciones: Un cargo Pendiente que venció ayer. Socio sin cuotas vencidas.
+Pasos:
+  1. Correr el chequeo diario (feeStatus). 2. Mirar los días de atraso, la condición de socio y si se lo puede citar.
+Datos de entrada: —
+Resultado esperado: 1) El cargo pasa a Vencido y llega "Venció el cargo <concepto>" (solo in-app). Correrlo de nuevo no
+  repite nada. 2) 0 días de atraso, sigue Activo y se lo puede citar. Un Vencido se puede pagar igual.
+Resultado obtenido: como el esperado.
+Estado: Aprobado
+
+--------------------------------------------------
+ID: CP-FEES-48
+Módulo: fees
+Descripción: Historial de pagos con cuotas y cargos
+Precondiciones: Pagos de cuotas y de cargos.
+Pasos:
+  1. Pagos → "Todos los pagos" → filtro "Qué": Cargos, después Cuotas. 2. Buscar por el apellido de un socio.
+Datos de entrada: —
+Resultado esperado: la columna "Concepto" muestra el período o el nombre del cargo; el filtro deja solo lo elegido; la
+  búsqueda encuentra los pagos de cargos del socio. "Transferencias por revisar" muestra las de cuotas y las de cargos.
+Resultado obtenido: como el esperado.
+Estado: Aprobado
+
+--------------------------------------------------
+ID: CP-FEES-49
+Módulo: backup
+Descripción: Restaurar un backup de antes de los cargos eventuales
+Precondiciones: Un backup generado antes del 19/11/2026 (sin las tablas charge y chargeMember).
+Pasos:
+  1. Copias de seguridad → restaurar ese archivo.
+Datos de entrada: el backup viejo.
+Resultado esperado: se restaura sin error de formato; los cargos quedan vacíos.
+Resultado obtenido: —
+Estado: Pendiente
+

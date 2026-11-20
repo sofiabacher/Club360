@@ -389,6 +389,20 @@ module.exports = {
         receiptNotFound: 'No encontramos el comprobante adjunto.',
         voucherNotFound: 'No encontramos el comprobante de pago. Solo tienen comprobante los pagos aprobados.',
 
+        // Cargos eventuales
+        chargeNotFound: 'No encontramos el cargo.',
+        chargeItemNotFound: 'No encontramos el cargo del socio.',
+        chargeAlreadyPaid: 'Este cargo ya está pagado.',
+        chargeInReview: 'Ya hay una transferencia en revisión para este cargo.',
+        chargeCancelled: 'Este cargo fue anulado.',
+        chargeNotCancellable: 'Solo se anulan los cargos impagos.',
+        chargeAlreadyCancelled: 'El cargo ya está anulado.',
+        chargeTransferInReview: 'Hay una transferencia en revisión para este cargo: revisala antes de anularlo.',
+        chargeTransfersInReview: 'Hay transferencias en revisión para este cargo: revisalas antes de anularlo.',
+        chargeExpirationPast: 'El vencimiento tiene que ser de hoy en adelante.',
+        chargeNoRecipients: 'No hay socios activos o suspendidos a quienes cobrarles este cargo.',
+        chargeTargetNotFound: 'Alguno de los socios, categorías o deportes elegidos no es del club.',
+
         // Validaciones de formato
         idInvalid: 'El identificador no es válido.',
         periodInvalid: 'Elegí un período válido (AAAA-MM).',
@@ -405,7 +419,14 @@ module.exports = {
         methodInvalid: 'El medio de pago no es válido.',
         dateInvalid: 'Elegí una fecha válida.',
         dateRangeInvalid: 'La fecha "desde" no puede ser posterior a la fecha "hasta".',
-        reasonInvalid: 'Escribí el motivo del rechazo (entre 10 y 300 caracteres).'
+        reasonInvalid: 'Escribí el motivo del rechazo (entre 10 y 300 caracteres).',
+        conceptInvalid: 'El concepto tiene que tener entre 3 y 100 caracteres.',
+        descriptionInvalid: 'La descripción puede tener hasta 300 caracteres.',
+        amountInvalid: 'El monto tiene que ser mayor a 0 y menor a 10.000.000, con hasta 2 decimales.',
+        expirationInvalid: 'Elegí la fecha de vencimiento.',
+        targetTypeInvalid: 'Elegí a quiénes se les cobra.',
+        targetIdsInvalid: 'Elegí al menos uno (hasta 500).',
+        kindInvalid: 'El tipo no es válido.'
     },
 
     routines: {
@@ -560,21 +581,36 @@ module.exports = {
             message: `Por tener cuotas impagas hace más de ${delayFee} días, perdiste tu condición de socio. `
                 + 'Mientras tanto no podés ser citada ni inscribirte a deportes. Se recupera sola cuando regularices tus cuotas.'
         }),
-        paymentReceived: ({ payer, amount, month, forWhom, recovered }) => ({
-            title: 'Cuota pagada',
-            message: `${payer} pagó con tarjeta ${amount} por la cuota de ${month}${forWhom}.${recovered ? ' Se regularizó y volvió a estar Activo.' : ''}`
+        // what: lo que se pagó, ya armado ("la cuota de noviembre" o "«Camiseta 2027»"); name: su nombre corto ("noviembre"
+        // o "Camiseta 2027")
+        paymentReceived: ({ payer, amount, what, forWhom, recovered }) => ({
+            title: 'Pago recibido',
+            message: `${payer} pagó con tarjeta ${amount} por ${what}${forWhom}.${recovered ? ' Se regularizó y volvió a estar Activo.' : ''}`
         }),
-        paymentReviewRequest: ({ payer, amount, month, forWhom }) => ({
+        paymentReviewRequest: ({ payer, amount, what, forWhom }) => ({
             title: 'Transferencia para revisar',
-            message: `${payer} informó una transferencia de ${amount} por la cuota de ${month}${forWhom}.`
+            message: `${payer} informó una transferencia de ${amount} por ${what}${forWhom}.`
         }),
-        transferApproved: ({ month }) => ({
-            title: `Se aprobó tu transferencia de ${month}`,
-            message: `Se aprobó tu transferencia por la cuota de ${month}. Ya podés descargar el comprobante.`
+        transferApproved: ({ name, what }) => ({
+            title: `Se aprobó tu transferencia de ${name}`,
+            message: `Se aprobó tu transferencia por ${what}. Ya podés descargar el comprobante.`
         }),
-        transferRejected: ({ month, reason }) => ({
-            title: `Se rechazó tu transferencia de ${month}`,
-            message: `Se rechazó tu transferencia por la cuota de ${month}: ${reason}. Podés volver a pagarla.`
+        transferRejected: ({ name, what, reason }) => ({
+            title: `Se rechazó tu transferencia de ${name}`,
+            message: `Se rechazó tu transferencia por ${what}: ${reason}. Podés volver a pagarla.`
+        }),
+        // Cargos eventuales
+        chargeNew: ({ concept, amount, dayMonth }) => ({
+            title: `Nuevo cargo: ${concept}`,
+            message: `El club te cargó «${concept}» por ${amount}. Vence el ${dayMonth}. Podés pagarlo desde tus cuotas.`
+        }),
+        chargeOverdue: ({ concept, dayMonth }) => ({
+            title: `Venció el cargo ${concept}`,
+            message: `El cargo «${concept}» venció el ${dayMonth}. Podés pagarlo desde tus cuotas. No suma días de atraso de la cuota.`
+        }),
+        chargeCancelled: ({ concept }) => ({
+            title: `Se anuló el cargo ${concept}`,
+            message: `El club anuló el cargo «${concept}». Ya no tenés que pagarlo.`
         }),
         fixturePublished: ({ category, rival, when, home, address }) => ({
             title: `Nuevo partido de ${category}`,

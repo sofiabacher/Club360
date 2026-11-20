@@ -11,11 +11,13 @@ import Typography from '@mui/material/Typography'
 
 import { registerFeePayment } from '../../api/fees.api.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
-import { formatMoney, formatPeriod } from '../../utils/format.js'
+import { formatMoney } from '../../utils/format.js'
+import { itemLabel } from './paymentLabels.js'
 
 const NOTE_MAX = 300
 
-// Pago en secretaría (fees.manage): el total de la cuota y una nota opcional. onDone(result) después de registrarlo
+// Pago en secretaría (fees.manage) de una cuota o de un cargo eventual (fee.kind): el total y una nota opcional.
+// onDone(result) después de registrarlo
 export default function RegisterPaymentDialog({ fee, memberName, onClose, onDone }) {
   const [note, setNote] = useState('')
   const [sending, setSending] = useState(false)
@@ -25,7 +27,7 @@ export default function RegisterPaymentDialog({ fee, memberName, onClose, onDone
     setSending(true)
     setError('')
     try {
-      const { data } = await registerFeePayment(fee.id, note.trim() || null)
+      const { data } = await registerFeePayment(fee, note.trim() || null)
       onDone(data)
     } catch (err) {
       setError(getErrorMessage(err))
@@ -37,7 +39,7 @@ export default function RegisterPaymentDialog({ fee, memberName, onClose, onDone
     <Dialog open onClose={sending ? undefined : onClose} fullWidth maxWidth="xs">
       <DialogTitle>Registrar pago en secretaría</DialogTitle>
       <DialogContent>
-        <DialogContentText>{memberName} · {formatPeriod(fee.period)}</DialogContentText>
+        <DialogContentText sx={{ overflowWrap: 'anywhere' }}>{memberName} · {itemLabel(fee)}</DialogContentText>
         <Typography variant="numeric" component="p" sx={{ fontSize: '2rem', color: 'navy.main', mb: 2 }}>{formatMoney(fee.total)}</Typography>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <TextField

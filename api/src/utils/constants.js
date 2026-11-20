@@ -34,6 +34,24 @@ const FEE_STATES = {
     OVERDUE: 3 
 }
 
+// chargeMember.chargeState — cargo eventual de un socio. CANCELLED: el Admin lo anuló (solo si estaba impago). Un cargo
+// impago no es mora: no suma días de atraso ni suspende (decisión del 19/11/2026)
+const CHARGE_STATES = {
+    PENDING: 1,
+    PAID: 2,
+    OVERDUE: 3,
+    CANCELLED: 4
+}
+
+// charge.targetType — a quiénes se le cobró un cargo eventual: todos los socios, socios elegidos, las jugadoras de
+// una o varias categorías o los socios inscriptos en uno o varios deportes
+const CHARGE_TARGETS = {
+    ALL: 1,
+    MEMBERS: 2,
+    CATEGORIES: 3,
+    SPORTS: 4
+}
+
 // payment.transactionState
 const TRANSACTION_STATES = { 
     PENDING: 1, 
@@ -214,6 +232,8 @@ const LOG_ACTIONS = {
     PAYMENT_REJECTED: { message: 'Pago rechazado', criticity: CRITICITY.MEDIUM },
     FEE_PAID_MANUAL: { message: 'Pago registrado en secretaría', criticity: CRITICITY.HIGH },
     TRANSFER_REPORTED: { message: 'Transferencia informada', criticity: CRITICITY.LOW },
+    CHARGE_CREATED: { message: 'Creación de cargo eventual', criticity: CRITICITY.MEDIUM },
+    CHARGE_CANCELLED: { message: 'Anulación de cargo eventual', criticity: CRITICITY.HIGH },
     MEMBER_SUSPENDED: { message: 'Suspensión de socio por mora', criticity: CRITICITY.HIGH },
     MEMBER_RECOVERED: { message: 'Recuperación de la condición de socio', criticity: CRITICITY.MEDIUM }
 }
@@ -318,6 +338,9 @@ const NOTIFICATION_TYPES = {
     PAYMENT_REVIEW_REQUEST: { email: false },   // Transferencia informada para revisar (usuarios con fees.manage)
     PAYMENT_RESULT: { email: false },       // Resultado de la revisión de una transferencia (quien pagó y el socio, con Familia)
     PAYMENT_RECEIVED: { email: false },     // Un socio pagó una cuota con tarjeta (usuarios con fees.manage)
+    CHARGE_NEW: { email: true },            // Cargo eventual nuevo (socio, y Familia si es menor)
+    CHARGE_OVERDUE: { email: false },       // Cargo eventual vencido (socio, y Familia si es menor)
+    CHARGE_CANCELLED: { email: false },     // Cargo eventual anulado (socio, y Familia si es menor)
     INTEGRITY_ALERT: { email: true },       // Error de integridad: el club queda bloqueado (usuarios con integrity.manage)
     GENERAL: { email: 'optional' }          // Avisos generales del Admin, el Representante y la Entrenadora
 }
@@ -391,6 +414,8 @@ const TABLE_LABELS = {
     inscription: 'Inscripciones',
     fee: 'Cuotas',
     payment: 'Pagos',
+    charge: 'Cargos eventuales',
+    chargeMember: 'Cargos de los socios',
     league: 'Ligas',
     category: 'Categorías',
     categoryPlayer: 'Jugadoras de las categorías',
@@ -434,6 +459,8 @@ module.exports = {
     MEMBER_STATES,
     INSCRIPTION_STATES,
     FEE_STATES,
+    CHARGE_STATES,
+    CHARGE_TARGETS,
     TRANSACTION_STATES,
     PAYMENT_METHODS,
     CITATION_STATES,
