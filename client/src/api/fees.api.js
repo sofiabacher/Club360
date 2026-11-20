@@ -11,23 +11,28 @@ export const getMyFees = () => axiosClient.get('/fees/mine').then((res) => res.d
 // data: { accounts: [estado de cuenta de cada socia vinculada] }
 export const getLinkedFees = () => axiosClient.get('/fees/linked').then((res) => res.data)
 
-// card: { cardNumber, cardHolder, cardExpiry, cardCvv } (no se guarda). data: { payment, feeState, recovered }
-export const payFee = (feeId, card) => axiosClient.post(`/fees/${feeId}/pay`, card).then((res) => res.data)
+// Lo que se paga es una cuota (kind 'fee') o un cargo eventual de un socio (kind 'charge'): cada uno tiene su ruta
+const payablePath = (item) => (item.kind === 'charge' ? `/fees/charge-items/${item.id}` : `/fees/${item.id}`)
+
+// item: la cuota o el cargo ({ id, kind }). card: { cardNumber, cardHolder, cardExpiry, cardCvv } (no se guarda).
+// data: { payment, state, recovered }
+export const payFee = (item, card) => axiosClient.post(`${payablePath(item)}/pay`, card).then((res) => res.data)
 
 // ---------- Transferencias y comprobantes ----------
 
 // data: { bankInfo: { holder, cuit, bank, cbu, alias } | null }
 export const getTransferInfo = () => axiosClient.get('/fees/transfer-info').then((res) => res.data)
 
-// Informa una transferencia con el comprobante (JPG, PNG o PDF, hasta 5 MB). data: { payment, feeState }
-export function reportTransfer(feeId, file) {
+// Informa una transferencia de la cuota o el cargo (item) con el comprobante (JPG, PNG o PDF, hasta 5 MB).
+// data: { payment, state }
+export function reportTransfer(item, file) {
   const formData = new FormData()
   formData.append('receipt', file)
-  return axiosClient.post(`/fees/${feeId}/transfer`, formData, { timeout: 60000 }).then((res) => res.data)
+  return axiosClient.post(`${payablePath(item)}/transfer`, formData, { timeout: 60000 }).then((res) => res.data)
 }
 
-// Comprobante de pago de un pago Aprobado. data: { club, confirmationCode, approvedAt, member, paidBy, registeredBy,
-//         period, socialAmount, sportAmount, total, method, methodLabel }
+// Comprobante de pago de un pago Aprobado. data: { club, kind, confirmationCode, approvedAt, member, paidBy, registeredBy,
+//         period, socialAmount, sportAmount (cuotas), concept, description (cargos), total, method, methodLabel }
 export const getPaymentVoucher = (paymentId) => axiosClient.get(`/fees/payments/${paymentId}/voucher`).then((res) => res.data)
 
 // Archivo del comprobante adjunto de una transferencia, como Blob (con axios, así viaja con el token).
@@ -59,14 +64,40 @@ export const getMemberFees = (memberId) => axiosClient.get(`/fees/members/${memb
 // data: { period, created, existing }
 export const generateFees = (period) => axiosClient.post('/fees/generate', { period }).then((res) => res.data)
 
-export const registerFeePayment = (feeId, note) => axiosClient.post(`/fees/${feeId}/register-payment`, { note }).then((res) => res.data)
+// Pago en secretaría de la cuota o el cargo (item)
+export const registerFeePayment = (item, note) => axiosClient.post(`${payablePath(item)}/register-payment`, { note }).then((res) => res.data)
 
-// Historial de pagos. params: { method, state, search, from, to, page }. data: { pendingReview, items, total, page, totalPages }
+// Historial de pagos. params: { kind ('fee' o 'charge'), method, state, search, from, to, page }.
+// data: { pendingReview, items, total, page, totalPages }
 export const getPayments = (params) => axiosClient.get('/fees/payments', { params }).then((res) => res.data)
 
 export const approveTransfer = (paymentId) => axiosClient.post(`/fees/payments/${paymentId}/approve`).then((res) => res.data)
 
 export const rejectTransfer = (paymentId, reason) => axiosClient.post(`/fees/payments/${paymentId}/reject`, { reason }).then((res) => res.data)
+
+// ---------- Cargos eventuales (fees.manage) ----------
+
+// data: { pendingReview, items: [{ id, concept, description, amount, expirationDate, targetType, targetLabel, isActive,
+//         createdAt, author, counts: { total, paid, pending, overdue, cancelled }, collected, due, inReview }] }
+export const getCharges = () => axiosClient.get('/fees/charges').then((res) => res.data)
+
+// Para elegir a quiénes. data: { members: [{ id, name, dni, numMember, memberStateId }], categories: [{ id, name, sport }],
+//         sports: [{ id, name }] }
+export const getChargeOptions = () => axiosClient.get('/fees/charges/options').then((res) => res.data)
+
+// target: { targetType, targetIds }. data: { count, members: [{ id, name, numMember }] }
+export const previewCharge = (target) => axiosClient.post('/fees/charges/preview', target).then((res) => res.data)
+
+// charge: { concept, description, amount, expirationDate, targetType, targetIds }. data: el detalle del cargo
+export const createCharge = (charge) => axiosClient.post('/fees/charges', charge).then((res) => res.data)
+
+// data: el cargo con items: [{ id, member, chargeState, overdueDays, inReview, payment }]
+export const getCharge = (chargeId) => axiosClient.get(`/fees/charges/${chargeId}`).then((res) => res.data)
+
+export const cancelCharge = (chargeId) => axiosClient.post(`/fees/charges/${chargeId}/cancel`).then((res) => res.data)
+
+// Anula el cargo de un socio. data: el detalle del cargo
+export const cancelChargeItem = (itemId) => axiosClient.post(`/fees/charge-items/${itemId}/cancel`).then((res) => res.data)
 
 // ---------- Representante (fees.viewPlayers) ----------
 

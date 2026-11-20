@@ -23,6 +23,8 @@ const Inscription = require('./Inscription')
 // 4. Cuotas y pagos
 const Fee = require('./Fee')
 const Payment = require('./Payment')
+const Charge = require('./Charge')
+const ChargeMember = require('./ChargeMember')
 
 // 5. Ligas, partidos y citaciones
 const League = require('./League')
@@ -81,6 +83,8 @@ oneToMany(Club, Staff, 'clubId', 'staff', 'club')
 oneToMany(Club, Inscription, 'clubId', 'inscriptions', 'club')
 oneToMany(Club, Fee, 'clubId', 'fees', 'club')
 oneToMany(Club, Payment, 'clubId', 'payments', 'club')
+oneToMany(Club, Charge, 'clubId', 'charges', 'club')
+oneToMany(Club, ChargeMember, 'clubId', 'chargeMembers', 'club')
 oneToMany(Club, League, 'clubId', 'leagues', 'club')
 oneToMany(Club, Category, 'clubId', 'categories', 'club')
 oneToMany(Club, Game, 'clubId', 'games', 'club')
@@ -127,10 +131,12 @@ oneToMany(User, Notification, 'transmitterId', 'sentNotifications', 'transmitter
 
 oneToMany(User, Payment, 'userId', 'payments', 'user')
 oneToMany(User, Routine, 'userId', 'routines', 'author')
+oneToMany(User, Charge, 'userId', 'createdCharges', 'author')
 
 // ---------- Socios y staff ----------
 oneToMany(Member, Inscription, 'memberId', 'inscriptions', 'member')
 oneToMany(Member, Fee, 'memberId', 'fees', 'member')
+oneToMany(Member, ChargeMember, 'memberId', 'charges', 'member')
 oneToMany(Member, Citation, 'memberId', 'citations', 'member')
 oneToMany(Member, RoutineLog, 'memberId', 'routineLogs', 'member')
 oneToMany(Member, Goal, 'memberId', 'goals', 'member')
@@ -155,6 +161,8 @@ oneToMany(Category, Routine, 'categoryId', 'routines', 'category')
 oneToMany(Routine, RoutineLog, 'routineId', 'logs', 'routine')
 oneToMany(Game, Citation, 'gameId', 'citations', 'game')
 oneToMany(Fee, Payment, 'feeId', 'payments', 'fee')
+oneToMany(Charge, ChargeMember, 'chargeId', 'items', 'charge')
+oneToMany(ChargeMember, Payment, 'chargeMemberId', 'payments', 'chargeMember')
 
 const models = {
     User,
@@ -174,6 +182,8 @@ const models = {
     Inscription,
     Fee,
     Payment,
+    Charge,
+    ChargeMember,
     League,
     Category,
     CategoryPlayer,

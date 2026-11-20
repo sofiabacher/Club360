@@ -33,6 +33,9 @@ const BACKUPS_DIR = path.join(__dirname, '../../../backups')
 const APP_NAME = 'Club360'
 const FORMAT_VERSION = 1
 
+// Tablas que se sumaron después de que ya había backups: un backup anterior no las trae, y se restauran vacías
+const TABLES_ADDED_LATER = ['charge', 'chargeMember']   // Cargos eventuales (19/11/2026)
+
 // Nombre de un archivo de backup. Los nombres que llegan del cliente se validan con esta regex y se buscan solo en la
 // carpeta del club del usuario: nunca se arma una ruta con lo que manda el cliente
 const FILE_NAME = /^backup-\d{8}-\d{6}-(manual|auto|pre_restore)\.json$/
@@ -184,7 +187,9 @@ async function validateBackup(actor, content) {
         throw createError(m.invalidFormat, 400)
     }
     for (const { Model } of CLUB_TABLES) {
-        if (!Array.isArray(data[Model.getTableName()])) throw createError(m.invalidFormat, 400)
+        const name = Model.getTableName()
+        if (data[name] === undefined && TABLES_ADDED_LATER.includes(name)) continue
+        if (!Array.isArray(data[name])) throw createError(m.invalidFormat, 400)
     }
 
     // 2. Club: el del Admin, y todas las filas con clubId son de ese club
@@ -196,6 +201,7 @@ async function validateBackup(actor, content) {
 
     // 3. Integridad del archivo
     if (meta.checksum !== checksumOf(data)) throw createError(m.checksumMismatch, 400)
+    for (const name of TABLES_ADDED_LATER) data[name] ??= []   // Después del checksum, que es del archivo tal cual
 
     // 4. Catálogos: los deportes y los permisos a los que apunta el backup existen en la base
     const [sports, permissions] = await Promise.all([

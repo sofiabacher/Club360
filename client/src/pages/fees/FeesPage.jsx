@@ -28,6 +28,7 @@ import Typography from '@mui/material/Typography'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { useTheme } from '@mui/material/styles'
 import ReceiptLongRounded from '@mui/icons-material/ReceiptLongRounded'
+import PostAddRounded from '@mui/icons-material/PostAddRounded'
 import SearchRounded from '@mui/icons-material/SearchRounded'
 
 import { generateFees, getFees } from '../../api/fees.api.js'
@@ -156,6 +157,9 @@ export default function FeesPage() {
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>Se generan el día 1 de cada mes y vencen el 10.</Typography>
           <Button component={RouterLink} to="/fees/payments" color="secondary" size="small" startIcon={<ReceiptLongRounded />} sx={{ mt: 0.5, ml: -0.5 }}>
             Ver historial de pagos{result?.pendingReview ? ` · ${result.pendingReview} ${result.pendingReview === 1 ? 'transferencia' : 'transferencias'} por revisar` : ''}
+          </Button>
+          <Button component={RouterLink} to="/fees/charges" color="secondary" size="small" startIcon={<PostAddRounded />} sx={{ mt: 0.5, ml: { xs: -0.5, sm: 1 } }}>
+            Cargos eventuales
           </Button>
         </Box>
         <Stack direction="row" sx={{ gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>

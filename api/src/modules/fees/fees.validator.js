@@ -2,7 +2,7 @@
 // Reglas de express-validator: solo el formato de los datos, no reglas de negocio.
 // Que la cuota sea del socio (o de una vinculada), que esté impaga y que el período no sea futuro lo controla el service.
 const { body, param, query } = require('express-validator')
-const { FEE_STATES, TRANSACTION_STATES, PAYMENT_METHODS } = require('../../utils/constants')
+const { FEE_STATES, TRANSACTION_STATES, PAYMENT_METHODS, CHARGE_TARGETS } = require('../../utils/constants')
 const { fees: m } = require('../../utils/messages')
 const { today } = require('../../utils/dates')
 
@@ -67,6 +67,7 @@ const dateQuery = (field) => query(field).optional({ values: 'falsy' })
     .withMessage(m.dateInvalid)
 
 const payments = [
+    query('kind').optional({ values: 'falsy' }).isIn(['fee', 'charge']).withMessage(m.kindInvalid),
     query('method').optional({ values: 'falsy' }).isIn(Object.values(PAYMENT_METHODS).map(String)).withMessage(m.methodInvalid),
     query('state').optional({ values: 'falsy' }).isIn(Object.values(TRANSACTION_STATES).map(String)).withMessage(m.stateInvalid),
     searchQuery,
@@ -81,6 +82,36 @@ const reject = [
     idParam,
     body('reason').isString().withMessage(m.reasonInvalid).bail().trim().isLength({ min: 10, max: 300 }).withMessage(m.reasonInvalid)
 ]
+
+// ---------- Cargos eventuales ----------
+// Que el vencimiento no sea pasado, que los ids sean del club y que haya a quién cobrarle lo controla el service
+
+const MAX_TARGET_IDS = 500
+
+const target = [
+    body('targetType').isIn(Object.values(CHARGE_TARGETS)).withMessage(m.targetTypeInvalid).bail().toInt(),
+    // Con ALL no se usan; con el resto, entre 1 y MAX_TARGET_IDS ids
+    body('targetIds')
+        .if((value, { req }) => Number(req.body.targetType) !== CHARGE_TARGETS.ALL)
+        .isArray({ min: 1, max: MAX_TARGET_IDS }).withMessage(m.targetIdsInvalid),
+    body('targetIds.*').isInt({ min: 1 }).withMessage(m.targetIdsInvalid).bail().toInt()
+]
+
+const previewCharge = [...target]
+
+const createCharge = [
+    body('concept').isString().withMessage(m.conceptInvalid).bail().trim().isLength({ min: 3, max: 100 }).withMessage(m.conceptInvalid),
+    body('description').optional({ values: 'null' }).isString().withMessage(m.descriptionInvalid).bail().trim().isLength({ max: 300 }).withMessage(m.descriptionInvalid),
+    body('amount')
+        .custom(value => /^\d{1,7}(\.\d{1,2})?$/.test(String(value ?? '').trim()) && Number(value) > 0)
+        .withMessage(m.amountInvalid).bail().toFloat(),
+    body('expirationDate')
+        .custom(value => DATE_FORMAT.test(value) && !isNaN(new Date(`${value}T12:00:00Z`)) && new Date(`${value}T12:00:00Z`).toISOString().startsWith(value))
+        .withMessage(m.expirationInvalid),
+    ...target
+]
+
+const chargeId = [idParam]
 
 const players = [
     query('status').optional({ values: 'falsy' }).isIn(PLAYER_STATUSES).withMessage(m.statusInvalid),
@@ -98,5 +129,8 @@ module.exports = {
     payments,
     paymentId,
     reject,
+    previewCharge,
+    createCharge,
+    chargeId,
     players
 }

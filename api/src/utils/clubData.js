@@ -15,8 +15,8 @@ const models = require('../models')
 const CHUNK_SIZE = 500
 
 const {
-    Club, User, Role, UserRole, RolePermission, UserPermission, ClubSport, Member, Staff, Inscription, Fee, Payment,
-    League, Category, CategoryPlayer, CategoryStaff, Game, Citation, Routine, RoutineLog, Goal, Notification
+    Club, User, Role, UserRole, RolePermission, UserPermission, ClubSport, Member, Staff, Inscription, Fee, Charge, ChargeMember,
+    Payment, League, Category, CategoryPlayer, CategoryStaff, Game, Citation, Routine, RoutineLog, Goal, Notification
 } = models
 
 // Tablas de un club, en orden de dependencia: cada una solo apunta a tablas que están antes en la lista (o a los
@@ -44,7 +44,9 @@ const CLUB_TABLES = [
     { Model: Staff, by: 'clubId' },
     { Model: Inscription, by: 'clubId' },
     { Model: Fee, by: 'clubId' },
-    { Model: Payment, by: 'clubId' },
+    { Model: Charge, by: 'clubId' },
+    { Model: ChargeMember, by: 'clubId' },   // Después de charge y de member
+    { Model: Payment, by: 'clubId' },        // Después de fee y de chargeMember
     { Model: League, by: 'clubId' },
     { Model: Category, by: 'clubId' },
     { Model: CategoryPlayer, by: 'parent', parent: Category, key: 'categoryId' },

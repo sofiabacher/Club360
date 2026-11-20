@@ -30,7 +30,8 @@ import UploadFileRounded from '@mui/icons-material/UploadFileRounded'
 import { getTransferInfo, payFee, reportTransfer } from '../../api/fees.api.js'
 import { getErrorMessage } from '../../utils/apiErrors.js'
 import { TRANSACTION_STATES } from '../../utils/constants.js'
-import { formatMoney, formatPeriod, formatFileSize } from '../../utils/format.js'
+import { formatMoney, formatFileSize } from '../../utils/format.js'
+import { itemLabel } from './paymentLabels.js'
 
 const TABS = { CARD: 'card', TRANSFER: 'transfer' }
 
@@ -209,7 +210,7 @@ function TransferForm({ fee, file, setFile, fileError, setFileError, error }) {
   )
 }
 
-// Pago de una cuota, con dos pestañas:
+// Pago de una cuota o de un cargo eventual (fee.kind), con dos pestañas:
 //   - Tarjeta: pago simulado (la tarjeta no se guarda). Aprobado (con el código y "Ver comprobante") o rechazado
 //     (con la opción de reintentar);
 //   - Transferencia: los datos del club, el monto exacto y el comprobante adjunto. Queda en revisión del club.
@@ -246,7 +247,7 @@ export default function PayFeeDialog({ fee, memberName, onClose }) {
     setSending(true)
     setError('')
     try {
-      const { data } = await payFee(fee.id, { ...card, cardNumber: digitsOf(card.cardNumber) })
+      const { data } = await payFee(fee, { ...card, cardNumber: digitsOf(card.cardNumber) })
       setResult(data)
     } catch (err) {
       setError(getErrorMessage(err))
@@ -259,7 +260,7 @@ export default function PayFeeDialog({ fee, memberName, onClose }) {
     setSending(true)
     setError('')
     try {
-      const { data } = await reportTransfer(fee.id, file)
+      const { data } = await reportTransfer(fee, file)
       setResult(data)
     } catch (err) {
       setError(getErrorMessage(err))
@@ -280,7 +281,7 @@ export default function PayFeeDialog({ fee, memberName, onClose }) {
 
   return (
     <Dialog open onClose={sending ? undefined : close} fullWidth maxWidth="xs">
-      <DialogTitle>Pagar {formatPeriod(fee.period)}</DialogTitle>
+      <DialogTitle sx={{ overflowWrap: 'anywhere' }}>Pagar {itemLabel(fee)}</DialogTitle>
 
       {!result && (
         <>
@@ -290,7 +291,7 @@ export default function PayFeeDialog({ fee, memberName, onClose }) {
           </Tabs>
 
           <DialogContent sx={{ pt: '20px !important' }}>
-            {memberName && <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>Cuota de {memberName}</Typography>}
+            {memberName && <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>{fee.kind === 'charge' ? 'Cargo' : 'Cuota'} de {memberName}</Typography>}
 
             {!isTransfer && (
               <>
@@ -393,7 +394,7 @@ export default function PayFeeDialog({ fee, memberName, onClose }) {
               </Typography>
 
               {state === TRANSACTION_STATES.REJECTED && (
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>La tarjeta no fue aceptada. La cuota sigue sin pagar: podés intentar con otra.</Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>La tarjeta no fue aceptada. {fee.kind === 'charge' ? 'El cargo sigue' : 'La cuota sigue'} sin pagar: podés intentar con otra.</Typography>
               )}
               {state === TRANSACTION_STATES.PENDING && (
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>Recibimos tu comprobante. El club lo va a revisar y te avisamos por acá.</Typography>

@@ -21,6 +21,7 @@ Plataforma web de gestión para clubes deportivos (proyecto integrador escolar).
   - `notification` suma `batchId` (`CHAR(36)` NULL): identifica las notificaciones de un mismo aviso general; las del sistema lo tienen en NULL.
   - `routine` suma `dayOfWeek` (`TINYINT NOT NULL DEFAULT 1`, `DAYS_OF_WEEK`, 1 lunes … 7 domingo), con índice único `(categoryId, weekStart, dayOfWeek)`. `weekStart` es siempre lunes.
   - `payment` suma `method` (`TINYINT NOT NULL DEFAULT 1`, `PAYMENT_METHODS`: 1 tarjeta, 2 transferencia, 3 secretaría), `receiptUrl` (`VARCHAR(255)` NULL) y `note` (`VARCHAR(300)` NULL).
+  - **Cargos eventuales (19/11/2026), tablas nuevas:** `charge` (`concept`, `description`, `amount`, `expirationDate`, `targetType` con `CHARGE_TARGETS`, `targetIds` JSON, `userId` de quien lo creó, `isActive`) y `chargeMember` (`chargeState` con `CHARGE_STATES`; único `(chargeId, memberId)`). `payment.feeId` pasa a admitir NULL y suma `chargeMemberId` (NULL): cada pago es de una cuota o de un cargo.
   - `club` suma `accentColor` (`VARCHAR(7)`, color propio del club) y `extraInfo` (JSON: WhatsApp, horarios de secretaría, canchas y horarios de entrenamiento).
 - `docs/pruebas/`: casos de prueba documentados en `.txt`, uno por módulo (ver "Pruebas").
 
@@ -294,6 +295,7 @@ Dirección **"Pizarra"** (P23, elegida por el equipo; reemplaza la paleta del mo
 - **Comprobantes adjuntos:** nunca por `/uploads` público. Se descargan con `GET /fees/payments/:id/receipt-file` (con sesión: `fees.manage`, quien pagó, el socio o su adulto; si no, 404). En Cloudinary van como recurso `raw` privado.
 - **Comprobante de pago:** todo pago Aprobado (cualquier medio) tiene uno (`GET /fees/payments/:id/voucher` y la página `/fees/payments/:id/voucher`). Se descarga en PDF generado en el navegador (`utils/voucherPdf.js`, con jsPDF cargado solo al descargar y los colores del tema) o se imprime. De la tarjeta solo se guardan los últimos 4 dígitos, en `note` ("Tarjeta ****1234").
 - **Formulario de tarjeta:** el número se muestra en grupos de 4 con guiones mientras se escribe, pero se envían solo los dígitos.
+- **Cargos eventuales (19/11/2026):** cobros aparte de la cuota que crea quien tiene `fees.manage` (`fees.charges.service.js`), a todos los socios, a socios elegidos, a las jugadoras de categorías o a los socios de deportes (solo ACTIVE o SUSPENDED). Se pagan igual que la cuota (tarjeta, transferencia, secretaría; `payItem`, `reportTransfer` y `registerPayment` reciben `kind`: `fee` o `charge`) y tienen comprobante. **No son mora:** `getOverdueDays` mira solo las cuotas. Al vencer pasan a Vencido (`feeStatus`, aviso `CHARGE_OVERDUE` in-app). Aviso `CHARGE_NEW` por la app y por email (socio y Familia). Se anulan enteros o de a un socio si están impagos y sin transferencia en revisión (`CHARGE_CANCELLED`, in-app).
 
 ## Rutinas (módulo `routines`)
 
