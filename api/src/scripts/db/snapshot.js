@@ -28,8 +28,16 @@ async function snapshot() {
     await confirmTarget(sequelize, 'guardar un snapshot de toda la base')
     await sequelize.authenticate()
 
+    // Las tablas de un modelo nuevo que la base todavía no tiene (se crean al recrearla) no tienen datos: se saltean
+    const existing = new Set((await sequelize.getQueryInterface().showAllTables()).map(table => (typeof table === 'string' ? table : table.tableName)))
+    const skipped = []
+
     const tables = {}
     for (const Model of Object.values(models)) {
+        if (!existing.has(Model.getTableName())) {
+            skipped.push(Model.getTableName())
+            continue
+        }
         const rows = await readTableRows(Model)
         tables[Model.getTableName()] = { model: Model.name, count: rows.length, rows }
     }
@@ -45,6 +53,7 @@ async function snapshot() {
 
     const total = Object.values(tables).reduce((sum, table) => sum + table.count, 0)
     console.log(`\n${total} filas en ${Object.keys(tables).length} tablas`)
+    if (skipped.length > 0) console.log(`Tablas nuevas que la base todavía no tiene (se crean al recrearla): ${skipped.join(', ')}`)
     console.log(`Guardado en ${path.relative(process.cwd(), file)}`)
 }
 
